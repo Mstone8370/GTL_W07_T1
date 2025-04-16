@@ -21,9 +21,6 @@ struct FStaticMeshRenderData
     TArray<FStaticMeshVertex> Vertices;
     TArray<UINT> Indices;
 
-    ID3D11Buffer* VertexBuffer;
-    ID3D11Buffer* IndexBuffer;
-
     TArray<FObjMaterialInfo> Materials;
     TArray<FMaterialSubset> MaterialSubsets;
 

@@ -12,7 +12,6 @@ class UStaticMesh : public UObject
 
 public:
     UStaticMesh() = default;
-    virtual ~UStaticMesh() override;
 
     virtual UObject* Duplicate(UObject* InOuter) override;
 
