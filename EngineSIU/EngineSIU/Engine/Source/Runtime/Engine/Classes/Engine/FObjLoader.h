@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Define.h"
 #include "EngineLoop.h"
 #include "Container/Map.h"
 #include "HAL/PlatformType.h"
@@ -8,6 +7,9 @@
 
 class UStaticMesh;
 struct FObjManager;
+
+struct FStaticMeshVertex;
+struct FStaticMesh;
 
 struct FObjLoader
 {

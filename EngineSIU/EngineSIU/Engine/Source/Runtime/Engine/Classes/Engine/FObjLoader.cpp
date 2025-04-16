@@ -4,6 +4,8 @@
 #include "Components/Material/Material.h"
 #include "Components/Mesh/StaticMesh.h"
 
+#include "Asset/StaticMeshAsset.h"
+
 #include <fstream>
 #include <sstream>
 

@@ -3,6 +3,7 @@
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 
+#include "Engine/Asset/StaticMeshAsset.h"
 
 UStaticMesh::~UStaticMesh()
 {
@@ -42,6 +43,11 @@ void UStaticMesh::GetUsedMaterials(TArray<UMaterial*>& Out) const
     {
         Out.Emplace(Material->Material);
     }
+}
+
+FWString UStaticMesh::GetOjbectName() const
+{
+    return staticMeshRenderData->ObjectName;
 }
 
 void UStaticMesh::SetData(FStaticMesh* renderData)

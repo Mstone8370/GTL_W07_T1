@@ -7,7 +7,6 @@
 
 #include "RendererHelpers.h"
 #include "UnrealClient.h"
-#include "Math/JungleMath.h"
 
 #include "UObject/UObjectIterator.h"
 #include "UObject/Casts.h"

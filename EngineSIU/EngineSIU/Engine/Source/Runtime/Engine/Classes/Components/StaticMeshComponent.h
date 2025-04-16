@@ -2,6 +2,8 @@
 #include "Components/MeshComponent.h"
 #include "Mesh/StaticMesh.h"
 
+#include "Engine/Asset/StaticMeshAsset.h"
+
 class UStaticMeshComponent : public UMeshComponent
 {
     DECLARE_CLASS(UStaticMeshComponent, UMeshComponent)

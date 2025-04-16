@@ -16,16 +16,6 @@
 
 #include <Math/Color.h>
 
-struct FStaticMeshVertex
-{
-    float X, Y, Z;    // Position
-    float R, G, B, A; // Color
-    float NormalX, NormalY, NormalZ;
-    float TangentX, TangentY, TangentZ;
-    float U = 0, V = 0;
-    uint32 MaterialIndex;
-};
-
 // Material Subset
 struct FMaterialSubset
 {
@@ -103,25 +93,6 @@ struct FObjMaterialInfo
 
     FString AlphaTextureName;    // map_d : Alpha texture
     FWString AlphaTexturePath;
-};
-
-// Cooked Data
-struct FStaticMesh
-{
-    FWString ObjectName;
-    FString DisplayName;
-
-    TArray<FStaticMeshVertex> Vertices;
-    TArray<UINT> Indices;
-
-    ID3D11Buffer* VertexBuffer;
-    ID3D11Buffer* IndexBuffer;
-
-    TArray<FObjMaterialInfo> Materials;
-    TArray<FMaterialSubset> MaterialSubsets;
-
-    FVector BoundingBoxMin;
-    FVector BoundingBoxMax;
 };
 
 struct FVertexTexture

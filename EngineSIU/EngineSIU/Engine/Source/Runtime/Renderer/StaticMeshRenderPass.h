@@ -3,14 +3,20 @@
 #include "EngineBaseTypes.h"
 #include "Container/Set.h"
 
-#include "Define.h"
-
 class FDXDShaderManager;
 class UWorld;
 class UMaterial;
 class FEditorViewportClient;
 class UStaticMeshComponent;
 struct FStaticMaterial;
+struct FStaticMesh;
+struct FMatrix;
+struct FVector4;
+
+class ID3D11Buffer;
+class ID3D11VertexShader;
+class ID3D11InputLayout;
+class ID3D11PixelShader;
 
 class FStaticMeshRenderPass : public IRenderPass
 {
