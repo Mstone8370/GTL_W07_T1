@@ -108,7 +108,7 @@ struct FObjMaterialInfo
 // Cooked Data
 namespace OBJ
 {
-    struct FStaticMeshRenderData
+    struct FStaticMesh
     {
         FWString ObjectName;
         FString DisplayName;
