@@ -1,5 +1,5 @@
 #include "StaticMesh.h"
-#include "Engine/FLoaderOBJ.h"
+#include "Engine/FObjLoader.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
 
@@ -44,7 +44,7 @@ void UStaticMesh::GetUsedMaterials(TArray<UMaterial*>& Out) const
     }
 }
 
-void UStaticMesh::SetData(OBJ::FStaticMesh* renderData)
+void UStaticMesh::SetData(FStaticMesh* renderData)
 {
     staticMeshRenderData = renderData;
 
@@ -58,7 +58,7 @@ void UStaticMesh::SetData(OBJ::FStaticMesh* renderData)
 
     for (int materialIndex = 0; materialIndex < staticMeshRenderData->Materials.Num(); materialIndex++) {
         FStaticMaterial* newMaterialSlot = new FStaticMaterial();
-        UMaterial* newMaterial = FManagerOBJ::CreateMaterial(staticMeshRenderData->Materials[materialIndex]);
+        UMaterial* newMaterial = FObjManager::CreateMaterial(staticMeshRenderData->Materials[materialIndex]);
 
         newMaterialSlot->Material = newMaterial;
         newMaterialSlot->MaterialSlotName = staticMeshRenderData->Materials[materialIndex].MaterialName;

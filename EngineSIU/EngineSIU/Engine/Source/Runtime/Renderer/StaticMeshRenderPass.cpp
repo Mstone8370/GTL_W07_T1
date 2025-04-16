@@ -171,7 +171,7 @@ void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(OBJ::FStaticMesh* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+void FStaticMeshRenderPass::RenderPrimitive(FStaticMesh* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
     UINT Stride = sizeof(FStaticMeshVertex);
     UINT Offset = 0;
@@ -248,7 +248,7 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
             continue;
         }
 
-        OBJ::FStaticMesh* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        FStaticMesh* RenderData = Comp->GetStaticMesh()->GetRenderData();
         if (RenderData == nullptr)
         {
             continue;
