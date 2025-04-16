@@ -146,7 +146,7 @@ int UStaticMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayD
     int nIntersections = 0;
     if (staticMesh == nullptr) return 0;
 
-    FStaticMesh* renderData = staticMesh->GetRenderData();
+    FStaticMeshRenderData* renderData = staticMesh->GetRenderData();
 
     FStaticMeshVertex* vertices = renderData->Vertices.GetData();
     int vCount = renderData->Vertices.Num();

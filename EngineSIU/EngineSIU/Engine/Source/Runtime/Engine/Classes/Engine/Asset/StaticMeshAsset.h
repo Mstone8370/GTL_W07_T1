@@ -13,7 +13,7 @@ struct FStaticMeshVertex
     uint32 MaterialIndex;
 };
 
-struct FStaticMesh
+struct FStaticMeshRenderData
 {
     FWString ObjectName;
     FString DisplayName;

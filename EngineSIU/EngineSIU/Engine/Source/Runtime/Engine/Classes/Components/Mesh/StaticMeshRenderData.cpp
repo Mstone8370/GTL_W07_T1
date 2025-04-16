@@ -1,4 +1,4 @@
-#include "StaticMesh.h"
+#include "StaticMeshRenderData.h"
 #include "Engine/FObjLoader.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
@@ -50,7 +50,7 @@ FWString UStaticMesh::GetOjbectName() const
     return staticMeshRenderData->ObjectName;
 }
 
-void UStaticMesh::SetData(FStaticMesh* renderData)
+void UStaticMesh::SetData(FStaticMeshRenderData* renderData)
 {
     staticMeshRenderData = renderData;
 

@@ -225,7 +225,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\SpotLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Material\Material.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\MeshComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMesh.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMeshRenderData.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\ParticleSubUVComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\ProjectileMovementComponent.cpp" />
@@ -362,7 +362,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\SpotLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Material\Material.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\MeshComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMesh.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMeshRenderData.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ParticleSubUVComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\PrimitiveComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\ProjectileMovementComponent.h" />

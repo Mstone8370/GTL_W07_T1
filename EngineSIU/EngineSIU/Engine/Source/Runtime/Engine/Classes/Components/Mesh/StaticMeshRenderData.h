@@ -4,7 +4,7 @@
 #include "Components/Material/Material.h"
 #include "Define.h"
 
-struct FStaticMesh;
+struct FStaticMeshRenderData;
 
 class UStaticMesh : public UObject
 {
@@ -19,14 +19,14 @@ public:
     const TArray<FStaticMaterial*>& GetMaterials() const { return materials; }
     uint32 GetMaterialIndex(FName MaterialSlotName) const;
     void GetUsedMaterials(TArray<UMaterial*>& Out) const;
-    FStaticMesh* GetRenderData() const { return staticMeshRenderData; }
+    FStaticMeshRenderData* GetRenderData() const { return staticMeshRenderData; }
 
     //ObjectName은 경로까지 포함
     FWString GetOjbectName() const;
 
-    void SetData(FStaticMesh* renderData);
+    void SetData(FStaticMeshRenderData* renderData);
 
 private:
-    FStaticMesh* staticMeshRenderData = nullptr;
+    FStaticMeshRenderData* staticMeshRenderData = nullptr;
     TArray<FStaticMaterial*> materials;
 };
