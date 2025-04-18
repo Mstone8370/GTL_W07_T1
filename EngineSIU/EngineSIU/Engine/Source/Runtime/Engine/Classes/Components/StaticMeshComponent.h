@@ -1,6 +1,8 @@
 #pragma once
 #include "Components/MeshComponent.h"
-#include "Mesh/StaticMesh.h"
+#include "Mesh/StaticMeshRenderData.h"
+
+#include "Engine/Asset/StaticMeshAsset.h"
 
 class UStaticMeshComponent : public UMeshComponent
 {

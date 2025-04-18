@@ -1,13 +1,13 @@
 #include "Cube.h"
 #include "Components/StaticMeshComponent.h"
 
-#include "Engine/FLoaderOBJ.h"
+#include "Engine/FObjLoader.h"
 
 #include "GameFramework/Actor.h"
 
 ACube::ACube()
 {
-    StaticMeshComponent->SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Contents/helloBlender.obj"));
+    StaticMeshComponent->SetStaticMesh(FObjManager::GetStaticMesh(L"Contents/helloBlender.obj"));
 }
 
 void ACube::Tick(float DeltaTime)

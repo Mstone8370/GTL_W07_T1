@@ -1,13 +1,15 @@
-#include "FLoaderOBJ.h"
+#include "FObjLoader.h"
 
 #include "UObject/ObjectFactory.h"
 #include "Components/Material/Material.h"
-#include "Components/Mesh/StaticMesh.h"
+#include "Components/Mesh/StaticMeshRenderData.h"
+
+#include "Asset/StaticMeshAsset.h"
 
 #include <fstream>
 #include <sstream>
 
-bool FLoaderOBJ::ParseOBJ(const FString& ObjFilePath, FObjInfo& OutObjInfo)
+bool FObjLoader::ParseOBJ(const FString& ObjFilePath, FObjInfo& OutObjInfo)
 {
     std::ifstream OBJ(ObjFilePath.ToWideString());
     if (!OBJ)
@@ -211,7 +213,7 @@ bool FLoaderOBJ::ParseOBJ(const FString& ObjFilePath, FObjInfo& OutObjInfo)
     return true;
 }
 
-bool FLoaderOBJ::ParseMaterial(FObjInfo& OutObjInfo, OBJ::FStaticMeshRenderData& OutFStaticMesh)
+bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutFStaticMesh)
 {
     // Subset
     OutFStaticMesh.MaterialSubsets = OutObjInfo.MaterialSubsets;
@@ -318,7 +320,7 @@ bool FLoaderOBJ::ParseMaterial(FObjInfo& OutObjInfo, OBJ::FStaticMeshRenderData&
     return true;
 }
 
-bool FLoaderOBJ::ConvertToStaticMesh(const FObjInfo& RawData, OBJ::FStaticMeshRenderData& OutStaticMesh)
+bool FObjLoader::ConvertToStaticMesh(const FObjInfo& RawData, FStaticMeshRenderData& OutStaticMesh)
 {
     OutStaticMesh.ObjectName = RawData.ObjectName;
     //OutStaticMesh.PathName = RawData.PathName;
@@ -401,7 +403,7 @@ bool FLoaderOBJ::ConvertToStaticMesh(const FObjInfo& RawData, OBJ::FStaticMeshRe
     return true;
 }
 
-bool FLoaderOBJ::CreateTextureFromFile(const FWString& Filename)
+bool FObjLoader::CreateTextureFromFile(const FWString& Filename)
 {
     if (FEngineLoop::ResourceManager.GetTexture(Filename))
     {
@@ -418,7 +420,7 @@ bool FLoaderOBJ::CreateTextureFromFile(const FWString& Filename)
     return true;
 }
 
-void FLoaderOBJ::ComputeBoundingBox(const TArray<FStaticMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector)
+void FObjLoader::ComputeBoundingBox(const TArray<FStaticMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector)
 {
     FVector MinVector = { FLT_MAX, FLT_MAX, FLT_MAX };
     FVector MaxVector = { -FLT_MAX, -FLT_MAX, -FLT_MAX };
@@ -438,7 +440,7 @@ void FLoaderOBJ::ComputeBoundingBox(const TArray<FStaticMeshVertex>& InVertices,
     OutMaxVector = MaxVector;
 }
 
-void FLoaderOBJ::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticMeshVertex& Vertex1, const FStaticMeshVertex& Vertex2)
+void FObjLoader::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticMeshVertex& Vertex1, const FStaticMeshVertex& Vertex2)
 {
     const float s1 = Vertex1.U - PivotVertex.U;
     const float t1 = Vertex1.V - PivotVertex.V;
@@ -462,9 +464,9 @@ void FLoaderOBJ::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
     PivotVertex.TangentZ = Tangent.Z;
 }
 
-OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& PathFileName)
+FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFileName)
 {
-    OBJ::FStaticMeshRenderData* NewStaticMesh = new OBJ::FStaticMeshRenderData();
+    FStaticMeshRenderData* NewStaticMesh = new FStaticMeshRenderData();
 
     if ( const auto It = ObjStaticMeshMap.Find(PathFileName))
     {
@@ -483,7 +485,7 @@ OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& P
 
     // Parse OBJ
     FObjInfo NewObjInfo;
-    bool Result = FLoaderOBJ::ParseOBJ(PathFileName, NewObjInfo);
+    bool Result = FObjLoader::ParseOBJ(PathFileName, NewObjInfo);
 
     if (!Result)
     {
@@ -494,7 +496,7 @@ OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& P
     // Material
     if (NewObjInfo.MaterialSubsets.Num() > 0)
     {
-        Result = FLoaderOBJ::ParseMaterial(NewObjInfo, *NewStaticMesh);
+        Result = FObjLoader::ParseMaterial(NewObjInfo, *NewStaticMesh);
 
         if (!Result)
         {
@@ -510,7 +512,7 @@ OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& P
     }
 
     // Convert FStaticMeshRenderData
-    Result = FLoaderOBJ::ConvertToStaticMesh(NewObjInfo, *NewStaticMesh);
+    Result = FObjLoader::ConvertToStaticMesh(NewObjInfo, *NewStaticMesh);
     if (!Result)
     {
         delete NewStaticMesh;
@@ -522,7 +524,7 @@ OBJ::FStaticMeshRenderData* FManagerOBJ::LoadObjStaticMeshAsset(const FString& P
     return NewStaticMesh;
 }
 
-void FManagerOBJ::CombineMaterialIndex(OBJ::FStaticMeshRenderData& OutFStaticMesh)
+void FObjManager::CombineMaterialIndex(FStaticMeshRenderData& OutFStaticMesh)
 {
     for (int32 i = 0; i < OutFStaticMesh.MaterialSubsets.Num(); i++)
     {
@@ -538,7 +540,7 @@ void FManagerOBJ::CombineMaterialIndex(OBJ::FStaticMeshRenderData& OutFStaticMes
     }
 }
 
-bool FManagerOBJ::SaveStaticMeshToBinary(const FWString& FilePath, const OBJ::FStaticMeshRenderData& StaticMesh)
+bool FObjManager::SaveStaticMeshToBinary(const FWString& FilePath, const FStaticMeshRenderData& StaticMesh)
 {
     std::ofstream File(FilePath, std::ios::binary);
     if (!File.is_open())
@@ -611,7 +613,7 @@ bool FManagerOBJ::SaveStaticMeshToBinary(const FWString& FilePath, const OBJ::FS
     return true;
 }
 
-bool FManagerOBJ::LoadStaticMeshFromBinary(const FWString& FilePath, OBJ::FStaticMeshRenderData& OutStaticMesh)
+bool FObjManager::LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMeshRenderData& OutStaticMesh)
 {
     std::ifstream File(FilePath, std::ios::binary);
     if (!File.is_open())
@@ -726,7 +728,7 @@ bool FManagerOBJ::LoadStaticMeshFromBinary(const FWString& FilePath, OBJ::FStati
     return true;
 }
 
-UMaterial* FManagerOBJ::CreateMaterial(FObjMaterialInfo materialInfo)
+UMaterial* FObjManager::CreateMaterial(FObjMaterialInfo materialInfo)
 {
     if (materialMap[materialInfo.MaterialName] != nullptr)
         return materialMap[materialInfo.MaterialName];
@@ -737,14 +739,14 @@ UMaterial* FManagerOBJ::CreateMaterial(FObjMaterialInfo materialInfo)
     return newMaterial;
 }
 
-UMaterial* FManagerOBJ::GetMaterial(FString name)
+UMaterial* FObjManager::GetMaterial(FString name)
 {
     return materialMap[name];
 }
 
-UStaticMesh* FManagerOBJ::CreateStaticMesh(const FString& filePath)
+UStaticMesh* FObjManager::CreateStaticMesh(const FString& filePath)
 {
-    OBJ::FStaticMeshRenderData* StaticMeshRenderData = FManagerOBJ::LoadObjStaticMeshAsset(filePath);
+    FStaticMeshRenderData* StaticMeshRenderData = FObjManager::LoadObjStaticMeshAsset(filePath);
 
     if (StaticMeshRenderData == nullptr) return nullptr;
 
@@ -761,7 +763,7 @@ UStaticMesh* FManagerOBJ::CreateStaticMesh(const FString& filePath)
     return StaticMesh;
 }
 
-UStaticMesh* FManagerOBJ::GetStaticMesh(FWString name)
+UStaticMesh* FObjManager::GetStaticMesh(FWString name)
 {
     return StaticMeshMap[name];
 }

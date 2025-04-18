@@ -3,14 +3,20 @@
 #include "EngineBaseTypes.h"
 #include "Container/Set.h"
 
-#include "Define.h"
-
 class FDXDShaderManager;
 class UWorld;
 class UMaterial;
 class FEditorViewportClient;
 class UStaticMeshComponent;
 struct FStaticMaterial;
+struct FStaticMeshRenderData;
+struct FMatrix;
+struct FVector4;
+
+class ID3D11Buffer;
+class ID3D11VertexShader;
+class ID3D11InputLayout;
+class ID3D11PixelShader;
 
 class FStaticMeshRenderPass : public IRenderPass
 {
@@ -33,7 +39,7 @@ public:
   
     void UpdateLitUnlitConstant(int32 isLit) const;
 
-    void RenderPrimitive(OBJ::FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
+    void RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
     
     void RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const;
 
