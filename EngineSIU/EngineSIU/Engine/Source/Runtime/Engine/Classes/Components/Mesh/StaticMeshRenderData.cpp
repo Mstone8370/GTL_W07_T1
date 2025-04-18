@@ -30,7 +30,7 @@ void UStaticMesh::GetUsedMaterials(TArray<UMaterial*>& Out) const
     }
 }
 
-FWString UStaticMesh::GetOjbectName() const
+FWString UStaticMesh::GetObjectName() const
 {
     return staticMeshRenderData->ObjectName;
 }

@@ -21,7 +21,7 @@ public:
     FStaticMeshRenderData* GetRenderData() const { return staticMeshRenderData; }
 
     //ObjectName은 경로까지 포함
-    FWString GetOjbectName() const;
+    FWString GetObjectName() const;
 
     void SetData(FStaticMeshRenderData* renderData);
 
