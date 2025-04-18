@@ -29,15 +29,15 @@ public:
 
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
     
-    UStaticMesh* GetStaticMesh() const { return staticMesh; }
+    UStaticMesh* GetStaticMesh() const { return StaticMesh; }
     void SetStaticMesh(UStaticMesh* value)
     { 
-        staticMesh = value;
+        StaticMesh = value;
         OverrideMaterials.SetNum(value->GetMaterials().Num());
-        AABB = FBoundingBox(staticMesh->GetRenderData()->BoundingBoxMin, staticMesh->GetRenderData()->BoundingBoxMax);
+        AABB = FBoundingBox(StaticMesh->GetRenderData()->BoundingBoxMin, StaticMesh->GetRenderData()->BoundingBoxMax);
     }
 
 protected:
-    UStaticMesh* staticMesh = nullptr;
+    UStaticMesh* StaticMesh = nullptr;
     int selectedSubMeshIndex = -1;
 };

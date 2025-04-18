@@ -9,8 +9,8 @@
 int UGizmoBaseComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
 {
     int nIntersections = 0;
-    if (staticMesh == nullptr) return 0;
-    FStaticMeshRenderData* renderData = staticMesh->GetRenderData();
+    if (StaticMesh == nullptr) return 0;
+    FStaticMeshRenderData* renderData = StaticMesh->GetRenderData();
     FStaticMeshVertex* vertices = renderData->Vertices.GetData();
     int vCount = renderData->Vertices.Num();
     UINT* indices = renderData->Indices.GetData();
