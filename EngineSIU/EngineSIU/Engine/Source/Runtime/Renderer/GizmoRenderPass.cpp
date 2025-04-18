@@ -186,7 +186,7 @@ void FGizmoRenderPass::RenderGizmoComponent(UGizmoBaseComponent* GizmoComp, cons
         return;
     }
     
-    OBJ::FStaticMeshRenderData* RenderData = GizmoComp->GetStaticMesh()->GetRenderData();
+    FStaticMeshRenderData* RenderData = GizmoComp->GetStaticMesh()->GetRenderData();
     if (!RenderData)
     {
         return;
@@ -202,13 +202,20 @@ void FGizmoRenderPass::RenderGizmoComponent(UGizmoBaseComponent* GizmoComp, cons
 
     UINT Stride = sizeof(FStaticMeshVertex);
     UINT Offset = 0;
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &RenderData->VertexBuffer, &Stride, &Offset);
 
-    if (!RenderData->IndexBuffer)
+    FVertexInfo VertexInfo;
+    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
+
+    FIndexInfo IndexInfo;
+    BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
+    
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
+
+    if (!IndexInfo.IndexBuffer)
     {
         // TODO: 인덱스 버퍼가 없는 경우?
     }
-    Graphics->DeviceContext->IASetIndexBuffer(RenderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    Graphics->DeviceContext->IASetIndexBuffer(IndexInfo.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     
     if (RenderData->MaterialSubsets.Num() == 0)
     {

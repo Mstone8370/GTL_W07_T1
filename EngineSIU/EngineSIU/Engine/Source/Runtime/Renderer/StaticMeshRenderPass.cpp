@@ -7,7 +7,6 @@
 
 #include "RendererHelpers.h"
 #include "UnrealClient.h"
-#include "Math/JungleMath.h"
 
 #include "UObject/UObjectIterator.h"
 #include "UObject/Casts.h"
@@ -224,16 +223,21 @@ void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(OBJ::FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+void FStaticMeshRenderPass::RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
 {
     UINT Stride = sizeof(FStaticMeshVertex);
     UINT Offset = 0;
-    
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &RenderData->VertexBuffer, &Stride, &Offset);
 
-    if (RenderData->IndexBuffer)
+    FVertexInfo VertexInfo;
+    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
+    
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
+
+    FIndexInfo IndexInfo;
+    BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
+    if (IndexInfo.IndexBuffer)
     {
-        Graphics->DeviceContext->IASetIndexBuffer(RenderData->IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        Graphics->DeviceContext->IASetIndexBuffer(IndexInfo.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
     }
 
     if (RenderData->MaterialSubsets.Num() == 0)
@@ -301,7 +305,7 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
             continue;
         }
 
-        OBJ::FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
         if (RenderData == nullptr)
         {
             continue;

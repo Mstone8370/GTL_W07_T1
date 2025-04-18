@@ -1,5 +1,5 @@
 #include "CubeComp.h"
-#include "Engine/FLoaderOBJ.h"
+#include "Engine/FObjLoader.h"
 #include "UObject/ObjectFactory.h"
 
 
@@ -19,8 +19,8 @@ void UCubeComp::InitializeComponent()
     //SetStaticMesh(FManagerOBJ::GetStaticMesh(L"helloBlender.obj"));
     // 
     // Begin Test
-    FManagerOBJ::CreateStaticMesh("Contents/Reference/Reference.obj");
-    SetStaticMesh(FManagerOBJ::GetStaticMesh(L"Reference.obj"));
+    FObjManager::CreateStaticMesh("Contents/Reference/Reference.obj");
+    SetStaticMesh(FObjManager::GetStaticMesh(L"Reference.obj"));
     // End Test
 }
 

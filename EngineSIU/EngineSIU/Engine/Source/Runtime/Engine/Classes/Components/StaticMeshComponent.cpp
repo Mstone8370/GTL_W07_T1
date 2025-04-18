@@ -1,6 +1,6 @@
 #include "Components/StaticMeshComponent.h"
 
-#include "Engine/FLoaderOBJ.h"
+#include "Engine/FObjLoader.h"
 #include "Launch/EngineLoop.h"
 #include "UObject/Casts.h"
 #include "UObject/ObjectFactory.h"
@@ -26,7 +26,7 @@ void UStaticMeshComponent::GetProperties(TMap<FString, FString>& OutProperties) 
     if (CurrentMesh != nullptr) {
 
         // 1. std::wstring 경로 얻기
-        std::wstring PathWString = CurrentMesh->GetOjbectName(); // 이 함수가 std::wstring 반환 가정
+        std::wstring PathWString = CurrentMesh->GetObjectName(); // 이 함수가 std::wstring 반환 가정
 
         // 2. std::wstring을 FString으로 변환
         FString PathFString(PathWString.c_str()); // c_str()로 const wchar_t* 얻어서 FString 생성
@@ -56,7 +56,7 @@ void UStaticMeshComponent::SetProperties(const TMap<FString, FString>& InPropert
         {
             // 경로 문자열로 UStaticMesh 에셋 로드 시도
            
-            if (UStaticMesh* MeshToSet = FManagerOBJ::CreateStaticMesh(*TempStr))
+            if (UStaticMesh* MeshToSet = FObjManager::CreateStaticMesh(*TempStr))
             {
                 SetStaticMesh(MeshToSet); // 성공 시 메시 설정
                 UE_LOG(LogLevel::Display, TEXT("Set StaticMesh '%s' for %s"), **TempStr, *GetName());
@@ -146,7 +146,7 @@ int UStaticMeshComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayD
     int nIntersections = 0;
     if (staticMesh == nullptr) return 0;
 
-    OBJ::FStaticMeshRenderData* renderData = staticMesh->GetRenderData();
+    FStaticMeshRenderData* renderData = staticMesh->GetRenderData();
 
     FStaticMeshVertex* vertices = renderData->Vertices.GetData();
     int vCount = renderData->Vertices.Num();
