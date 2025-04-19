@@ -13,7 +13,7 @@ cbuffer MaterialConstants : register(b1)
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 {
     // Normal
-    float3 WorldNormal = Input.WorldNormal;
+    float3 WorldNormal = normalize(Input.WorldNormal);
     if (Material.TextureFlag & (1 << 2))
     {
         float3 Tangent = normalize(Input.WorldTangent.xyz);
