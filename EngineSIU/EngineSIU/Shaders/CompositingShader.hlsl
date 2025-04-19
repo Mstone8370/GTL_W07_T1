@@ -50,7 +50,7 @@ float4 mainPS(PS_Input Input) : SV_TARGET
     float4 Debug = DebugTexture.Sample(CompositingSampler, Input.UV);
 
     float4 FinalColor = float4(0, 0, 0, 0);
-    if (ViewMode == 7)
+    if (ViewMode == 8)
     {
         FinalColor = lerp(Scene, Debug, 0.5);
         FinalColor = lerp(FinalColor, Editor, Editor.a);

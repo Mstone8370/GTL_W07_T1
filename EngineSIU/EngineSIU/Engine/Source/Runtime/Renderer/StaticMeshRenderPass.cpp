@@ -53,6 +53,11 @@ void FStaticMeshRenderPass::CreateShader()
     {
         return;
     }
+    hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderWorldTangent", L"Shaders/StaticMeshPixelShaderWorldTangent.hlsl", "mainPS");
+    if (FAILED(hr))
+    {
+        return;
+    }
     // End Debug Shaders
 
 #pragma region UberShader
@@ -97,6 +102,7 @@ void FStaticMeshRenderPass::CreateShader()
     PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
     DebugDepthShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderDepth");
     DebugWorldNormalShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldNormal");
+    DebugWorldTangentShader = ShaderManager->GetPixelShaderByKey(L"StaticMeshPixelShaderWorldTangent");
 }
 
 void FStaticMeshRenderPass::ReleaseShader()
@@ -197,6 +203,10 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     else if (ViewMode == EViewModeIndex::VMI_WorldNormal)
     {
         Graphics->DeviceContext->PSSetShader(DebugWorldNormalShader, nullptr, 0);
+    }
+    else if (ViewMode == EViewModeIndex::VMI_WorldTangent)
+    {
+        Graphics->DeviceContext->PSSetShader(DebugWorldTangentShader, nullptr, 0);
     }
     else
     {

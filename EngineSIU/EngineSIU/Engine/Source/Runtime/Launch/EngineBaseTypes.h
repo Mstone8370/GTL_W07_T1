@@ -11,6 +11,7 @@ enum class EViewModeIndex : uint8
     VMI_Wireframe,
     VMI_SceneDepth,
     VMI_WorldNormal,
+    VMI_WorldTangent,
     VMI_LightHeatMap,
     VMI_MAX,
 };
