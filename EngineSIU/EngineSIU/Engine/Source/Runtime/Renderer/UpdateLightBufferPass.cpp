@@ -18,6 +18,7 @@
 #include "UObject/UObjectIterator.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "TileLightCullingPass.h"
+#include "Math/JungleMath.h"
 
 //------------------------------------------------------------------------------
 // 생성자/소멸자
@@ -39,8 +40,17 @@ void FUpdateLightBufferPass::Initialize(FDXDBufferManager* InBufferManager, FGra
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
 
+    ShaderManager->AddVertexShader(L"ShadowMapVertexShader", L"Shaders/ShadowMapVertexShader.hlsl", "mainVS");
     CreatePointLightBuffer();
     CreatePointLightPerTilesBuffer();
+
+    // viewport for shadow map
+    ShadowMapViewport.Width = 2048;
+    ShadowMapViewport.Height = 2048;
+    ShadowMapViewport.MinDepth = 0.0f;
+    ShadowMapViewport.MaxDepth = 1.0f;
+    ShadowMapViewport.TopLeftX = 0;
+    ShadowMapViewport.TopLeftY = 0;
 }
 
 void FUpdateLightBufferPass::PrepareRenderArr()
@@ -292,14 +302,21 @@ void FUpdateLightBufferPass::UpdatePointLightPerTilesBuffer()
 
 void FUpdateLightBufferPass::RenderShadowMap(ULightComponentBase* InLightComponent)
 {
+    UINT OriginalViewportCount = 1;
+    D3D11_VIEWPORT OriginalViewport = {};
+    Graphics->DeviceContext->RSGetViewports(&OriginalViewportCount, &OriginalViewport);
+    Graphics->DeviceContext->RSSetViewports(1, &ShadowMapViewport);
+    
     PrepareRenderState(InLightComponent);
     RenderAllStaticMeshes();
+    
+    Graphics->DeviceContext->RSSetViewports(OriginalViewportCount, &OriginalViewport);
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 }
 
 void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComponent)
 {
-    VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"ShadowMapVertexShader");
     InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
     
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
@@ -313,7 +330,23 @@ void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComp
     Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
 
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
-
+    
+    // Update Light Constants
+    // TODO: Light를 Structured Buffer로 바꾸면 수정하기.
+    FLightConstants LightData = {};
+    FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, InLightComponent->GetWorldMatrix());
+    FVector Position = InLightComponent->GetWorldLocation();
+    // FVector Position = -Cast<UDirectionalLightComponent>(InLightComponent)->GetDirection()*500;
+    LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
+    if (InLightComponent->IsA<UDirectionalLightComponent>())
+    {
+        LightData.LightProjMatrix = JungleMath::CreateOrthoProjectionMatrix(10, 10, 0.1f, 1000.f);
+    } else
+    {
+        LightData.LightProjMatrix = JungleMath::CreateProjectionMatrix(45.f, 1.f, 0.1f, 1000.f);
+    }
+    BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 0, EShaderStage::Vertex);
+    BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
     
     FDepthStencilRHI DepthStencilRHI = InLightComponent->GetShadowDepthMap();
     Graphics->DeviceContext->ClearDepthStencilView(DepthStencilRHI.DSV, D3D11_CLEAR_DEPTH, 1.0f, 0);

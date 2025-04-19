@@ -63,6 +63,7 @@ private:
     FDXDShaderManager* ShaderManager;
     ID3D11VertexShader* VertexShader;
     ID3D11InputLayout* InputLayout;
+    D3D11_VIEWPORT ShadowMapViewport;
 
     TArray<TArray<uint32>> PointLightPerTiles;
     TArray<PointLightPerTile> GPointLightPerTiles;

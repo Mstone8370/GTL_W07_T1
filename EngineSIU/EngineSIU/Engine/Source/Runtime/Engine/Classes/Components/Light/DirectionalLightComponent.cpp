@@ -7,7 +7,7 @@
 UDirectionalLightComponent::UDirectionalLightComponent()
 {
     // DirectionalLight Info
-    DirectionalLightInfo.Direction = -GetUpVector();
+    DirectionalLightInfo.Direction = GetForwardVector();
     DirectionalLightInfo.Intensity = 10.0f;
     DirectionalLightInfo.LightColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -64,7 +64,7 @@ void UDirectionalLightComponent::SetProperties(const TMap<FString, FString>& InP
 FVector UDirectionalLightComponent::GetDirection()  
 {
     FRotator rotator = GetWorldRotation();
-    FVector WorldDown= rotator.ToQuaternion().RotateVector(-GetUpVector());
+    FVector WorldDown= rotator.ToQuaternion().RotateVector(GetForwardVector());
     return WorldDown;  
 }
 
@@ -110,7 +110,7 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapTextureDesc.ArraySize = 1;
     shadowMapTextureDesc.Usage = D3D11_USAGE_DEFAULT;
     shadowMapTextureDesc.SampleDesc.Count = 1;
-    shadowMapTextureDesc.SampleDesc.Quality = 1;
+    shadowMapTextureDesc.SampleDesc.Quality = 0;
     shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
     shadowMapTextureDesc.Width = 2048;
     shadowMapTextureDesc.Height = 2048;

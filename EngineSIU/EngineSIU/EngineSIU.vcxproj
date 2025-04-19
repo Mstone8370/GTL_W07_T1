@@ -306,6 +306,7 @@
     <None Include="Shaders\ShaderLine.hlsl" />
     <None Include="Shaders\ShaderRegisters.hlsl" />
     <None Include="Shaders\ShaderW0.hlsl" />
+    <None Include="Shaders\ShadowMapVertexShader.hlsl" />
     <None Include="Shaders\SlateShader.hlsl" />
     <None Include="Shaders\StaticMeshPixelShader.hlsl" />
     <None Include="Shaders\StaticMeshPixelShaderDepth.hlsl" />

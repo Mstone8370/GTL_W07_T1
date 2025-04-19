@@ -136,6 +136,9 @@ void FRenderer::CreateConstantBuffers()
     UINT ViewportSizeBufferSize = sizeof(FViewportSize);
     BufferManager->CreateBufferGeneric<FViewportSize>("FViewportSize", nullptr, ViewportSizeBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    // TODO: Light가 Structured Buffer로 관리되면 제거할 것.
+    UINT LightConstantsBufferSize = sizeof(FLightConstants);
+    BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));

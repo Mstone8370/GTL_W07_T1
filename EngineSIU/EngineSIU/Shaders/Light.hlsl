@@ -1,4 +1,4 @@
-
+// TODO: structured buffer로 변경
 #define MAX_LIGHTS 16 
 
 #define MAX_DIRECTIONAL_LIGHT 16
