@@ -73,8 +73,14 @@ struct PS_INPUT_StaticMesh
 };
 
 ////////
-/// 공용: 12 ~ 13
+/// 공용: 11 ~ 13
 ///////
+cbuffer ViewportSizeBuffer : register(b11)
+{
+    float2 ViewportSize;
+    float2 ViewportPadding;
+}
+
 cbuffer ObjectBuffer : register(b12)
 {
     row_major matrix WorldMatrix;

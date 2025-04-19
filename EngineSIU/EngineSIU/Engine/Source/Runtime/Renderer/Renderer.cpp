@@ -133,14 +133,19 @@ void FRenderer::CreateConstantBuffers()
     UINT LightInfoBufferSize = sizeof(FLightInfoBuffer);
     BufferManager->CreateBufferGeneric<FLightInfoBuffer>("FLightInfoBuffer", nullptr, LightInfoBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    UINT ViewportSizeBufferSize = sizeof(FViewportSize);
+    BufferManager->CreateBufferGeneric<FViewportSize>("FViewportSize", nullptr, ViewportSizeBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
     ID3D11Buffer* CameraConstantBuffer = BufferManager->GetConstantBuffer(TEXT("FCameraConstantBuffer"));
     Graphics->DeviceContext->VSSetConstantBuffers(12, 1, &ObjectBuffer);
     Graphics->DeviceContext->VSSetConstantBuffers(13, 1, &CameraConstantBuffer);
+    
     Graphics->DeviceContext->PSSetConstantBuffers(12, 1, &ObjectBuffer);
     Graphics->DeviceContext->PSSetConstantBuffers(13, 1, &CameraConstantBuffer);
+    BufferManager->BindConstantBuffer(TEXT("FViewportSize"), 11, EShaderStage::Pixel);
 }
 
 void FRenderer::ReleaseConstantBuffer()
@@ -227,6 +232,11 @@ void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FEditorViewportClient>&
     CameraConstantBuffer.NearClip = Viewport->GetCameraLearClip();
     CameraConstantBuffer.FarClip = Viewport->GetCameraFarClip();
     BufferManager->UpdateConstantBuffer("FCameraConstantBuffer", CameraConstantBuffer);
+
+    FViewportSize ViewportSize;
+    ViewportSize.ViewportSize.X = Viewport->GetViewport()->GetRect().Width;
+    ViewportSize.ViewportSize.Y = Viewport->GetViewport()->GetRect().Height;
+    BufferManager->UpdateConstantBuffer(TEXT("FViewportSize"), ViewportSize);
 }
 
 void FRenderer::BeginRender(const std::shared_ptr<FEditorViewportClient>& Viewport)
