@@ -41,7 +41,7 @@ void FPostProcessCompositingPass::Initialize(FDXDBufferManager* InBufferManager,
     Graphics->Device->CreateSamplerState(&SamplerDesc, &Sampler);
 }
 
-void FPostProcessCompositingPass::PrepareRender()
+void FPostProcessCompositingPass::PrepareRenderArr()
 {
 }
 
@@ -57,8 +57,6 @@ void FPostProcessCompositingPass::Render(const std::shared_ptr<FEditorViewportCl
     const EResourceType ResourceType = EResourceType::ERT_PostProcessCompositing; 
     FRenderTargetRHI* RenderTargetRHI = Viewport->GetViewportResource()->GetRenderTarget(ResourceType);
 
-    Graphics->DeviceContext->ClearRenderTargetView(RenderTargetRHI->RTV, ViewportResource->GetClearColor(ResourceType).data());
-    
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Fog), 1, &ViewportResource->GetRenderTarget(EResourceType::ERT_PP_Fog)->SRV);
 
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);

@@ -428,7 +428,8 @@ void ControlEditorPanel::CreateFlagButton() const
 
     const char* ViewModeNames[] = { 
         "Lit_Gouraud", "Lit_Lambert", "Lit_Phong", 
-        "Unlit", "Wireframe", "Scene Depth", "World Normal"
+        "Unlit", "Wireframe",
+        "Scene Depth", "World Normal", "Light Heat Map"
     };
     uint32 ViewModeCount = sizeof(ViewModeNames) / sizeof(ViewModeNames[0]);
     

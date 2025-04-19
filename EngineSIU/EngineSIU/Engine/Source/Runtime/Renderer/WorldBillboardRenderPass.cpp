@@ -11,7 +11,7 @@ FWorldBillboardRenderPass::FWorldBillboardRenderPass()
     ResourceType = EResourceType::ERT_Scene;
 }
 
-void FWorldBillboardRenderPass::PrepareRender()
+void FWorldBillboardRenderPass::PrepareRenderArr()
 {
     BillboardComps.Empty();
     for (const auto Component : TObjectRange<UBillboardComponent>())

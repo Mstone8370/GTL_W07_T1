@@ -426,8 +426,9 @@ void FEditorRenderPass::PrepareRendertarget(std::shared_ptr<FEditorViewportClien
 
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
     FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
-    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, ViewportResource->GetDepthStencilView());
 
+    // 뎁스 비교는 씬을 기준으로
+    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, ViewportResource->GetDepthStencil(EResourceType::ERT_Scene)->DSV);
 }
 
 void FEditorRenderPass::PrepareRender()
@@ -517,9 +518,11 @@ void FEditorRenderPass::Render(std::shared_ptr<FEditorViewportClient> Viewport)
     // ID3D11DepthStencilState* DepthStateEnable = Graphics->DepthStencilState;
     // Graphics->DeviceContext->OMSetDepthStencilState(DepthStateEnable, 0);
 
+    // [NOTE] ----------- Light Culling 프레임 보호 위해 잠시 주석처리 ---------- //
     RenderPointlightInstanced();
     RenderSpotlightInstanced();
     RenderArrows();    // Directional Light Arrow : Depth Test Enabled
+    
     //RenderIcons(World, ActiveViewport); // 기존 렌더패스에서 아이콘 렌더하고 있으므로 제거
 
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);

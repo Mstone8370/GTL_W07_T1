@@ -16,10 +16,13 @@
 #include "FogRenderPass.h"
 #include "SlateRenderPass.h"
 #include "EditorRenderPass.h"
+#include "DepthPrePass.h"
+#include "TileLightCullingPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
 
 #include "CompositingPass.h"
+#include "LightHeatMapRenderPass.h"
 #include "PostProcessCompositingPass.h"
 #include "SlateRenderPass.h"
 #include "UnrealClient.h"
@@ -48,6 +51,11 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     LineRenderPass = new FLineRenderPass();
     FogRenderPass = new FFogRenderPass();
     EditorRenderPass = new FEditorRenderPass();
+    
+    DepthPrePass = new FDepthPrePass();
+    TileLightCullingPass = new FTileLightCullingPass();
+    LightHeatMapRenderPass = new FLightHeatMapRenderPass();
+    
     CompositingPass = new FCompositingPass();
     PostProcessCompositingPass = new FPostProcessCompositingPass();
     SlateRenderPass = new FSlateRenderPass();
@@ -61,6 +69,10 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     FogRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     
+    DepthPrePass->Initialize(BufferManager, Graphics, ShaderManager);
+    TileLightCullingPass->Initialize(BufferManager, Graphics, ShaderManager);
+    LightHeatMapRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
+
     CompositingPass->Initialize(BufferManager, Graphics, ShaderManager);
     PostProcessCompositingPass->Initialize(BufferManager, Graphics, ShaderManager);
     
@@ -172,6 +184,7 @@ void FRenderer::PrepareRender(FViewportResource* ViewportResource)
     // Setup Viewport
     Graphics->DeviceContext->RSSetViewports(1, &ViewportResource->GetD3DViewport());
 
+    ViewportResource->ClearDepthStencils(Graphics->DeviceContext);
     ViewportResource->ClearRenderTargets(Graphics->DeviceContext);
 
     PrepareRenderPass();
@@ -179,13 +192,15 @@ void FRenderer::PrepareRender(FViewportResource* ViewportResource)
 
 void FRenderer::PrepareRenderPass()
 {
-    StaticMeshRenderPass->PrepareRender();
-    GizmoRenderPass->PrepareRender();
-    WorldBillboardRenderPass->PrepareRender();
-    EditorBillboardRenderPass->PrepareRender();
-    UpdateLightBufferPass->PrepareRender();
-    FogRenderPass->PrepareRender();
+    StaticMeshRenderPass->PrepareRenderArr();
+    GizmoRenderPass->PrepareRenderArr();
+    WorldBillboardRenderPass->PrepareRenderArr();
+    EditorBillboardRenderPass->PrepareRenderArr();
+    UpdateLightBufferPass->PrepareRenderArr();
+    FogRenderPass->PrepareRenderArr();
     EditorRenderPass->PrepareRender();
+    TileLightCullingPass->PrepareRenderArr();
+    DepthPrePass->PrepareRenderArr();
 }
 
 void FRenderer::ClearRenderArr()
@@ -197,6 +212,8 @@ void FRenderer::ClearRenderArr()
     UpdateLightBufferPass->ClearRenderArr();
     FogRenderPass->ClearRenderArr();
     EditorRenderPass->ClearRenderArr();
+    DepthPrePass->ClearRenderArr();
+    TileLightCullingPass->ClearRenderArr();
 }
 
 void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -243,11 +260,34 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
      *   2. 렌더 타겟의 생명주기와 용도가 명확함
      *   3. RTV -> SRV 전환 타이밍이 정확히 지켜짐
      */
+
+	if (DepthPrePass) // Depth Pre Pass : 렌더타겟 nullptr 및 렌더 후 복구
+    {
+        DepthPrePass->Render(Viewport);
+    }
+
+    // Added Compute Shader Pass
+    if (TileLightCullingPass)
+    {
+        TileLightCullingPass->Render(Viewport);
+        LightHeatMapRenderPass->SetDebugHeatmapSRV(TileLightCullingPass->GetDebugHeatmapSRV());
+        UpdateLightBufferPass->SetPointLightData(TileLightCullingPass->GetPointLights(),
+                                                TileLightCullingPass->GetPointLightPerTiles()
+        ); 
+        UpdateLightBufferPass->SetTileConstantBuffer(TileLightCullingPass->GetTileConstantBuffer());
+    }
+
     RenderWorldScene(Viewport);
     RenderPostProcess(Viewport);
     RenderEditorOverlay(Viewport);
-
+    
     // Compositing: 위에서 렌더한 결과들을 하나로 합쳐서 뷰포트의 최종 이미지를 만드는 작업
+    
+    Graphics->DeviceContext->PSSetShaderResources(
+        static_cast<UINT>(EShaderSRVSlot::SRV_Debug),
+        1,
+        &TileLightCullingPass->GetDebugHeatmapSRV()
+    ); // TODO: 최악의 코드
     CompositingPass->Render(Viewport);
 
     EndRender();
@@ -280,8 +320,6 @@ void FRenderer::RenderPostProcess(const std::shared_ptr<FEditorViewportClient>& 
 {
     const uint64 ShowFlag = Viewport->GetShowFlag();
     const EViewModeIndex ViewMode = Viewport->GetViewMode();
-
-    FViewportResource* ViewportResource = Viewport->GetViewportResource();
     
     if (ViewMode >= EViewModeIndex::VMI_Unlit)
     {
@@ -331,7 +369,7 @@ void FRenderer::RenderEditorOverlay(const std::shared_ptr<FEditorViewportClient>
         EditorBillboardRenderPass->Render(Viewport);
     }
 
-    EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스로, 이후 개선 필요.
+    EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요.
 
     LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
     

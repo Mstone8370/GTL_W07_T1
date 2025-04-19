@@ -11,7 +11,7 @@ FEditorBillboardRenderPass::FEditorBillboardRenderPass()
     ResourceType = EResourceType::ERT_Editor;
 }
 
-void FEditorBillboardRenderPass::PrepareRender()
+void FEditorBillboardRenderPass::PrepareRenderArr()
 {
     BillboardComps.Empty();
     for (const auto Component : TObjectRange<UBillboardComponent>())

@@ -10,6 +10,10 @@
 #include "UnrealEd/UnrealEd.h"
 #include "World/World.h"
 
+#include "Engine/EditorEngine.h"
+#include "Renderer/DepthPrePass.h"
+#include "Renderer/TileLightCullingPass.h"
+
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -188,7 +192,7 @@ void FEngineLoop::WindowInit(HINSTANCE hInstance)
 
     AppWnd = CreateWindowExW(
         0, WindowClass, Title, WS_POPUP | WS_VISIBLE | WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 1300, 1000,
+        CW_USEDEFAULT, CW_USEDEFAULT, 1400, 1000,
         nullptr, nullptr, hInstance, nullptr
     );
 }
@@ -212,6 +216,8 @@ LRESULT CALLBACK FEngineLoop::AppWndProc(HWND hWnd, uint32 Msg, WPARAM wParam, L
             if (LevelEditor)
             {
                 FEngineLoop::GraphicDevice.Resize(hWnd);
+                // FEngineLoop::Renderer.DepthPrePass->ResizeDepthStencil();
+                FEngineLoop::Renderer.TileLightCullingPass->ResizeViewBuffers();
                 
                 uint32 ClientWidth = 0;
                 uint32 ClientHeight = 0;

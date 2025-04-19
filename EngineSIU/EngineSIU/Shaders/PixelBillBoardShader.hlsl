@@ -22,7 +22,7 @@ float4 main(PS_Input input) : SV_TARGET
     float4 Color = Texture.Sample(Sampler, UV);
     float threshold = 0.1f;
 
-    if (max(max(Color.r, Color.g), Color.b) < threshold)
+    if (max(max(Color.r, Color.g), Color.b) < threshold || Color.a < 0.5f)
     {
         discard;
     }

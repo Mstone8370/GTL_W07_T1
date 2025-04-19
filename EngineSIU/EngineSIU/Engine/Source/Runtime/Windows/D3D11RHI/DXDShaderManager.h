@@ -57,7 +57,7 @@ public:
 	HRESULT AddVertexShader(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint);
     HRESULT AddVertexShader(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint, const D3D_SHADER_MACRO* defines);
 	HRESULT AddInputLayout(const std::wstring& Key, const D3D11_INPUT_ELEMENT_DESC* Layout, uint32_t LayoutSize);
-
+    HRESULT AddComputeShader(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint);
 	
 	HRESULT AddVertexShaderAndInputLayout(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint, const D3D11_INPUT_ELEMENT_DESC* Layout, uint32_t LayoutSize);
     HRESULT AddVertexShaderAndInputLayout(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint, const D3D11_INPUT_ELEMENT_DESC* Layout, uint32_t LayoutSize, const D3D_SHADER_MACRO* defines);
@@ -66,14 +66,17 @@ public:
 	ID3D11InputLayout* GetInputLayoutByKey(const std::wstring& Key) const;
 	ID3D11VertexShader* GetVertexShaderByKey(const std::wstring& Key) const;
 	ID3D11PixelShader* GetPixelShaderByKey(const std::wstring& Key) const;
+    ID3D11ComputeShader* GetComputeShaderByKey(const std::wstring& Key);
+
 
 private:
 	TMap<std::wstring, ID3D11InputLayout*> InputLayouts;
 	TMap<std::wstring, ID3D11VertexShader*> VertexShaders;
 	TMap<std::wstring, ID3D11PixelShader*> PixelShaders;
-    TMap<std::wstring, std::filesystem::file_time_type> ShaderTimeStamps;
-    std::vector<FShaderReloadInfo> RegisteredShaders;
+    TMap<std::wstring, ID3D11ComputeShader*> ComputeShaders;
 
+    TMap<std::wstring, std::filesystem::file_time_type> ShaderTimeStamps;
     TMap<std::wstring, TSet<std::wstring>> ShaderDependencyGraph;
+    std::vector<FShaderReloadInfo> RegisteredShaders;
 };
 

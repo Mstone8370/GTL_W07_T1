@@ -13,7 +13,7 @@ public:
     
     virtual void Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManage) override;
     
-    virtual void PrepareRender() override;
+    virtual void PrepareRenderArr() override;
 
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 
@@ -25,4 +25,6 @@ private:
     FDXDShaderManager* ShaderManager;
 
     ID3D11SamplerState* Sampler;
+
+    ID3D11Buffer* ViewModeBuffer;
 };

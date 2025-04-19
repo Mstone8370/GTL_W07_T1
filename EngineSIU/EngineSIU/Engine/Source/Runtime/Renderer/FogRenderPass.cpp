@@ -56,7 +56,7 @@ void FFogRenderPass::ReleaseShader()
 {
 }
 
-void FFogRenderPass::PrepareRender()
+void FFogRenderPass::PrepareRenderArr()
 {
     for (const auto iter : TObjectRange<UHeightFogComponent>())
     {
@@ -104,13 +104,12 @@ void FFogRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewpo
 
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
     const EResourceType ResourceType = EResourceType::ERT_PP_Fog; 
-    FRenderTargetRHI* RenderTargetRHI = Viewport->GetViewportResource()->GetRenderTarget(ResourceType);
+    FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
 
-    ViewportResource->ClearRenderTarget(Graphics->DeviceContext, ResourceType);
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, nullptr);
     Graphics->DeviceContext->OMSetBlendState(BlendState, nullptr, 0xffffffff);
 
-    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, &ViewportResource->GetDepthStencilSRV());
+    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, &ViewportResource->GetDepthStencil(EResourceType::ERT_Scene)->SRV);
     
     PrepareRenderState();
     

@@ -8,5 +8,5 @@ public:
     FEditorBillboardRenderPass();
     virtual ~FEditorBillboardRenderPass() = default;
 
-    virtual void PrepareRender() override;
+    virtual void PrepareRenderArr() override;
 };

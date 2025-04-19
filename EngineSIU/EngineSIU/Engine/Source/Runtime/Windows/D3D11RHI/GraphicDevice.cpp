@@ -31,10 +31,14 @@ void FGraphicsDevice::CreateDeviceAndSwapChain(HWND hWindow)
     SwapchainDesc.Windowed = TRUE;                                // 창 모드
     SwapchainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;     // 스왑 방식
 
+    uint32 FLAG = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#if _DEBUG
+    FLAG |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
     // 디바이스와 스왑 체인 생성
     HRESULT hr = D3D11CreateDeviceAndSwapChain(
         nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr,
-        D3D11_CREATE_DEVICE_BGRA_SUPPORT | D3D11_CREATE_DEVICE_DEBUG,
+        FLAG,
         FeatureLevels, ARRAYSIZE(FeatureLevels), D3D11_SDK_VERSION,
         &SwapchainDesc, &SwapChain, &Device, nullptr, &DeviceContext
     );
@@ -224,7 +228,7 @@ void FGraphicsDevice::Release()
 
 void FGraphicsDevice::SwapBuffer() const
 {
-    SwapChain->Present(1, 0);
+    SwapChain->Present(0, 0);
 }
 
 void FGraphicsDevice::Resize(HWND hWindow)
@@ -260,6 +264,8 @@ void FGraphicsDevice::Resize(HWND hWindow)
     Viewport.TopLeftY = 0;
 
     CreateBackBuffer();
+
+    // TODO : Resize에 따른 Depth Pre-Pass 리사이징 필요
 }
 
 void FGraphicsDevice::CreateAlphaBlendState()

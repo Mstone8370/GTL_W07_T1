@@ -15,6 +15,7 @@
 #include "D3D11RHI/DXDBufferManager.h"
 
 
+class FLightHeatMapRenderPass;
 class FPostProcessCompositingPass;
 enum class EResourceType : uint8;
 
@@ -39,6 +40,8 @@ class FFogRenderPass;
 class FCompositingPass;
 class FSlateRenderPass;
 class FEditorRenderPass;
+class FDepthPrePass;
+class FTileLightCullingPass;
 
 class FRenderer
 {
@@ -96,6 +99,10 @@ public:
     FFogRenderPass* FogRenderPass = nullptr;
     FEditorRenderPass* EditorRenderPass = nullptr;
     
+    FDepthPrePass* DepthPrePass = nullptr;
+    FTileLightCullingPass* TileLightCullingPass = nullptr;
+    FLightHeatMapRenderPass* LightHeatMapRenderPass = nullptr;
+
     FCompositingPass* CompositingPass = nullptr;
     FPostProcessCompositingPass* PostProcessCompositingPass = nullptr;
     

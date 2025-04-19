@@ -29,7 +29,7 @@ void FSlateRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsD
     CreateSampler();
 }
 
-void FSlateRenderPass::PrepareRender()
+void FSlateRenderPass::PrepareRenderArr()
 {
 }
 
@@ -66,7 +66,7 @@ void FSlateRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& View
 
     // 렌더 준비
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
-    FRenderTargetRHI* Resource = ViewportResource->GetRenderTargets().Find(EResourceType::ERT_Compositing);
+    FRenderTargetRHI* Resource = ViewportResource->GetRenderTarget(EResourceType::ERT_Compositing);
 
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_Viewport), 1, &Resource->SRV);
     Graphics->DeviceContext->PSSetSamplers(0, 1, &Sampler);

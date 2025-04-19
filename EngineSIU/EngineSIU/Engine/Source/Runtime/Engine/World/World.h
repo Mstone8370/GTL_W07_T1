@@ -21,7 +21,7 @@ public:
     static UWorld* CreateWorld(UObject* InOuter, const EWorldType InWorldType, const FString& InWorldName = "DefaultWorld");
 
     void InitializeNewWorld();
-
+    void InitializeLightScene();
     virtual UObject* Duplicate(UObject* InOuter) override;
 
     void Tick(float DeltaTime);

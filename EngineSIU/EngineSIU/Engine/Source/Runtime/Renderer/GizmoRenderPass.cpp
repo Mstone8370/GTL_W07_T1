@@ -104,7 +104,7 @@ void FGizmoRenderPass::PrepareRenderState() const
     Graphics->DeviceContext->PSSetSamplers(0, 1, &Sampler);
 }
 
-void FGizmoRenderPass::PrepareRender()
+void FGizmoRenderPass::PrepareRenderArr()
 {
 }
 
@@ -112,9 +112,12 @@ void FGizmoRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& View
 {
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
     FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(EResourceType::ERT_Editor);
-    Graphics->DeviceContext->ClearDepthStencilView(ViewportResource->GetGizmoDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, ViewportResource->GetGizmoDepthStencilView());
-    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, &ViewportResource->GetDepthStencilSRV());
+    FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(EResourceType::ERT_Gizmo);
+    
+    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
+
+    // 씬 뎁스를 쉐이더 리소스로 사용
+    Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, &ViewportResource->GetDepthStencil(EResourceType::ERT_Scene)->SRV);
     
     Graphics->DeviceContext->RSSetState(FEngineLoop::GraphicDevice.RasterizerSolidBack);
 
@@ -156,7 +159,7 @@ void FGizmoRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& View
         }
     }
     
-    Graphics->DeviceContext->RSSetState(Graphics->GetCurrentRasterizer());
+    Graphics->DeviceContext->RSSetState(Graphics->GetCurrentRasterizer()); // TODO: 이 래스터라이저 안씀.
 
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
     ID3D11ShaderResourceView* NullSRV[1] = { nullptr };

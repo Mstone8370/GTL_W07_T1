@@ -2,12 +2,13 @@
 Texture2D SceneTexture : register(t100);
 Texture2D PP_PostProcessTexture : register(t101);
 Texture2D EditorTexture : register(t102);
+Texture2D DebugTexture : register(t104);
 
 SamplerState CompositingSampler : register(s0);
 
 cbuffer ViewMode : register(b0)
 {
-    uint ViewMode;
+    uint ViewMode; 
     float3 Padding;
 }
 
@@ -46,10 +47,19 @@ float4 mainPS(PS_Input Input) : SV_TARGET
     float4 Scene = SceneTexture.Sample(CompositingSampler, Input.UV);
     float4 PostProcess = PP_PostProcessTexture.Sample(CompositingSampler, Input.UV);
     float4 Editor = EditorTexture.Sample(CompositingSampler, Input.UV);
+    float4 Debug = DebugTexture.Sample(CompositingSampler, Input.UV);
 
-    float4 FinalColor;
-    FinalColor = lerp(Scene, PostProcess, PostProcess.a);
-    FinalColor = lerp(FinalColor, Editor, Editor.a);
+    float4 FinalColor = float4(0, 0, 0, 0);
+    if (ViewMode == 7)
+    {
+        FinalColor = lerp(Scene, Debug, 0.5);
+        FinalColor = lerp(FinalColor, Editor, Editor.a);
+    }
+    else
+    {
+        FinalColor = lerp(Scene, PostProcess, PostProcess.a);
+        FinalColor = lerp(FinalColor, Editor, Editor.a);
+    }
 
     return FinalColor;
 }

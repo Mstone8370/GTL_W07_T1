@@ -52,6 +52,31 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         Normal = normalize(2.f * Normal - 1.f);
         WorldNormal = normalize(mul(mul(Normal, Input.TBN), (float3x3) InverseTransposedWorld));
     }
+
+    // (1) 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
+    uint2 pixelCoord = uint2(Input.Position.xy);
+    uint2 tileCoord = pixelCoord / TileSize; // 각 성분별 나눔
+    uint tilesX = ScreenSize.x / TileSize.x; // 한 행에 존재하는 타일 수
+    uint flatTileIndex = tileCoord.x + tileCoord.y * tilesX;
+    
+    // (2) 현재 타일의 조명 정보 읽기
+    LightPerTiles tileLights = gLightPerTiles[flatTileIndex];
+    
+    // 조명 기여 누적 (예시: 단순히 조명 색상을 더함)
+    float3 lightingAccum = float3(0, 0, 0);
+    for (uint i = 0; i < tileLights.NumLights; ++i)
+    {
+        // tileLights.Indices[i] 는 전역 조명 인덱스
+        uint gPointLightIndex = tileLights.Indices[i];
+        //FPointLightInfo light = gPointLights[gPointLightIndex];
+        
+        float4 lightContribution = PointLight(gPointLightIndex, Input.WorldPosition, 
+            normalize(Input.WorldNormal),
+            Input.WorldViewPosition, DiffuseColor.rgb
+        );
+        lightingAccum += lightContribution.rgb;
+    }
+    //lightingAccum += Ambient[0].AmbientColor.rgb;
     
     // Lighting
     if (IsLit)
@@ -60,6 +85,12 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
 #else
         float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
+        
+        // 디버깅용 ---- PointLight 전역 배열에 대한 라이팅 테스팅
+        //LitColor = float3(0, 0, 0);
+        //LitColor += lightingAccum;
+        // ------------------------------
+        
         FinalColor = float4(LitColor, 1);
 #endif
     }

@@ -73,11 +73,17 @@ void FDXDShaderManager::UpdateShaderIfOutdated(const std::wstring Key, const std
         if (PixelShaders.Contains(Key)) { 
             PixelShaders[Key]->Release();
             PixelShaders[Key] = nullptr;
+
+            (Defines)
+                ? AddPixelShader(Key, FilePath, EntryPoint, Defines)
+                : AddPixelShader(Key, FilePath, EntryPoint);
+        }
+        // Pixel Shader가 아니라면 Compute Shader로 간주
+        else
+        {
+            AddComputeShader(Key, FilePath, EntryPoint);
         }
         ShaderTimeStamps[Key] = currentTime;
-        (Defines)
-            ? AddPixelShader(Key, FilePath, EntryPoint, Defines)
-            : AddPixelShader(Key, FilePath, EntryPoint);
     }
     
 }
@@ -535,6 +541,64 @@ HRESULT FDXDShaderManager::AddInputLayout(const std::wstring& Key, const D3D11_I
     return S_OK;
 }
 
+HRESULT FDXDShaderManager::AddComputeShader(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint)
+{
+    if (DXDDevice == nullptr)
+        return S_FALSE;
+
+    HRESULT hr = S_OK;
+    ID3DBlob* csBlob = nullptr;
+    ID3DBlob* errorBlob = nullptr;
+
+    // --- 컴파일 플래그 설정 ---
+    DWORD shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
+#ifdef _DEBUG
+    shaderFlags |= D3DCOMPILE_DEBUG;
+    shaderFlags |= D3DCOMPILE_SKIP_OPTIMIZATION;
+#endif
+
+    hr = D3DCompileFromFile( 
+        FileName.c_str(),
+        nullptr,
+        D3D_COMPILE_STANDARD_FILE_INCLUDE,
+        EntryPoint.c_str(),
+        "cs_5_0",
+        shaderFlags,
+        0,
+        &csBlob,
+        &errorBlob
+    );
+
+    if (FAILED(hr))
+    {
+        if (errorBlob)
+        {
+            OutputDebugStringA((char*)errorBlob->GetBufferPointer());
+            UE_LOG(LogLevel::Error, "%s", (char*)errorBlob->GetBufferPointer());
+            errorBlob->Release();
+        }
+        return hr;
+    }
+
+    ID3D11ComputeShader* NewComputeShader = nullptr;
+    hr = DXDDevice->CreateComputeShader(csBlob->GetBufferPointer(), csBlob->GetBufferSize(), nullptr, &NewComputeShader);
+    if (FAILED(hr))
+    {
+        csBlob->Release();
+        return hr;
+    }
+
+    if (SUCCEEDED(hr) && !ComputeShaders.Contains(Key))
+    {
+        RegisterShaderForReload(Key, FileName, EntryPoint, false, nullptr, nullptr, 0);
+    }
+    ComputeShaders[Key] = NewComputeShader;
+    
+    csBlob->Release();
+
+    return S_OK;
+}
+
 HRESULT FDXDShaderManager::AddVertexShaderAndInputLayout(const std::wstring& Key, const std::wstring& FileName, const std::string& EntryPoint, const D3D11_INPUT_ELEMENT_DESC* Layout, uint32_t LayoutSize)
 {
     UINT shaderFlags = D3DCOMPILE_ENABLE_STRICTNESS;
@@ -660,6 +724,15 @@ ID3D11PixelShader* FDXDShaderManager::GetPixelShaderByKey(const std::wstring& Ke
     if (PixelShaders.Contains(Key))
     {
         return *PixelShaders.Find(Key);
+    }
+    return nullptr;
+}
+
+ID3D11ComputeShader* FDXDShaderManager::GetComputeShaderByKey(const std::wstring& Key)
+{
+    if (ComputeShaders.Contains(Key))
+    {
+        return *ComputeShaders.Find(Key);
     }
     return nullptr;
 }

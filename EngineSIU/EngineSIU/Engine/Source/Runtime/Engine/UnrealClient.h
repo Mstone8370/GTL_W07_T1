@@ -20,7 +20,9 @@ enum class EResourceType : uint8
     ERT_Compositing,
     ERT_Scene,
     ERT_PP_Fog,
+    ERT_Debug,
     ERT_Editor,
+    ERT_Gizmo,
     ERT_Overlay,
     ERT_PostProcessCompositing,
     ERT_MAX,
@@ -52,6 +54,32 @@ struct FRenderTargetRHI
     }
 };
 
+struct FDepthStencilRHI
+{
+    ID3D11Texture2D* Texture2D = nullptr;
+    ID3D11DepthStencilView* DSV = nullptr;
+    ID3D11ShaderResourceView* SRV = nullptr;
+
+    void Release()
+    {
+        if (SRV)
+        {
+            SRV->Release();
+            SRV = nullptr;
+        }
+        if (DSV)
+        {
+            DSV->Release();
+            DSV = nullptr;
+        }
+        if (Texture2D)
+        {
+            Texture2D->Release();
+            Texture2D = nullptr;
+        }
+    }
+};
+
 class FViewportResource
 {
 public:
@@ -62,20 +90,31 @@ public:
     void Resize(uint32 NewWidth, uint32 NewHeight);
 
     void Release();
-
-    HRESULT CreateResource(EResourceType Type);
     
     D3D11_VIEWPORT& GetD3DViewport() { return D3DViewport; }
+
+    ////////
+    /// Depth Stencil
+    ////////
+    HRESULT CreateDepthStencil(EResourceType Type);
     
-    ID3D11Texture2D*& GetDepthStencilTexture() { return DepthStencilTexture; }
-    ID3D11DepthStencilView*& GetDepthStencilView() { return DepthStencilView; }
-    ID3D11ShaderResourceView*& GetDepthStencilSRV() { return DepthStencilSRV; }
+    // 해당 타입의 리소스를 리턴. 없는 경우에는 생성해서 리턴.
+    FDepthStencilRHI* GetDepthStencil(EResourceType Type);
 
-    ID3D11Texture2D*& GetGizmoDepthStencilTexture() { return GizmoDepthStencilTexture; }
-    ID3D11DepthStencilView*& GetGizmoDepthStencilView() { return GizmoDepthStencilView; }
+    bool HasDepthStencil(EResourceType Type) const;
 
-    TMap<EResourceType, FRenderTargetRHI>& GetRenderTargets();
+    // 가지고있는 모든 리소스의 렌더 타겟 뷰를 clear
+    void ClearDepthStencils(ID3D11DeviceContext* DeviceContext);
 
+    // 지정한 타입의 렌더 타겟 뷰를 clear. 없는 경우 생성해서 clear.
+    void ClearDepthStencil(ID3D11DeviceContext* DeviceContext, EResourceType Type);
+
+
+    ////////
+    /// Render Target
+    ////////
+    HRESULT CreateRenderTarget(EResourceType Type);
+    
     // 해당 타입의 리소스를 리턴. 없는 경우에는 생성해서 리턴.
     FRenderTargetRHI* GetRenderTarget(EResourceType Type);
 
@@ -87,26 +126,21 @@ public:
     // 지정한 타입의 렌더 타겟 뷰를 clear. 없는 경우 생성해서 clear.
     void ClearRenderTarget(ID3D11DeviceContext* DeviceContext, EResourceType Type);
 
+    ////////
+    /// ClearColor
+    ////////
     std::array<float, 4> GetClearColor(EResourceType Type) const;
     
 private:
     // DirectX
     D3D11_VIEWPORT D3DViewport = {};
 
-    ID3D11Texture2D* DepthStencilTexture = nullptr;
-    ID3D11DepthStencilView* DepthStencilView = nullptr;
-    ID3D11ShaderResourceView* DepthStencilSRV = nullptr;
-
-    ID3D11Texture2D* GizmoDepthStencilTexture = nullptr;
-    ID3D11DepthStencilView* GizmoDepthStencilView = nullptr;
-
+    TMap<EResourceType, FDepthStencilRHI> DepthStencils;
     TMap<EResourceType, FRenderTargetRHI> RenderTargets;
 
-    HRESULT CreateDepthStencilResources();
-
-    void ReleaseDepthStencilResources();
-    void ReleaseResources();
-    void ReleaseResource(EResourceType Type);
+    void ReleaseAllResources();
+    void ReleaseDepthStencil(EResourceType Type);
+    void ReleaseRenderTarget(EResourceType Type);
 
     /**
      * ClearColors 맵에는 모든 EResourceType에 대응하는 색상을

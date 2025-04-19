@@ -8,5 +8,5 @@ public:
     FWorldBillboardRenderPass();
     virtual ~FWorldBillboardRenderPass() = default;
 
-    virtual void PrepareRender() override;
+    virtual void PrepareRenderArr() override;
 };
