@@ -169,7 +169,8 @@ void PropertyEditorPanel::Render()
                     pointlightObj->SetRadius(Radius);
                 }
 
-
+                ImGui::Image((ImTextureID)pointlightObj->GetShadowDepthMap().SRV, ImVec2(256, 256));
+                
                 ImGui::TreePop();
             }
 
@@ -209,6 +210,8 @@ void PropertyEditorPanel::Render()
                     spotlightObj->SetOuterDegree(OuterDegree);
                 }
 
+                ImGui::Image((ImTextureID)spotlightObj->GetShadowDepthMap().SRV, ImVec2(256, 256));
+
                 ImGui::TreePop();
             }
 
@@ -233,6 +236,7 @@ void PropertyEditorPanel::Render()
                 LightDirection = dirlightObj->GetDirection();
                 FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
 
+                ImGui::Image((ImTextureID)dirlightObj->GetShadowDepthMap().SRV, ImVec2(256, 256));
                 ImGui::TreePop();
             }
 

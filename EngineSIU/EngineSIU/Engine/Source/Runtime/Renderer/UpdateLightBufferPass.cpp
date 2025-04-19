@@ -1,6 +1,8 @@
 #include "Define.h"
 #include "UObject/Casts.h"
 #include "UpdateLightBufferPass.h"
+
+#include "RendererHelpers.h"
 #include "D3D11RHI/DXDBufferManager.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "D3D11RHI/DXDShaderManager.h"
@@ -9,9 +11,12 @@
 #include "Components/Light/SpotLightComponent.h"
 #include "Components/Light/DirectionalLightComponent.h"
 #include "Components/Light/AmbientLightComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "BaseGizmos/GizmoBaseComponent.h"
 #include "Engine/EditorEngine.h"
 #include "GameFramework/Actor.h"
 #include "UObject/UObjectIterator.h"
+#include "UnrealEd/EditorViewportClient.h"
 #include "TileLightCullingPass.h"
 
 //------------------------------------------------------------------------------
@@ -62,6 +67,13 @@ void FUpdateLightBufferPass::PrepareRenderArr()
             }
         }
     }
+    for (const auto iter : TObjectRange<UStaticMeshComponent>())
+    {
+        if (!Cast<UGizmoBaseComponent>(iter) && iter->GetWorld() == GEngine->ActiveWorld)
+        {
+            StaticMeshComponents.Add(iter);
+        }
+    }
 }
 
 void FUpdateLightBufferPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -78,10 +90,11 @@ void FUpdateLightBufferPass::ClearRenderArr()
     SpotLights.Empty();
     DirectionalLights.Empty();
     AmbientLights.Empty();
+    StaticMeshComponents.Empty();
 }
 
 
-void FUpdateLightBufferPass::UpdateLightBuffer() const
+void FUpdateLightBufferPass::UpdateLightBuffer()
 {
     FLightInfoBuffer LightBufferData = {};
 
@@ -98,6 +111,8 @@ void FUpdateLightBufferPass::UpdateLightBuffer() const
             LightBufferData.SpotLights[SpotLightsCount].Position = Light->GetWorldLocation();
             LightBufferData.SpotLights[SpotLightsCount].Direction = Light->GetDirection();
             SpotLightsCount++;
+
+            RenderShadowMap(Light);
         }
     }
 
@@ -118,6 +133,8 @@ void FUpdateLightBufferPass::UpdateLightBuffer() const
             LightBufferData.Directional[DirectionalLightsCount] = Light->GetDirectionalLightInfo();
             LightBufferData.Directional[DirectionalLightsCount].Direction = Light->GetDirection();
             DirectionalLightsCount++;
+            
+            RenderShadowMap(Light);
         }
     }
 
@@ -271,4 +288,119 @@ void FUpdateLightBufferPass::UpdatePointLightPerTilesBuffer()
     // 이제 TempBuffer에 대해 업데이트
     Graphics->DeviceContext->UpdateSubresource(PointLightPerTilesBuffer, 0, nullptr,
         TempBuffer.GetData(), 0, 0);
+}
+
+void FUpdateLightBufferPass::RenderShadowMap(ULightComponentBase* InLightComponent)
+{
+    PrepareRenderState(InLightComponent);
+    RenderAllStaticMeshes();
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+}
+
+void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComponent)
+{
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+    InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    
+    Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+    Graphics->DeviceContext->IASetInputLayout(InputLayout);
+
+    // 뎁스만 필요하므로, 픽셀 쉐이더는 지정 안함.
+    Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
+
+    Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
+
+    Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+
+    
+    FDepthStencilRHI DepthStencilRHI = InLightComponent->GetShadowDepthMap();
+    Graphics->DeviceContext->ClearDepthStencilView(DepthStencilRHI.DSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DepthStencilRHI.DSV); // ← 깊이 전용
+}
+
+void FUpdateLightBufferPass::RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+{
+    UINT Stride = sizeof(FStaticMeshVertex);
+    UINT Offset = 0;
+
+    FVertexInfo VertexInfo;
+    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
+    
+    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
+
+    FIndexInfo IndexInfo;
+    BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
+    if (IndexInfo.IndexBuffer)
+    {
+        Graphics->DeviceContext->IASetIndexBuffer(IndexInfo.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+    }
+
+    if (RenderData->MaterialSubsets.Num() == 0)
+    {
+        Graphics->DeviceContext->DrawIndexed(RenderData->Indices.Num(), 0, 0);
+        return;
+    }
+
+    for (int SubMeshIndex = 0; SubMeshIndex < RenderData->MaterialSubsets.Num(); SubMeshIndex++)
+    {
+        uint32 MaterialIndex = RenderData->MaterialSubsets[SubMeshIndex].MaterialIndex;
+
+        FSubMeshConstants SubMeshData = (SubMeshIndex == SelectedSubMeshIndex) ? FSubMeshConstants(true) : FSubMeshConstants(false);
+
+        BufferManager->UpdateConstantBuffer(TEXT("FSubMeshConstants"), SubMeshData);
+
+        // Depth 그리는데 Material은 필요없다.
+        // if (OverrideMaterials[MaterialIndex] != nullptr)
+        // {
+        //     MaterialUtils::UpdateMaterial(BufferManager, Graphics, OverrideMaterials[MaterialIndex]->GetMaterialInfo());
+        // }
+        // else
+        // {
+        //     MaterialUtils::UpdateMaterial(BufferManager, Graphics, Materials[MaterialIndex]->Material->GetMaterialInfo());
+        // }
+
+        uint32 StartIndex = RenderData->MaterialSubsets[SubMeshIndex].IndexStart;
+        uint32 IndexCount = RenderData->MaterialSubsets[SubMeshIndex].IndexCount;
+        Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
+    }
+}
+
+void FUpdateLightBufferPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
+{
+    FObjectConstantBuffer ObjectData = {};
+    ObjectData.WorldMatrix = WorldMatrix;
+    ObjectData.InverseTransposedWorld = FMatrix::Transpose(FMatrix::Inverse(WorldMatrix));
+    ObjectData.UUIDColor = UUIDColor;
+    ObjectData.bIsSelected = bIsSelected;
+    
+    BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
+}
+
+void FUpdateLightBufferPass::RenderAllStaticMeshes()
+{
+    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    {
+        if (!Comp || !Comp->GetStaticMesh())
+        {
+            continue;
+        }
+
+        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
+        if (RenderData == nullptr)
+        {
+            continue;
+        }
+
+        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
+
+        FMatrix WorldMatrix = Comp->GetWorldMatrix();
+        FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
+        const bool bIsSelected = (Engine && Engine->GetSelectedActor() == Comp->GetOwner());
+
+        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
+
+        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
+    }
 }

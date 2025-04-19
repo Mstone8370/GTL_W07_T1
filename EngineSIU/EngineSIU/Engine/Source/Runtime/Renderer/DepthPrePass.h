@@ -17,7 +17,7 @@ public:
     virtual void ClearRenderArr() override;
 
     // Begin FStaticMeshRenderPass override
-    virtual void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
+    virtual void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     // End FStaticMeshRenderPass override
 };
 

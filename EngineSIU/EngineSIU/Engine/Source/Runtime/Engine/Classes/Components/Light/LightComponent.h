@@ -21,9 +21,10 @@ protected:
 
     FBoundingBox AABB;
     FDepthStencilRHI ShadowDepthMap;
-    virtual void InitializeShadowDepthMap() {};
+    virtual void InitializeShadowDepthMap() {}
     void ReleaseShadowDepthMap();
     
 public:
     FBoundingBox GetBoundingBox() const {return AABB;}
+    FDepthStencilRHI GetShadowDepthMap() const {return ShadowDepthMap;}
 };

@@ -115,19 +115,19 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapTextureDesc.Width = 2048;
     shadowMapTextureDesc.Height = 2048;
     hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
-    assert(FAILED(hr));
+    assert(SUCCEEDED(hr));
 
     D3D11_SHADER_RESOURCE_VIEW_DESC shadowMapSRVDesc = {};
     shadowMapSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
     shadowMapSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
     shadowMapSRVDesc.Texture2D.MipLevels = 1;
     hr = device->CreateShaderResourceView(ShadowDepthMap.Texture2D, &shadowMapSRVDesc, &ShadowDepthMap.SRV);
-    assert(FAILED(hr));
+    assert(SUCCEEDED(hr));
 
     D3D11_DEPTH_STENCIL_VIEW_DESC shadowMapDSVDesc = {};
     shadowMapDSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
     shadowMapDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
     shadowMapDSVDesc.Texture2D.MipSlice = 0;
     hr = device->CreateDepthStencilView(ShadowDepthMap.Texture2D, &shadowMapDSVDesc, &ShadowDepthMap.DSV);
-    assert(FAILED(hr));
+    assert(SUCCEEDED(hr));
 }
