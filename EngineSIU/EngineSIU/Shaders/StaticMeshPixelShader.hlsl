@@ -45,12 +45,18 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     }
 
     // Normal
-    float3 WorldNormal = Input.WorldNormal;
+    float3 WorldNormal = normalize(Input.WorldNormal);
     if (Material.TextureFlag & (1 << 2))
     {
+        float3 Tangent = normalize(Input.WorldTangent.xyz);
+        float Sign = Input.WorldTangent.w;
+        float3 BiTangent = cross(WorldNormal, Tangent) * Sign;
+
+        float3x3 TBN = float3x3(Tangent, BiTangent, WorldNormal);
+        
         float3 Normal = NormalTexture.Sample(NormalSampler, Input.UV).rgb;
         Normal = normalize(2.f * Normal - 1.f);
-        WorldNormal = normalize(mul(mul(Normal, Input.TBN), (float3x3) InverseTransposedWorld));
+        WorldNormal = normalize(mul(Normal, TBN));
     }
 
     // (1) 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
@@ -72,7 +78,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         
         float4 lightContribution = PointLight(gPointLightIndex, Input.WorldPosition, 
             normalize(Input.WorldNormal),
-            Input.WorldViewPosition, DiffuseColor.rgb
+            ViewWorldLocation, DiffuseColor.rgb
         );
         lightingAccum += lightContribution.rgb;
     }
@@ -84,13 +90,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 #ifdef LIGHTING_MODEL_GOURAUD
         FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
 #else
-        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
-        
-        // 디버깅용 ---- PointLight 전역 배열에 대한 라이팅 테스팅
-        //LitColor = float3(0, 0, 0);
-        //LitColor += lightingAccum;
-        // ------------------------------
-        
+        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor).rgb;
         FinalColor = float4(LitColor, 1);
 #endif
     }

@@ -30,7 +30,7 @@ void FLightHeatMapRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGr
     BufferManager = InBufferManager;
     ShaderManager = InShaderManager;
     
-    CreateShader();
+    //CreateShader();
 }
 
 void FLightHeatMapRenderPass::CreateShader()

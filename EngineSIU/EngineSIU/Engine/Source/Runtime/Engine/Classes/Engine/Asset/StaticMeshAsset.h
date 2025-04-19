@@ -8,7 +8,7 @@ struct FStaticMeshVertex
     float X, Y, Z;    // Position
     float R, G, B, A; // Color
     float NormalX, NormalY, NormalZ;
-    float TangentX, TangentY, TangentZ;
+    float TangentX, TangentY, TangentZ, TangentW;
     float U = 0, V = 0;
     uint32 MaterialIndex;
 };

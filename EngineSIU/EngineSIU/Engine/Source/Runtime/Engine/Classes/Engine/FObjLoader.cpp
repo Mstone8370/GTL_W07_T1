@@ -477,16 +477,24 @@ void FObjLoader::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
     const float E2z = Vertex2.Z - PivotVertex.Z;
 
     const float Denominator = s1 * t2 - s2 * t1;
-    FVector Tangent;
+    FVector Tangent(1, 0, 0);
+    FVector BiTangent(0, 1, 0);
+    FVector Normal(PivotVertex.NormalX, PivotVertex.NormalY, PivotVertex.NormalZ);
     
     if (FMath::Abs(Denominator) > SMALL_NUMBER)
     {
         // 정상적인 계산 진행
         const float f = 1.f / Denominator;
+        
         const float Tx = f * (t2 * E1x - t1 * E2x);
         const float Ty = f * (t2 * E1y - t1 * E2y);
         const float Tz = f * (t2 * E1z - t1 * E2z);
         Tangent = FVector(Tx, Ty, Tz).GetSafeNormal();
+
+        const float Bx = f * (-s2 * E1x + s1 * E2x);
+        const float By = f * (-s2 * E1y + s1 * E2y);
+        const float Bz = f * (-s2 * E1z + s1 * E2z);
+        BiTangent = FVector(Bx, By, Bz).GetSafeNormal();
     }
     else
     {
@@ -506,9 +514,14 @@ void FObjLoader::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
         }
     }
 
+    Tangent = (Tangent - Normal * FVector::DotProduct(Normal, Tangent)).GetSafeNormal();
+    
+    const float Sign = (FVector::DotProduct(FVector::CrossProduct(Normal, Tangent), BiTangent) < 0.f) ? -1.f : 1.f;
+
     PivotVertex.TangentX = Tangent.X;
     PivotVertex.TangentY = Tangent.Y;
     PivotVertex.TangentZ = Tangent.Z;
+    PivotVertex.TangentW = Sign;
 }
 
 FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFileName)

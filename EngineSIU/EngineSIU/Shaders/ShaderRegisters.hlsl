@@ -55,7 +55,7 @@ struct VS_INPUT_StaticMesh
     float3 Position : POSITION;
     float4 Color : COLOR;
     float3 Normal : NORMAL;
-    float3 Tangent : TANGENT;
+    float4 Tangent : TANGENT;
     float2 UV : TEXCOORD;
     uint MaterialIndex : MATERIAL_INDEX;
 };
@@ -64,12 +64,11 @@ struct PS_INPUT_StaticMesh
 {
     float4 Position : SV_POSITION;
     float4 Color : COLOR;
-    float3 WorldNormal : NORMAL;
     float2 UV : TEXCOORD0;
-    float3 WorldPosition : TEXCOORD1;
-    float3 WorldViewPosition : TEXCOORD2;
-    float3x3 TBN : TBN;
-    int MaterialIndex : MATERIAL_INDEX;
+    float3 WorldNormal : TEXCOORD1;
+    float4 WorldTangent : TEXCOORD2;
+    float3 WorldPosition : TEXCOORD3;
+    nointerpolation int MaterialIndex : MATERIAL_INDEX;
 };
 
 ////////
@@ -107,7 +106,7 @@ cbuffer CameraBuffer : register(b13)
     row_major matrix ProjectionMatrix;
     row_major matrix InvProjectionMatrix;
     
-    float3 ViewWorldLocation; // TODO: 가능하면 버퍼에서 빼기
+    float3 ViewWorldLocation;
     float ViewPadding;
     
     float NearClip;
