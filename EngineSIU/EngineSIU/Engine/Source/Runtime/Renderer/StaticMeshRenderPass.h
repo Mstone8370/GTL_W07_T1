@@ -12,6 +12,7 @@ struct FStaticMaterial;
 struct FStaticMeshRenderData;
 struct FMatrix;
 struct FVector4;
+struct ID3D11SamplerState;
 
 class ID3D11Buffer;
 class ID3D11VertexShader;
@@ -66,4 +67,6 @@ protected:
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
     FDXDShaderManager* ShaderManager;
+
+    ID3D11SamplerState* ShadowSampler;
 };

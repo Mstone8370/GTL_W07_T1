@@ -18,7 +18,9 @@
 #include "Components/StaticMeshComponent.h"
 
 #include "BaseGizmos/GizmoBaseComponent.h"
+#include "Components/Light/DirectionalLightComponent.h"
 #include "Engine/EditorEngine.h"
+#include "Math/JungleMath.h"
 
 #include "PropertyEditor/ShowFlags.h"
 
@@ -141,6 +143,22 @@ void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGrap
     BufferManager = InBufferManager;
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
+
+    D3D11_SAMPLER_DESC ShadowSamplerDesc = {};
+    ShadowSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    ShadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    ShadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    ShadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    ShadowSamplerDesc.MipLODBias = 0.0f;
+    ShadowSamplerDesc.MaxAnisotropy = 1;
+    ShadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+    ShadowSamplerDesc.BorderColor[0] = 0;
+    ShadowSamplerDesc.BorderColor[1] = 0;
+    ShadowSamplerDesc.BorderColor[2] = 0;
+    ShadowSamplerDesc.BorderColor[3] = 0;
+    ShadowSamplerDesc.MinLOD = 0;
+    ShadowSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; 
+    Graphics->Device->CreateSamplerState(&ShadowSamplerDesc, &ShadowSampler);
 
     CreateShader();
 }
@@ -325,11 +343,26 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(ResourceType);
     
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
-    
-    PrepareRenderState(Viewport);
 
+    UDirectionalLightComponent* tempDirLight = *TObjectIterator<UDirectionalLightComponent>();
+    if (tempDirLight)
+    {
+        FLightConstants LightData = {};
+        FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, tempDirLight->GetWorldMatrix());
+        // FVector Position = InLightComponent->GetWorldLocation();
+        FVector Position = -Cast<UDirectionalLightComponent>(tempDirLight)->GetDirection()*500;
+        LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
+        LightData.LightProjMatrix = JungleMath::CreateOrthoProjectionMatrix(100, 100, 0.1f, 1000.f);
+        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
+        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
+
+        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(2, 1, &ShadowMapSRV);
+
+        Graphics->DeviceContext->PSSetSamplers(2, 1, &ShadowSampler);
+    }
+    PrepareRenderState(Viewport);
     RenderAllStaticMeshes(Viewport);
-    
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);

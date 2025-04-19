@@ -3,9 +3,11 @@
 
 SamplerState DiffuseSampler : register(s0);
 SamplerState NormalSampler : register(s1);
+SamplerState ShadowSampler : register(s2);
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
+Texture2D ShadowTexture : register(t2);
 
 cbuffer MaterialConstants : register(b1)
 {
@@ -30,6 +32,12 @@ cbuffer TextureConstants : register(b4)
     float2 TexturePad0;
 }
 
+cbuffer FLightConstants: register(b5)
+{
+    row_major matrix mLightView;
+    row_major matrix mLightProj;
+}
+
 #include "Light.hlsl"
 
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
@@ -52,6 +60,8 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         Normal = normalize(2.f * Normal - 1.f);
         WorldNormal = normalize(mul(mul(Normal, Input.TBN), (float3x3) InverseTransposedWorld));
     }
+
+
 
     // (1) 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
     uint2 pixelCoord = uint2(Input.Position.xy);
@@ -81,6 +91,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     // Lighting
     if (IsLit)
     {
+        
 #ifdef LIGHTING_MODEL_GOURAUD
         FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
 #else
@@ -98,6 +109,24 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     {
         FinalColor = float4(DiffuseColor, 1);
     }
+    
+    // Shadow Mapping
+    float shadowFactor = 1.0f;
+    float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
+    PositionFromLight = mul(PositionFromLight, mLightView);
+    PositionFromLight = mul(PositionFromLight, mLightProj);
+    PositionFromLight /= PositionFromLight.w;
+    float2 shadowUV = {
+        0.5f + PositionFromLight.x * 0.5f,
+        0.5f - PositionFromLight.y * 0.5f
+    };
+    float shadowZ = PositionFromLight.z;
+    shadowZ -= 0.0001f; // bias
+    
+    float DepthFromLight = ShadowTexture.Sample(ShadowSampler, shadowUV).r;
+    if (shadowZ > DepthFromLight)
+        shadowFactor = 0.1f;
+    FinalColor *= shadowFactor;
     
     if (bIsSelected)
     {

@@ -334,18 +334,29 @@ void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComp
     // Update Light Constants
     // TODO: Light를 Structured Buffer로 바꾸면 수정하기.
     FLightConstants LightData = {};
-    FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, InLightComponent->GetWorldMatrix());
-    FVector Position = InLightComponent->GetWorldLocation();
-    // FVector Position = -Cast<UDirectionalLightComponent>(InLightComponent)->GetDirection()*500;
-    LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
-    if (InLightComponent->IsA<UDirectionalLightComponent>())
+   
+    if (UDirectionalLightComponent* casted = Cast<UDirectionalLightComponent>(InLightComponent))
     {
-        LightData.LightProjMatrix = JungleMath::CreateOrthoProjectionMatrix(10, 10, 0.1f, 1000.f);
-    } else
-    {
-        LightData.LightProjMatrix = JungleMath::CreateProjectionMatrix(45.f, 1.f, 0.1f, 1000.f);
+        FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, InLightComponent->GetWorldMatrix());
+        // FVector Position = InLightComponent->GetWorldLocation();
+        FVector Position = -Cast<UDirectionalLightComponent>(InLightComponent)->GetDirection()*500;
+        LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
+        LightData.LightProjMatrix = JungleMath::CreateOrthoProjectionMatrix(100, 100, 0.1f, 1000.f);
     }
-    BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 0, EShaderStage::Vertex);
+    else if (USpotLightComponent* casted = Cast<USpotLightComponent>(InLightComponent))
+    {
+        FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, InLightComponent->GetWorldMatrix());
+        FVector Position = InLightComponent->GetWorldLocation();
+        float FOV = casted->GetOuterDegree() * PI / 180.f;
+        float Radius = casted->GetRadius();
+        LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
+        LightData.LightProjMatrix = JungleMath::CreateProjectionMatrix(FOV, 1.f, 0.1f, Radius);
+    }
+    else // UPointLightComponent
+    {
+        
+    }
+    BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Vertex);
     BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
     
     FDepthStencilRHI DepthStencilRHI = InLightComponent->GetShadowDepthMap();
