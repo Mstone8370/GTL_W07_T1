@@ -87,8 +87,8 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
         
         // 디버깅용 ---- PointLight 전역 배열에 대한 라이팅 테스팅
-        LitColor = float3(0, 0, 0);
-        LitColor += lightingAccum;
+        //LitColor = float3(0, 0, 0);
+        //LitColor += lightingAccum;
         // ------------------------------
         
         FinalColor = float4(LitColor, 1);

@@ -290,19 +290,6 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
     ); // TODO: 최악의 코드
     CompositingPass->Render(Viewport);
 
- //    if (!IsSceneDepth)
- //    {
- //        DepthBufferDebugPass->UpdateDepthBufferSRV();
- //        
- //        LightHeatMapRenderPass->Render(Viewport, DepthBufferDebugPass->GetDepthSRV());
- //    }
-
-    // 테스트용 tile light 열화상맵 추가
-    if (TileLightCullingPass)
-    {
-        //LightHeatMapRenderPass->Render(Viewport);
-    }
-
     EndRender();
 }
 

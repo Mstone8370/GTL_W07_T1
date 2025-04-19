@@ -519,9 +519,9 @@ void FEditorRenderPass::Render(std::shared_ptr<FEditorViewportClient> Viewport)
     // Graphics->DeviceContext->OMSetDepthStencilState(DepthStateEnable, 0);
 
     // [NOTE] ----------- Light Culling 프레임 보호 위해 잠시 주석처리 ---------- //
-    //RenderPointlightInstanced(World);
-    //RenderSpotlightInstanced(World);
-    //RenderArrows(World);    // Directional Light Arrow : Depth Test Enabled
+    RenderPointlightInstanced();
+    RenderSpotlightInstanced();
+    RenderArrows();    // Directional Light Arrow : Depth Test Enabled
     
     //RenderIcons(World, ActiveViewport); // 기존 렌더패스에서 아이콘 렌더하고 있으므로 제거
 

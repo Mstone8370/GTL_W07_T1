@@ -30,7 +30,7 @@ void UWorld::InitializeNewWorld()
 {
     ActiveLevel = FObjectFactory::ConstructObject<ULevel>(this);
     ActiveLevel->InitLevel(this);
-	InitializeLightScene();
+	// InitializeLightScene();
 }
 
 void UWorld::InitializeLightScene()
