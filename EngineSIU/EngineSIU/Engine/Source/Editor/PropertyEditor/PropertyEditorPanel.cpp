@@ -168,8 +168,17 @@ void PropertyEditorPanel::Render()
                 if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
                     pointlightObj->SetRadius(Radius);
                 }
+                for (int face = 0; face < 6; ++face)
+                {
+                    ImGui::PushID(face);
 
-
+                    ImGui::Text("Face %d", face);
+                    // UV 좌표를 뒤집어(depth 텍스처 상 Y축 반전) 제대로 보이게
+                    ImGui::Image(
+                        (ImTextureID)pointlightObj->faceSRVs[face],
+                        ImVec2(512,512));   // UV1
+                    ImGui::PopID();
+                }
                 ImGui::TreePop();
             }
 

@@ -394,3 +394,11 @@ struct FFogConstants
     float padding1;
     float padding2;
 };
+
+#pragma region ShadowMap
+struct FLightMatrix
+{
+    FMatrix LightViewMat;
+    FMatrix LightProjectMat;
+};
+#pragma endregion

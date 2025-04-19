@@ -14,7 +14,11 @@ cbuffer MaterialConstants : register(b1)
 #include "Light.hlsl"
 #endif
 
-
+cbuffer LightMatrix : register(b1)
+{
+    row_major matrix LightViewMat;
+    row_major matrix LightProjectMat;
+};
 PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
 {
     PS_INPUT_StaticMesh Output;
@@ -25,7 +29,8 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
     
     Output.Position = mul(Output.Position, ViewMatrix);
     Output.Position = mul(Output.Position, ProjectionMatrix);
-
+    // Output.Position = mul(Output.Position, LightViewMat);
+    // Output.Position = mul(Output.Position, LightProjectMat);
     Output.WorldViewPosition = float3(InvViewMatrix._41, InvViewMatrix._42, InvViewMatrix._43);
     
     Output.WorldNormal = mul(Input.Normal, (float3x3)InverseTransposedWorld);

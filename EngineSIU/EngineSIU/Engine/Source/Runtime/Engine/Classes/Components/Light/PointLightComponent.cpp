@@ -1,5 +1,6 @@
 #include "PointLightComponent.h"
 
+#include "Math/JungleMath.h"
 #include "UObject/Casts.h"
 
 UPointLightComponent::UPointLightComponent()
@@ -12,6 +13,7 @@ UPointLightComponent::UPointLightComponent()
     PointLightInfo.Intensity = 1000.f;
     PointLightInfo.Type = ELightType::POINT_LIGHT;
     PointLightInfo.Attenuation = 20.0f;
+    CreateShadowMapResources();
 }
 
 UPointLightComponent::~UPointLightComponent()
@@ -127,4 +129,49 @@ int UPointLightComponent::GetType() const
 void UPointLightComponent::SetType(int InType)
 {
     PointLightInfo.Type = InType;
+}
+
+void UPointLightComponent::CreateShadowMapResources()
+{
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width              = ShadowMapWidth;
+    texDesc.Height             = ShadowMapHeight;
+    texDesc.MipLevels          = 1;
+    texDesc.ArraySize          = 6; // 큐브맵의 6면
+    texDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
+    texDesc.SampleDesc.Count   = 1;
+    texDesc.Usage              = D3D11_USAGE_DEFAULT;
+    texDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+    GEngineLoop.GraphicDevice.Device->CreateTexture2D(&texDesc, nullptr, &PointDepthCubeTex);
+
+    for(int i = 0; i < 6; ++i) {
+        D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+        dsvDesc.Format               = DXGI_FORMAT_D32_FLOAT;
+        dsvDesc.ViewDimension        = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
+        dsvDesc.Texture2DArray.FirstArraySlice = i;
+        dsvDesc.Texture2DArray.ArraySize       = 1;
+        GEngineLoop.GraphicDevice.Device->CreateDepthStencilView(PointDepthCubeTex, &dsvDesc, &PointShadowDSV[i]);
+    }
+    for(int face = 0; face < 6; ++face) {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Format                    = DXGI_FORMAT_R32_FLOAT;              // R32_TYPELESS -> R32_FLOAT
+        srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+        srvDesc.Texture2DArray.MostDetailedMip = 0;
+        srvDesc.Texture2DArray.MipLevels       = 1;
+        srvDesc.Texture2DArray.FirstArraySlice = face;                           // 각 페이스
+        srvDesc.Texture2DArray.ArraySize       = 1;
+        GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
+        PointDepthCubeTex, &srvDesc, &faceSRVs[face]);
+    }
+    projection = JungleMath::CreateProjectionMatrix(60.0f, 1.0f, 0.01f, GetRadius());
+}
+
+void UPointLightComponent::UpdateViewMatrix()
+{
+    for (int i=0; i < 6; i++)
+    {
+        FVector target = GetWorldLocation() + dirs[i];
+        FVector up = ups[i];
+        view[i] = JungleMath::CreateViewMatrix(GetWorldLocation(),target, up);
+    }
 }

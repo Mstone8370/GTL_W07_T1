@@ -32,7 +32,7 @@ struct FPointLightInfo
 
     float3 Position;
     float Radius;
-
+    
     int Type;
     float Intensity;
     float Attenuation;
@@ -54,7 +54,6 @@ struct FSpotLightInfo
     float OuterRad;
     float Attenuation;
 };
-
 cbuffer Lighting : register(b0)
 {
     FAmbientLightInfo Ambient[MAX_AMBIENT_LIGHT];
