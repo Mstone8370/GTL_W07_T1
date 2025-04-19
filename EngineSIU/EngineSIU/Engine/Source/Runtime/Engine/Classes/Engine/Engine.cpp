@@ -34,12 +34,12 @@ FWorldContext& UEngine::CreateNewWorldContext(EWorldType InWorldType)
 }
 
 
-void UEngine::LoadWorld(const FString& FileName) const
+void UEngine::LoadLevel(const FString& FileName) const
 {
     SceneManager::LoadSceneFromJsonFile(*FileName, *ActiveWorld);
 }
 
-void UEngine::SaveWorld(const FString& FileName) const
+void UEngine::SaveLevel(const FString& FileName) const
 {
     SceneManager::SaveSceneToJsonFile(*FileName, *ActiveWorld);
 }

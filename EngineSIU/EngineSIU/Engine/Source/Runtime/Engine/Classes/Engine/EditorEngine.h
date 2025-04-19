@@ -20,6 +20,7 @@ public:
 
     virtual void Init() override;
     virtual void Tick(float DeltaTime) override;
+    void Release() override;
 
     UWorld* PIEWorld = nullptr;
     UWorld* EditorWorld = nullptr;
@@ -33,17 +34,25 @@ public:
 
 public:
     void SelectActor(AActor* InActor);
+
+    // 전달된 액터가 선택된 컴포넌트와 같다면 해제 
     void DeselectActor(AActor* InActor);
+    void ClearActorSelection(); 
+    
     bool CanSelectActor(const AActor* InActor) const;
     AActor* GetSelectedActor() const;
 
     void HoverActor(AActor* InActor);
 
     
-    void NewWorld();
+    void NewLevel();
 
     void SelectComponent(USceneComponent* InComponent) const;
+    
+    // 전달된 InComponent가 현재 선택된 컴포넌트와 같다면 선택 해제
     void DeselectComponent(USceneComponent* InComponent);
+    void ClearComponentSelection(); 
+    
     bool CanSelectComponent(const USceneComponent* InComponent) const;
     USceneComponent* GetSelectedComponent() const;
 

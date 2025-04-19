@@ -39,15 +39,21 @@ void UEditorEngine::Init()
         assert(AssetManager);
         AssetManager->InitAssetManager();
     }
+    LoadLevel("Saved/AutoSaves.scene");
 
-#ifdef _DEBUG
-    AActor* Actor = EditorWorld->SpawnActor<ACube>();
-    
-    ADirectionalLight* DirLight = EditorWorld->SpawnActor<ADirectionalLight>();
-    DirLight->SetActorRotation(FRotator(20, -61, 11));
-    DirLight->SetActorLocation(FVector(0, 0, 20));
-    DirLight->SetIntensity(2.f);
-#endif
+// #ifdef _DEBUG
+//     AActor* Actor = EditorWorld->SpawnActor<ACube>();
+//     
+//     ADirectionalLight* DirLight = EditorWorld->SpawnActor<ADirectionalLight>();
+//     DirLight->SetActorRotation(FRotator(20, -61, 11));
+//     DirLight->SetActorLocation(FVector(0, 0, 20));
+//     DirLight->SetIntensity(2.f);
+// #endif
+}
+
+void UEditorEngine::Release()
+{
+    SaveLevel("Saved/AutoSaves.scene");
 }
 
 void UEditorEngine::Tick(float DeltaTime)
@@ -170,10 +176,15 @@ void UEditorEngine::SelectActor(AActor* InActor)
 
 void UEditorEngine::DeselectActor(AActor* InActor)
 {
-    if (InActor)
+    if (PrivateEditorSelection::GActorSelected == InActor && InActor)
     {
         PrivateEditorSelection::GActorSelected = nullptr;
     }
+}
+
+void UEditorEngine::ClearActorSelection()
+{
+    PrivateEditorSelection::GActorSelected = nullptr;
 }
 
 bool UEditorEngine::CanSelectActor(const AActor* InActor) const
@@ -194,10 +205,10 @@ void UEditorEngine::HoverActor(AActor* InActor)
     }
 }
 
-void UEditorEngine::NewWorld()
+void UEditorEngine::NewLevel()
 {
-    SelectActor(nullptr);
-    SelectComponent(nullptr);
+    ClearActorSelection();
+    ClearComponentSelection();
 
     if (ActiveWorld->GetActiveLevel())
     {
@@ -215,10 +226,16 @@ void UEditorEngine::SelectComponent(USceneComponent* InComponent) const
 
 void UEditorEngine::DeselectComponent(USceneComponent* InComponent)
 {
-    if (InComponent == nullptr)
+    // 전달된 InComponent가 현재 선택된 컴포넌트와 같다면 선택 해제
+    if (PrivateEditorSelection::GComponentSelected == InComponent && InComponent != nullptr)
     {
         PrivateEditorSelection::GComponentSelected = nullptr;
     }
+}
+
+void UEditorEngine::ClearComponentSelection()
+{
+    PrivateEditorSelection::GComponentSelected = nullptr;
 }
 
 bool UEditorEngine::CanSelectComponent(const USceneComponent* InComponent) const

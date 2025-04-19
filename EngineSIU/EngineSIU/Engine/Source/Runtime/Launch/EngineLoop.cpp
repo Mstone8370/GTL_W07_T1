@@ -163,6 +163,8 @@ void FEngineLoop::Exit()
     ResourceManager.Release(&Renderer);
     Renderer.Release();
     GraphicDevice.Release();
+    
+    GEngine->Release();
 
     delete UnrealEditor;
     delete BufferManager;

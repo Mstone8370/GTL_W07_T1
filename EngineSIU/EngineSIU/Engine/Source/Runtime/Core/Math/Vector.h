@@ -83,7 +83,7 @@ struct FVector
 
     FVector() : X(0), Y(0), Z(0) {}
     FVector(float X, float Y, float Z) : X(X), Y(Y), Z(Z) {}
-    FVector(float Scalar) : X(Scalar), Y(Scalar), Z(Scalar) {}
+    explicit  FVector(float Scalar) : X(Scalar), Y(Scalar), Z(Scalar) {}
 
     
     FVector(const FRotator& InRotator);

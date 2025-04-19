@@ -159,7 +159,9 @@ void FStaticMeshRenderPass::PrepareRender()
 void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) 
 {
     const EViewModeIndex ViewMode = Viewport->GetViewMode();
-    
+
+    ChangeViewMode(ViewMode);
+
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
 
@@ -178,7 +180,6 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     BufferManager->BindConstantBuffer(TEXT("FLightInfoBuffer"), 0, EShaderStage::Vertex);
     BufferManager->BindConstantBuffer(TEXT("FMaterialConstants"), 1, EShaderStage::Vertex);
 
-    ChangeViewMode(ViewMode);
 
     // Rasterizer
     if (ViewMode == EViewModeIndex::VMI_Wireframe)
