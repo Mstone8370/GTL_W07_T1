@@ -39,6 +39,10 @@ namespace MaterialUtils
             std::shared_ptr<FTexture> texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.DiffuseTexturePath);
             Graphics->DeviceContext->PSSetShaderResources(0, 1, &texture->TextureSRV);
             Graphics->DeviceContext->PSSetSamplers(0, 1, &texture->SamplerState);
+
+            // for Gouraud shading
+            Graphics->DeviceContext->VSSetShaderResources(0, 1, &texture->TextureSRV);
+            Graphics->DeviceContext->VSSetSamplers(0, 1, &texture->SamplerState);
         }
         else
         {

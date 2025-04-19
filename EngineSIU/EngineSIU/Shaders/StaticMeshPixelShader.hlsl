@@ -88,7 +88,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     if (IsLit)
     {
 #ifdef LIGHTING_MODEL_GOURAUD
-        FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
+        FinalColor = float4(Input.Color.rgb, 1.0);
 #else
         float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor).rgb;
         FinalColor = float4(LitColor, 1);

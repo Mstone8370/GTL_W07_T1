@@ -40,7 +40,14 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
     Output.MaterialIndex = Input.MaterialIndex;
 
 #ifdef LIGHTING_MODEL_GOURAUD
-    float4 Diffuse = Lighting(Output.WorldPosition, Output.WorldNormal, ViewWorldLocation, float3(1,1,1));
+    float3 DiffuseColor = Input.Color;
+    if (Material.TextureFlag & (1 << 1))
+    {
+        DiffuseColor = DiffuseTexture.SampleLevel(DiffuseSampler, Input.UV, 0).rgb;
+        DiffuseColor = SRGBToLinear(DiffuseColor);
+    }
+    float4 Diffuse = Lighting(Output.WorldPosition, Output.WorldNormal, ViewWorldLocation, DiffuseColor);
+    Diffuse *= 10; // 임의로 보정. 왜 하필 10을 곱해야 다른 라이딩 모델과 동일한 밝기로 나오는지는 의문.
     Output.Color = float4(Diffuse.rgb, 1.0);
 #else
     Output.Color = Input.Color;

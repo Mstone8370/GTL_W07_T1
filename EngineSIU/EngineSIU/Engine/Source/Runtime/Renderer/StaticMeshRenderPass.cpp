@@ -126,18 +126,19 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         PixelShader = ShaderManager->GetPixelShaderByKey(L"LAMBERT_StaticMeshPixelShader");
         UpdateLitUnlitConstant(1);
         break;
-    case EViewModeIndex::VMI_Lit_BlinnPhong:
-        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
-        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
-        PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
-        UpdateLitUnlitConstant(1);
-        break;
     case EViewModeIndex::VMI_Wireframe:
     case EViewModeIndex::VMI_Unlit:
         VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(0);
+        break;
+    case EViewModeIndex::VMI_Lit_BlinnPhong:
+    default:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
         break;
     }
 }
@@ -343,6 +344,13 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+    // 쉐이더 리소스 해제
+    ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
+    Graphics->DeviceContext->PSSetShaderResources(0, 1, NullSRV);
+    Graphics->DeviceContext->PSSetShaderResources(1, 1, NullSRV);
+    
+    Graphics->DeviceContext->VSSetShaderResources(0, 1, NullSRV);
 }
 
 void FStaticMeshRenderPass::ClearRenderArr()

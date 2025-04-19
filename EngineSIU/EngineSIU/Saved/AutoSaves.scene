@@ -9,8 +9,8 @@
                     "ComponentClass": "UStaticMeshComponent",
                     "ComponentID": "StaticMeshComponent_0",
                     "Properties": {
-                        "AABB_max": "X=0.201 Y=0.291 Z=0.452",
-                        "AABB_min": "X=-0.221 Y=-0.254 Z=-0.002",
+                        "AABB_max": "X=1.287 Y=1.199 Z=2.555",
+                        "AABB_min": "X=-1.287 Y=-1.199 Z=-0.000",
                         "ComponentClass": "UStaticMeshComponent",
                         "ComponentName": "StaticMeshComponent_0",
                         "ComponentOwner": "ACube_77",
@@ -18,7 +18,7 @@
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
                         "RelativeScale3D": "X=10.000 Y=10.000 Z=10.000",
-                        "StaticMeshPath": "Contents/Nessie/Nessie.obj",
+                        "StaticMeshPath": "Contents/Reference/Reference.obj",
                         "bAutoActive": "true",
                         "bIsActive": "true",
                         "m_Type": ""
@@ -43,7 +43,7 @@
                         "ComponentOwner": "ADirectionalLight_82",
                         "ComponentOwnerClass": "ADirectionalLight",
                         "Direction": "X=-0.000 Y=-0.000 Z=-1.000",
-                        "Intensity": "1.500000",
+                        "Intensity": "2.000000",
                         "LightColor": "R=1.000 G=1.000 B=1.000 A=1.000",
                         "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
