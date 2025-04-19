@@ -412,12 +412,12 @@ void FEditorRenderPass::CreateConstantBuffers()
     };
 
     CreateCB(sizeof(FConstantBufferCamera), &Resources.ConstantBuffers.Camera00);
-    CreateCB(sizeof(FConstantBufferDebugAABB) * ConstantBufferSizeAABB, &Resources.ConstantBuffers.AABB11);
-    CreateCB(sizeof(FConstantBufferDebugSphere) * ConstantBufferSizeSphere, &Resources.ConstantBuffers.Sphere11);
-    CreateCB(sizeof(FConstantBufferDebugCone) * ConstantBufferSizeCone, &Resources.ConstantBuffers.Cone11);
-    CreateCB(sizeof(FConstantBufferDebugGrid), &Resources.ConstantBuffers.Grid11);
-    CreateCB(sizeof(FConstantBufferDebugIcon), &Resources.ConstantBuffers.Icon11);
-    CreateCB(sizeof(FConstantBufferDebugArrow), &Resources.ConstantBuffers.Arrow11);
+    CreateCB(sizeof(FConstantBufferDebugAABB) * ConstantBufferSizeAABB, &Resources.ConstantBuffers.AABB10);
+    CreateCB(sizeof(FConstantBufferDebugSphere) * ConstantBufferSizeSphere, &Resources.ConstantBuffers.Sphere10);
+    CreateCB(sizeof(FConstantBufferDebugCone) * ConstantBufferSizeCone, &Resources.ConstantBuffers.Cone10);
+    CreateCB(sizeof(FConstantBufferDebugGrid), &Resources.ConstantBuffers.Grid10);
+    CreateCB(sizeof(FConstantBufferDebugIcon), &Resources.ConstantBuffers.Icon10);
+    CreateCB(sizeof(FConstantBufferDebugArrow), &Resources.ConstantBuffers.Arrow10);
 }
 
 void FEditorRenderPass::PrepareRendertarget(std::shared_ptr<FEditorViewportClient> Viewport)
@@ -528,8 +528,8 @@ void FEditorRenderPass::Render(std::shared_ptr<FEditorViewportClient> Viewport)
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 
     ID3D11Buffer* NullBuffer[1] = { nullptr };
-    Graphics->DeviceContext->VSSetConstantBuffers(11, 1, NullBuffer);
-    Graphics->DeviceContext->PSSetConstantBuffers(11, 1, NullBuffer);
+    Graphics->DeviceContext->VSSetConstantBuffers(10, 1, NullBuffer);
+    Graphics->DeviceContext->PSSetConstantBuffers(10, 1, NullBuffer);
 }
 
 void FEditorRenderPass::PrepareShaderGizmo()
@@ -565,13 +565,13 @@ void FEditorRenderPass::UdpateConstantbufferAABBInstanced(TArray<FConstantBuffer
         UE_LOG(LogLevel::Error, "Invalid Buffer Num");
         return;
     }
-    if (Resources.ConstantBuffers.AABB11)
+    if (Resources.ConstantBuffers.AABB10)
     {
         D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR;
 
-        Graphics->DeviceContext->Map(Resources.ConstantBuffers.AABB11, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        Graphics->DeviceContext->Map(Resources.ConstantBuffers.AABB10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, Buffer.GetData(), sizeof(FConstantBufferDebugAABB) * Buffer.Num()); // TArray이니까 실제 값을 받아와야함
-        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.AABB11, 0);
+        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.AABB10, 0);
     }
 }
 
@@ -624,9 +624,9 @@ void FEditorRenderPass::RenderPointlightInstanced()
 
 void FEditorRenderPass::PrepareConstantbufferPointlight()
 {
-    if (Resources.ConstantBuffers.Sphere11)
+    if (Resources.ConstantBuffers.Sphere10)
     {
-        Graphics->DeviceContext->VSSetConstantBuffers(11, 1, &Resources.ConstantBuffers.Sphere11);
+        Graphics->DeviceContext->VSSetConstantBuffers(10, 1, &Resources.ConstantBuffers.Sphere10);
     }
 }
 
@@ -639,13 +639,13 @@ void FEditorRenderPass::UdpateConstantbufferPointlightInstanced(TArray<FConstant
         UE_LOG(LogLevel::Error, "Invalid Buffer Num");
         return;
     }
-    if (Resources.ConstantBuffers.Sphere11)
+    if (Resources.ConstantBuffers.Sphere10)
     {
         D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR; // GPU�� �޸� �ּ� ����
 
-        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Sphere11, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Sphere10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, Buffer.GetData(), sizeof(FConstantBufferDebugSphere) * Buffer.Num()); // TArray이니까 실제 값을 받아와야함
-        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Sphere11, 0); // GPU�� �ٽ� ��밡���ϰ� �����
+        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Sphere10, 0); // GPU�� �ٽ� ��밡���ϰ� �����
     }
 }
 
@@ -702,9 +702,9 @@ void FEditorRenderPass::RenderSpotlightInstanced()
 
 void FEditorRenderPass::PrepareConstantbufferSpotlight()
 {
-    if (Resources.ConstantBuffers.Cone11)
+    if (Resources.ConstantBuffers.Cone10)
     {
-        Graphics->DeviceContext->VSSetConstantBuffers(11, 1, &Resources.ConstantBuffers.Cone11);
+        Graphics->DeviceContext->VSSetConstantBuffers(10, 1, &Resources.ConstantBuffers.Cone10);
     }
 }
 
@@ -717,13 +717,13 @@ void FEditorRenderPass::UdpateConstantbufferSpotlightInstanced(TArray<FConstantB
         UE_LOG(LogLevel::Error, "Invalid Buffer Num");
         return;
     }
-    if (Resources.ConstantBuffers.Cone11)
+    if (Resources.ConstantBuffers.Cone10)
     {
         D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR; // GPU�� �޸� �ּ� ����
 
-        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Cone11, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Cone10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, Buffer.GetData(), sizeof(FConstantBufferDebugCone) * Buffer.Num()); // TArray이니까 실제 값을 받아와야함
-        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Cone11, 0); // GPU�� �ٽ� ��밡���ϰ� �����
+        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Cone10, 0); // GPU�� �ٽ� ��밡���ϰ� �����
     }
 }
 
@@ -812,21 +812,21 @@ void FEditorRenderPass::RenderIcons(const UWorld* World, std::shared_ptr<FEditor
 
 void FEditorRenderPass::PrepareConstantbufferIcon()
 {
-    if (Resources.ConstantBuffers.Icon11)
+    if (Resources.ConstantBuffers.Icon10)
     {
-        Graphics->DeviceContext->VSSetConstantBuffers(11, 1, &Resources.ConstantBuffers.Icon11);
+        Graphics->DeviceContext->VSSetConstantBuffers(10, 1, &Resources.ConstantBuffers.Icon10);
     }
 }
 
 void FEditorRenderPass::UdpateConstantbufferIcon(FConstantBufferDebugIcon Buffer)
 {
-    if (Resources.ConstantBuffers.Icon11)
+    if (Resources.ConstantBuffers.Icon10)
     {
         D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR; // GPU�� �޸� �ּ� ����
 
-        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Icon11, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Icon10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, &Buffer, sizeof(FConstantBufferDebugIcon)); // TArray이니까 실제 값을 받아와야함
-        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Icon11, 0); // GPU�� �ٽ� ��밡���ϰ� �����
+        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Icon10, 0); // GPU�� �ٽ� ��밡���ϰ� �����
     }
 }
 
@@ -874,21 +874,21 @@ void FEditorRenderPass::RenderArrows()
 
 void FEditorRenderPass::PrepareConstantbufferArrow()
 {
-    if (Resources.ConstantBuffers.Arrow11)
+    if (Resources.ConstantBuffers.Arrow10)
     {
-        Graphics->DeviceContext->VSSetConstantBuffers(11, 1, &Resources.ConstantBuffers.Arrow11);
+        Graphics->DeviceContext->VSSetConstantBuffers(10, 1, &Resources.ConstantBuffers.Arrow10);
     }
 }
 
 void FEditorRenderPass::UdpateConstantbufferArrow(FConstantBufferDebugArrow Buffer)
 {
-    if (Resources.ConstantBuffers.Arrow11)
+    if (Resources.ConstantBuffers.Arrow10)
     {
         D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR; // GPU�� �޸� �ּ� ����
 
-        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Arrow11, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Arrow10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
         memcpy(ConstantBufferMSR.pData, &Buffer, sizeof(FConstantBufferDebugArrow)); // TArray이니까 실제 값을 받아와야함
-        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Arrow11, 0); // GPU�� �ٽ� ��밡���ϰ� �����
+        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Arrow10, 0); // GPU�� �ٽ� ��밡���ϰ� �����
     }
 }
 

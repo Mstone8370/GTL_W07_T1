@@ -10,12 +10,6 @@ cbuffer MaterialConstants : register(b1)
     FMaterial Material;
 }
 
-cbuffer ViewportSizeBuffer : register(b2)
-{
-    float2 ViewportSize;
-    float2 Padding;
-}
-
 float3 ReconstructWorldPosition(float2 UV, float Z)
 {
     float2 NDC;
