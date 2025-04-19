@@ -55,3 +55,8 @@ int ULightComponentBase::CheckRayIntersection(FVector& rayOrigin, FVector& rayDi
     return res;
 }
 
+void ULightComponentBase::ReleaseShadowDepthMap()
+{
+    ShadowDepthMap.Release();
+}
+

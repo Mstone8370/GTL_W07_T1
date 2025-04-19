@@ -43,5 +43,6 @@ public:
 
 private:
     FSpotLightInfo SpotLightInfo;
+    virtual void InitializeShadowDepthMap() override;
 };
 

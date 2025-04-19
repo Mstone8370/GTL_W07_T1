@@ -27,5 +27,6 @@ public:
 
 private:
     FDirectionalLightInfo DirectionalLightInfo;
+    virtual void InitializeShadowDepthMap() override;
 };
 
