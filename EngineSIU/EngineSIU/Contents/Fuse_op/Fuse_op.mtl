@@ -1,0 +1,75 @@
+# Blender 4.3.2 MTL File: 'None'
+# www.blender.org
+
+newmtl fuse_lgnd_v23_opbundle_body
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd fuse_lgnd_v23_opbundle_body_albedoTexture.png
+map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_body_normalTexture.png
+map_Ks fuse_lgnd_v23_opbundle_body_specTexture.png
+map_Ns fuse_lgnd_v23_opbundle_body_glossTexture.png
+map_Ke fuse_lgnd_v23_opbundle_body_emissiveTexture.png
+
+newmtl fuse_lgnd_v23_opbundle_gear
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd fuse_lgnd_v23_opbundle_gear_albedoTexture.png
+map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_gear_normalTexture.png
+map_Ks fuse_lgnd_v23_opbundle_gear_specTexture.png
+map_Ns fuse_lgnd_v23_opbundle_gear_glossTexture.png
+
+newmtl fuse_lgnd_v23_opbundle_hair
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd fuse_lgnd_v23_opbundle_hair_albedoTexture.png
+map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_hair_normalTexture.png
+map_Ks fuse_lgnd_v23_opbundle_hair_specTexture.png
+map_Ns fuse_lgnd_v23_opbundle_hair_glossTexture.png
+map_Ke fuse_lgnd_v23_opbundle_hair_emissiveTexture.png
+
+newmtl fuse_lgnd_v23_opbundle_head
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd fuse_lgnd_v23_opbundle_head_albedoTexture.png
+map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_head_normalTexture.png
+map_Ks fuse_lgnd_v23_opbundle_head_specTexture.png
+map_Ns fuse_lgnd_v23_opbundle_head_glossTexture.png
+
+newmtl repeater3030_base_main
+Ns 360.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+map_Kd repeater3030_base_main_albedoTexture.png
+map_Bump -bm 1.000000 repeater3030_base_main_normalTexture.png
+map_Ks repeater3030_base_main_specTexture.png
+map_Ns repeater3030_base_main_glossTexture.png
+map_Ke repeater3030_base_main_emissiveTexture.png
