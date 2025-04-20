@@ -37,18 +37,27 @@ float3 SRGBToLinear(float3 color)
 
 struct FMaterial
 {
+    uint TextureFlag;
     float3 DiffuseColor;
-    float TransparencyScalar;
     
     float3 SpecularColor;
-    float SpecularScalar;
-    
+    float SpecularExponent; // or Glossiness
+
     float3 EmissiveColor;
-    float DensityScalar;
-    
-    float3 AmbientColor;
-    uint TextureFlag;
+    float Opacity;
 };
+
+#define MATERIAL_TEXTURE_DIFFUSE       (1 << 0)
+#define MATERIAL_TEXTURE_SPECULAR      (1 << 1)
+#define MATERIAL_TEXTURE_NORMAL        (1 << 2)
+#define MATERIAL_TEXTURE_EMISSIVE      (1 << 3)
+#define MATERIAL_TEXTURE_ALPHA         (1 << 4)
+#define MATERIAL_TEXTURE_AMBIENT       (1 << 5)
+#define MATERIAL_TEXTURE_SHININESS     (1 << 6)
+#define MATERIAL_TEXTURE_DISPLACEMENT  (1 << 7)
+#define MATERIAL_TEXTURE_DECAL         (1 << 8)
+
+Texture2D MaterialTextures[9] : register(t0);
 
 struct VS_INPUT_StaticMesh
 {

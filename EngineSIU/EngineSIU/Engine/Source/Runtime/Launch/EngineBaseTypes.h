@@ -4,6 +4,9 @@
 
 enum class EViewModeIndex : uint8
 {
+    /**
+     * 이 enum 수정 시에는 CompositingShader.hlsl도 수정해야 합니다.
+     */
     VMI_Lit_Gouraud,
     VMI_Lit_Lambert,
     VMI_Lit_BlinnPhong,

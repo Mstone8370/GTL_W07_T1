@@ -68,39 +68,58 @@ struct FObjInfo
     TArray<FMaterialSubset> MaterialSubsets;
 };
 
+enum class EMaterialTextureFlags : uint16
+{
+    Diffuse      = 1 << 0,
+    Specular     = 1 << 1,
+    Normal       = 1 << 2,
+    Emissive     = 1 << 3,
+    Alpha        = 1 << 4,
+    Ambient      = 1 << 5,
+    Shininess    = 1 << 6,
+    Displacement = 1 << 7,
+    Decal        = 1 << 8,
+};
+
 struct FObjMaterialInfo
 {
-    FString MaterialName;  // newmtl : Material Name.
+    FString MaterialName;  // newmtl: Material Name.
 
     uint32 TextureFlag = 0;
 
     bool bTransparent = false; // Has alpha channel?
 
-    FVector Diffuse = FVector(0.7f, 0.7f, 0.7f);  // Kd : Diffuse (Vector4)
-    FVector Specular = FVector(0.5f, 0.5f, 0.5f);  // Ks : Specular (Vector) 
-    FVector Ambient = FVector(0.01f, 0.01f, 0.01f);   // Ka : Ambient (Vector)
-    FVector Emissive = FVector::ZeroVector;  // Ke : Emissive (Vector)
+    FVector DiffuseColor = FVector(0.7f, 0.7f, 0.7f);  // Kd: Diffuse Color
+    FVector SpecularColor = FVector(0.5f, 0.5f, 0.5f);  // Ks: Specular Color
+    FVector AmbientColor = FVector(0.01f, 0.01f, 0.01f);   // Ka: Ambient Color
+    FVector EmissiveColor = FVector::ZeroVector;  // Ke: Emissive Color
 
-    float SpecularScalar = 64.f; // Ns : Specular Power (Float)
-    float DensityScalar;  // Ni : Optical Density (Float)
-    float TransparencyScalar; // d or Tr  : Transparency of surface (Float)
-    float BumpMultiplier;     // -bm : Bump Mulitplier ex) normalMap.xy *= BumpMultiplier; 
-    uint32 IlluminanceModel; // illum: illumination Model between 0 and 10. (UINT)
+    float SpecularExponent = 250.f; // Ns: Specular Power
+    float IOR = 1.5f;  // Ni: Index of Refraction
+    float Transparency = 0.f; // d or Tr: Transparency of surface
+    float BumpMultiplier = 1.f;     // -bm: Bump Multiplier
+    uint32 IlluminanceModel; // illum: illumination Model between 0 and 10.
 
     /* Texture */
-    FString DiffuseTextureName;  // map_Kd : Diffuse texture
-    FWString DiffuseTexturePath;
+    FString DiffuseColorTextureName;  // map_Kd: Diffuse Color texture
+    FWString DiffuseColorTexturePath;
 
-    FString AmbientTextureName;  // map_Ka : Ambient texture
-    FWString AmbientTexturePath;
+    FString AmbientColorTextureName;  // map_Ka: Ambient Color texture
+    FWString AmbientColorTexturePath;
 
-    FString SpecularTextureName; // map_Ks : Specular texture
-    FWString SpecularTexturePath;
+    FString SpecularColorTextureName; // map_Ks: Specular Color texture
+    FWString SpecularColorTexturePath;
 
-    FString BumpTextureName;     // map_Bump : Bump texture
+    FString SpecularExponentTextureName; // map_Ns: Specular Exponent texture
+    FWString SpecularExponentTexturePath;
+
+    FString EmissiveColorTextureName;    // map_Ke: Emissive Color texture
+    FWString EmissiveColorTexturePath;
+
+    FString BumpTextureName;     // map_Bump: Bump texture
     FWString BumpTexturePath;
 
-    FString AlphaTextureName;    // map_d : Alpha texture
+    FString AlphaTextureName;    // map_d: Alpha texture
     FWString AlphaTexturePath;
 };
 
@@ -255,7 +274,8 @@ struct FPrimitiveCounts
 };
 
 #define MAX_LIGHTS 16
-enum ELightType {
+enum ELightType
+{
     POINT_LIGHT = 1,
     SPOT_LIGHT = 2,
     DIRECTIONAL_LIGHT = 3,
@@ -265,17 +285,14 @@ enum ELightType {
 
 struct FMaterialConstants
 {
+    uint32 TextureFlag;
     FVector DiffuseColor;
-    float TransparencyScalar;
-
+    
     FVector SpecularColor;
-    float SpecularScalar;
+    float SpecularExponent; // or Glossiness
 
     FVector EmissiveColor;
-    float DensityScalar;
-
-    FVector AmbientColor;
-    uint32 TextureFlag;
+    float Transparency;
 };
 
 struct FObjectConstantBuffer
