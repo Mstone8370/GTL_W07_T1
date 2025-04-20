@@ -53,6 +53,24 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         WorldNormal = normalize(mul(Normal, TBN));
     }
 
+    // Specular Color
+    float3 SpecularColor = Material.SpecularColor;
+    if (Material.TextureFlag & TEXTURE_FLAG_SPECULAR)
+    {
+        SpecularColor = MaterialTextures[TEXTURE_SLOT_SPECULAR].Sample(MaterialSamplers[TEXTURE_SLOT_SPECULAR], Input.UV).rgb;
+        SpecularColor = SRGBToLinear(SpecularColor);
+    }
+
+    // Specular Exponent or Glossiness
+    float SpecularExponent = Material.SpecularExponent;
+    if (Material.TextureFlag & TEXTURE_FLAG_SHININESS)
+    {
+        SpecularExponent = MaterialTextures[TEXTURE_SLOT_SHININESS].Sample(MaterialSamplers[TEXTURE_SLOT_SHININESS], Input.UV).r;
+#ifdef LIGHTING_MODEL_BLINN_PHONG
+        SpecularExponent = 1000 * SpecularExponent * SpecularExponent; // y = 1000 * x ^ 2
+#endif
+    }
+
     // (1) 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
     uint2 pixelCoord = uint2(Input.Position.xy);
     uint2 tileCoord = pixelCoord / TileSize; // 각 성분별 나눔
@@ -72,7 +90,8 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         
         float4 lightContribution = PointLight(gPointLightIndex, Input.WorldPosition, 
             normalize(Input.WorldNormal),
-            ViewWorldLocation, DiffuseColor.rgb
+            ViewWorldLocation, DiffuseColor.rgb,
+            SpecularColor, SpecularExponent
         );
         lightingAccum += lightContribution.rgb;
     }
@@ -84,7 +103,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 #ifdef LIGHTING_MODEL_GOURAUD
         FinalColor = float4(Input.Color.rgb, 1.0);
 #else
-        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor).rgb;
+        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent).rgb;
         FinalColor = float4(LitColor, 1);
 #endif
     }
