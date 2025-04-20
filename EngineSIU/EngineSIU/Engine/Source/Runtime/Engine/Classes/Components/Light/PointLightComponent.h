@@ -36,7 +36,7 @@ private:
 #pragma region PointShadow
 public:
     void CreateShadowMapResources();
-    void UpdateViewMatrix();
+    void UpdateViewProjMatrix();
     FVector dirs[6] = {
         { 1,  0,  0}, {-1,  0,  0},
         { 0,  1,  0}, { 0, -1,  0},

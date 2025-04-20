@@ -148,7 +148,10 @@ void FRenderer::CreateConstantBuffers()
 #pragma region ShadowMap
     UINT LigthMatrixBufferSize = sizeof(FLightMatrix);
     BufferManager->CreateBufferGeneric<FLightMatrix>("FLightMatrix", nullptr, LigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-#pragma endregion
+    UINT PointLigthMatrixBufferSize = sizeof(FPointLightMatrix);
+    BufferManager->CreateBufferGeneric<FPointLightMatrix>("FPointLightMatrix", nullptr, PointLigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+
+    #pragma endregion
     
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));

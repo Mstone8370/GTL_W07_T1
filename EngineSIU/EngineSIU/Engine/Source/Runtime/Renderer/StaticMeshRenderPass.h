@@ -52,7 +52,9 @@ public:
     void ReleaseShader();
 
     void ChangeViewMode(EViewModeIndex ViewModeIndex);
-    
+
+
+    void UpdatePointLightConstantBuffer(const FMatrix* ViewMatrix, const FMatrix& ProjectionMatrix);
 protected:
     TArray<UStaticMeshComponent*> StaticMeshComponents;
 

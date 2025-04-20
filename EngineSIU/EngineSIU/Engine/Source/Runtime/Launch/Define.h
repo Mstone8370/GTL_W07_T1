@@ -401,4 +401,9 @@ struct FLightMatrix
     FMatrix LightViewMat;
     FMatrix LightProjectMat;
 };
+struct FPointLightMatrix
+{
+    FMatrix LightViewMat[6];
+    FMatrix LightProjectMat;
+};
 #pragma endregion

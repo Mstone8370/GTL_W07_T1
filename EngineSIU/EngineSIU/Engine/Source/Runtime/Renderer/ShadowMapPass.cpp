@@ -48,7 +48,7 @@ void FShadowMapPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewpo
         vp.Width    = (FLOAT)iter->ShadowMapWidth;
         vp.Height   = (FLOAT)iter->ShadowMapHeight;
         vp.MinDepth = 0.0f; vp.MaxDepth = 1.0f;
-        iter->UpdateViewMatrix();
+        iter->UpdateViewProjMatrix();
         for (size_t face = 0; face < 6; ++face)
         {
             Graphics->DeviceContext->RSSetViewports(1, &vp);
