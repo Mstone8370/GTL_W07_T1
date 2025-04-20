@@ -145,17 +145,17 @@ void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGrap
     ShaderManager = InShaderManager;
 
     D3D11_SAMPLER_DESC ShadowSamplerDesc = {};
-    ShadowSamplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    ShadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    ShadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    ShadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    ShadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    ShadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    ShadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    ShadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
     ShadowSamplerDesc.MipLODBias = 0.0f;
-    ShadowSamplerDesc.MaxAnisotropy = 1;
-    ShadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-    ShadowSamplerDesc.BorderColor[0] = 0;
-    ShadowSamplerDesc.BorderColor[1] = 0;
-    ShadowSamplerDesc.BorderColor[2] = 0;
-    ShadowSamplerDesc.BorderColor[3] = 0;
+    ShadowSamplerDesc.MaxAnisotropy = 0;
+    ShadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    ShadowSamplerDesc.BorderColor[0] = 1.f;
+    ShadowSamplerDesc.BorderColor[1] = 1.f;
+    ShadowSamplerDesc.BorderColor[2] = 1.f;
+    ShadowSamplerDesc.BorderColor[3] = 1.f;
     ShadowSamplerDesc.MinLOD = 0;
     ShadowSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; 
     Graphics->Device->CreateSamplerState(&ShadowSamplerDesc, &ShadowSampler);
@@ -344,9 +344,11 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
 
-    UDirectionalLightComponent* tempDirLight = *TObjectIterator<UDirectionalLightComponent>();
-    if (tempDirLight)
+    auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
+    
+    if (begin(tempDirLightRange) != end(tempDirLightRange))
     {
+        UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
         FLightConstants LightData = {};
         FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, tempDirLight->GetWorldMatrix());
         // FVector Position = InLightComponent->GetWorldLocation();

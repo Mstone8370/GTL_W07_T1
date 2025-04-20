@@ -3,7 +3,7 @@
 
 SamplerState DiffuseSampler : register(s0);
 SamplerState NormalSampler : register(s1);
-SamplerState ShadowSampler : register(s2);
+SamplerComparisonState ShadowSampler : register(s2);
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
@@ -92,7 +92,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     if (IsLit)
     {
         // Shadow Mapping
-        bool shadowed = false;
         float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
         PositionFromLight = mul(PositionFromLight, mLightView);
         PositionFromLight = mul(PositionFromLight, mLightProj);
@@ -102,41 +101,44 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
             0.5f - PositionFromLight.y * 0.5f
         };
         float shadowZ = PositionFromLight.z;
-        shadowZ -= 0.0001f; // bias
-        
-        float DepthFromLight = ShadowTexture.Sample(ShadowSampler, shadowUV).r;
-        if (shadowZ > DepthFromLight)
-            shadowed = true;
-#ifdef LIGHTING_MODEL_GOURAUD
-        if (shadowed)
+        shadowZ -= 0.0005f; // bias
+
+        // Percentage Closer Filtering
+        // float DepthFromLight = ShadowTexture.Sample(ShadowSampler, shadowUV).r;
+        float DepthFromLight = 0.f;
+        float PCFOffsetX = 1.f / 2048;
+        float PCFOffsetY = 1.f / 2048;
+        for (int i = -1; i <= 1; ++i)
         {
-            FinalColor = float4(0.f, 0.f, 0.f, 1.f);
-        }
-        else
-        {
-            FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
-        }
-#else
-        float3 LitColor = float3(0.f, 0.f, 0.f);
-        if (shadowed)
-        {
-            [unroll(MAX_AMBIENT_LIGHT)]
-            for (int l = 0; l < AmbientLightsCount; l++)
+            for (int j = -1; j <= 1; ++j)
             {
-                LitColor += Ambient[l].AmbientColor.rgb;
+                float2 SampleCoord = {
+                    shadowUV.x + PCFOffsetX * i,
+                    shadowUV.y + PCFOffsetY * j
+                };
+                if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
+                {
+                    DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowSampler, SampleCoord, shadowZ).r;
+                }
+                else
+                {
+                    DepthFromLight += 1.f;
+                }
             }
         }
-        else
-        {
-            LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
-        }
+        DepthFromLight /= 9;
+
+#ifdef LIGHTING_MODEL_GOURAUD
+        FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
+#else
+        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
         
         // 디버깅용 ---- PointLight 전역 배열에 대한 라이팅 테스팅
         //LitColor = float3(0, 0, 0);
         //LitColor += lightingAccum;
         // ------------------------------
         
-        FinalColor = float4(LitColor, 1);
+        FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
 #endif
     }
     else
