@@ -75,6 +75,14 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 #endif
     }
 
+    // Emissive Color
+    float3 EmissiveColor = Material.EmissiveColor;
+    if (Material.TextureFlag & TEXTURE_FLAG_EMISSIVE)
+    {
+        EmissiveColor = MaterialTextures[TEXTURE_SLOT_EMISSIVE].Sample(MaterialSamplers[TEXTURE_SLOT_EMISSIVE], Input.UV).rgb;
+        EmissiveColor = SRGBToLinear(EmissiveColor);
+    }
+
     // Begin for Tile based light culled result
     // 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
     uint2 PixelCoord = uint2(Input.Position.xy);
@@ -90,6 +98,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         FinalColor = float4(Input.Color.rgb, 1.0);
 #else
         float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent, FlatTileIndex);
+        LitColor += EmissiveColor * 5.f; // 5는 임의의 값
         FinalColor = float4(LitColor, 1);
 #endif
     }
