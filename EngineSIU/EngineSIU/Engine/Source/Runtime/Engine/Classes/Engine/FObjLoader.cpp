@@ -358,7 +358,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
         }
         if (Token == "map_Ns")
         {
-            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Specular);
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Shininess);
             
             LineStream >> Line;
             OutFStaticMesh.Materials[MaterialIndex].TextureNames[SlotIdx] = Line;
