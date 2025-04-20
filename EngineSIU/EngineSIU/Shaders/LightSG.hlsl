@@ -217,7 +217,7 @@ float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wo
     float3 Kd = DiffuseColor * KdScale;
     
     float3 Diffuse = DisneyDiffuse(WorldNormal, L, V, Roughness) * Kd;
-    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, H);
+    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, L);
 
     float3 BRDF_Term = Diffuse + Specular;
     
@@ -255,7 +255,7 @@ float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wor
     float3 Kd = DiffuseColor * KdScale;
     
     float3 Diffuse = DisneyDiffuse(WorldNormal, L, V, Roughness) * Kd;
-    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, H);
+    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, L);
 
     float3 BRDF_Term = Diffuse + Specular;
     
@@ -277,7 +277,7 @@ float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, fl
     float3 Kd = DiffuseColor * KdScale;
     
     float3 Diffuse = DisneyDiffuse(WorldNormal, L, V, Roughness) * Kd;
-    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, H);
+    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, L);
 
     float3 BRDF_Term = Diffuse + Specular;
     
