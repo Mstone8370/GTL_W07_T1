@@ -1,6 +1,8 @@
 #include "Define.h"
 #include "UObject/Casts.h"
 #include "UpdateLightBufferPass.h"
+
+#include <algorithm>
 #include "D3D11RHI/DXDBufferManager.h"
 #include "D3D11RHI/GraphicDevice.h"
 #include "D3D11RHI/DXDShaderManager.h"
@@ -141,9 +143,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer() const
 }
 
 void FUpdateLightBufferPass::SetPointLightData(
-    TArray<UPointLightComponent*> InPointLights,
-    TArray<TArray<uint32>> InPointLightPerTiles
-    )
+    const TArray<UPointLightComponent*>& InPointLights, TArray<TArray<uint32>> InPointLightPerTiles)
 {
     PointLights = InPointLights; 
     PointLightPerTiles = InPointLightPerTiles;
@@ -152,22 +152,19 @@ void FUpdateLightBufferPass::SetPointLightData(
     GPointLightPerTiles.Empty();
     GPointLightPerTiles.SetNum(TotalTiles);
 
-    for (uint32 tileIndex = 0; tileIndex < TotalTiles; ++tileIndex)
+    for (uint32 TileIndex = 0; TileIndex < TotalTiles; ++TileIndex)
     {
-        const TArray<uint32>& TileLightList = InPointLightPerTiles[tileIndex];
+        const TArray<uint32>& TileLightList = InPointLightPerTiles[TileIndex];
         PointLightPerTile TileData = {};
         TileData.NumLights = TileLightList.Num();
-        if (TileData.NumLights > MAX_POINTLIGHT_PER_TILE)
-        {
-            TileData.NumLights = MAX_POINTLIGHT_PER_TILE;
-        }
+        TileData.NumLights = FMath::Min<uint32>(TileData.NumLights, MAX_POINTLIGHT_PER_TILE);
 
         // 각 조명 인덱스를 TileData.Indice 배열에 복사합니다.
         for (uint32 i = 0; i < TileData.NumLights; ++i)
         {
-            TileData.Indice[i] = TileLightList[i];
+            TileData.Indices[i] = TileLightList[i];
         }
-        GPointLightPerTiles[tileIndex] = TileData;
+        GPointLightPerTiles[TileIndex] = TileData;
     }
 
     UpdatePointLightBuffer();

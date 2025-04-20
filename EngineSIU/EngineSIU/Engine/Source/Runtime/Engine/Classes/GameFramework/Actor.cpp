@@ -10,8 +10,13 @@ UObject* AActor::Duplicate(UObject* InOuter)
     NewActor->bTickInEditor = bTickInEditor;
     // 기본적으로 있던 컴포넌트 제거
     TSet CopiedComponents = NewActor->OwnedComponents;
+
+    //임시용 디폴트 컴포넌트 이름 저장
+    //TODO: 디퐅트 컴포넌트를 삭제하지 않고 그 컴포넌트에 프로퍼티를 복사하는 방법으로 변경 필요
+    TArray<FName> DefaultCopiedComponentNames;
     for (UActorComponent* Components : CopiedComponents)
     {
+        DefaultCopiedComponentNames.Add(Components->GetFName());
         Components->DestroyComponent();
     }
     NewActor->OwnedComponents.Empty();
@@ -25,10 +30,20 @@ UObject* AActor::Duplicate(UObject* InOuter)
 
     for (UActorComponent* Component : OwnedComponents)
     {
-        UActorComponent* NewComponent = Cast<UActorComponent>(Component->Duplicate(InOuter));
+
+        UActorComponent* NewComponent = Cast<UActorComponent>(Component->Duplicate(NewActor));
         NewComponent->OwnerPrivate = NewActor;
         NewActor->OwnedComponents.Add(NewComponent);
 
+        //디폴트 컴포넌트 이름 동일하게 
+        for (const auto DefaultCopiedName : DefaultCopiedComponentNames)
+        {
+            if (DefaultCopiedName == Component->GetFName())
+            {
+                NewComponent->SetFName(DefaultCopiedName);
+            }
+        }
+  
         // RootComponent 설정
         if (RootComponent == Component)
         {

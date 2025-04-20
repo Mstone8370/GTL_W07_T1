@@ -284,6 +284,45 @@ float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, fl
     return BRDF_Term * LightInfo.LightColor * LightInfo.Intensity;
 }
 
+float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness, uint TileIndex)
+{
+    float3 FinalColor = float3(0.0, 0.0, 0.0);
+
+    if (Glossiness > 1.0)
+    {
+        Glossiness = 0.5;
+    }
+    
+    // 현재 타일의 조명 정보 읽기
+    LightPerTiles TileLights = gLightPerTiles[TileIndex];
+    
+    // 다소 비효율적일 수도 있음.
+    [unroll(MAX_POINT_LIGHT)]
+    for (int i = 0; i < PointLightsCount; i++)
+    {
+        uint gPointLightIndex = TileLights.Indices[i];
+        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+    }
+
+    [unroll(MAX_SPOT_LIGHT)]
+    for (int j = 0; j < SpotLightsCount; j++)
+    {
+        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+    }
+    [unroll(MAX_DIRECTIONAL_LIGHT)]
+    for (int k = 0; k < DirectionalLightsCount; k++)
+    {
+        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+    }
+    [unroll(MAX_AMBIENT_LIGHT)]
+    for (int l = 0; l < AmbientLightsCount; l++)
+    {
+        FinalColor += Ambient[l].AmbientColor.rgb;
+    }
+    
+    return float4(FinalColor, 1);
+}
+
 float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness)
 {
     float3 FinalColor = float3(0.0, 0.0, 0.0);

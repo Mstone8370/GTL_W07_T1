@@ -33,6 +33,7 @@ public:
     void RenderGizmoComponent(UGizmoBaseComponent* GizmoComp, const std::shared_ptr<FEditorViewportClient>& Viewport);
 
     void CreateShader();
+    void UpdateShader();
     void ReleaseShader();
 
     void CreateBuffer();

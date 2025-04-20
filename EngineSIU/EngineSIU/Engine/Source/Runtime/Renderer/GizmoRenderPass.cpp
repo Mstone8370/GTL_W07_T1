@@ -76,6 +76,13 @@ void FGizmoRenderPass::CreateShader()
     PixelShader = ShaderManager->GetPixelShaderByKey(L"GizmoPixelShader");
 }
 
+void FGizmoRenderPass::UpdateShader()
+{
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+    InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    PixelShader = ShaderManager->GetPixelShaderByKey(L"GizmoPixelShader");
+}
+
 void FGizmoRenderPass::ReleaseShader()
 {
 }
@@ -91,7 +98,7 @@ void FGizmoRenderPass::ClearRenderArr()
 void FGizmoRenderPass::PrepareRenderState() const
 {
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    
+
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
@@ -186,6 +193,8 @@ void FGizmoRenderPass::RenderGizmoComponent(UGizmoBaseComponent* GizmoComp, cons
     {
         return;
     }
+
+    UpdateShader();
 
     PrepareRenderState();
     

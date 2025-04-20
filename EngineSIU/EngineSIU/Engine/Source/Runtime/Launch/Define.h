@@ -119,30 +119,6 @@ struct FObjMaterialInfo
     /* Texture */
     TArray<FString> TextureNames;
     TArray<FWString> TexturePaths;
-
-    ////////
-    /// Deprecated Variables
-    ////////
-    FString DiffuseColorTextureName;  // map_Kd: Diffuse Color texture
-    FWString DiffuseColorTexturePath;
-
-    FString AmbientColorTextureName;  // map_Ka: Ambient Color texture
-    FWString AmbientColorTexturePath;
-
-    FString SpecularColorTextureName; // map_Ks: Specular Color texture
-    FWString SpecularColorTexturePath;
-
-    FString SpecularExponentTextureName; // map_Ns: Specular Exponent texture
-    FWString SpecularExponentTexturePath;
-
-    FString EmissiveColorTextureName;    // map_Ke: Emissive Color texture
-    FWString EmissiveColorTexturePath;
-
-    FString BumpTextureName;     // map_Bump: Bump texture
-    FWString BumpTexturePath;
-
-    FString AlphaTextureName;    // map_d: Alpha texture
-    FWString AlphaTexturePath;
 };
 
 struct FVertexTexture

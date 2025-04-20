@@ -46,6 +46,7 @@ public:
         ID3D11ShaderResourceView* _TextureSRV, ID3D11SamplerState* _SamplerState) const;
 
     void CreateShader();
+    void UpdateShader();
     void ReleaseShader();
 
 protected:

@@ -60,9 +60,6 @@ protected:
     ID3D11InputLayout* InputLayout;
     
     ID3D11PixelShader* PixelShader;
-    ID3D11PixelShader* DebugDepthShader;
-    ID3D11PixelShader* DebugWorldNormalShader;
-    ID3D11PixelShader* DebugWorldTangentShader;
 
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;

@@ -640,7 +640,7 @@ FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFi
         return nullptr;
     }
 
-    // SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh); // TODO: refactoring 끝나면 활성화하기
+    SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh); // TODO: refactoring 끝나면 활성화하기
     ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
     return NewStaticMesh;
 }
@@ -692,28 +692,26 @@ bool FObjManager::SaveStaticMeshToBinary(const FWString& FilePath, const FStatic
     for (const FObjMaterialInfo& Material : StaticMesh.Materials)
     {
         Serializer::WriteFString(File, Material.MaterialName);
+        
         File.write(reinterpret_cast<const char*>(&Material.TextureFlag), sizeof(Material.TextureFlag));
-        //File.write(reinterpret_cast<const char*>(&Material.bHasNormalMap), sizeof(Material.bHasNormalMap));
+        
         File.write(reinterpret_cast<const char*>(&Material.bTransparent), sizeof(Material.bTransparent));
         File.write(reinterpret_cast<const char*>(&Material.DiffuseColor), sizeof(Material.DiffuseColor));
         File.write(reinterpret_cast<const char*>(&Material.SpecularColor), sizeof(Material.SpecularColor));
         File.write(reinterpret_cast<const char*>(&Material.AmbientColor), sizeof(Material.AmbientColor));
         File.write(reinterpret_cast<const char*>(&Material.EmissiveColor), sizeof(Material.EmissiveColor));
+        
         File.write(reinterpret_cast<const char*>(&Material.SpecularExponent), sizeof(Material.SpecularExponent));
         File.write(reinterpret_cast<const char*>(&Material.IOR), sizeof(Material.IOR));
         File.write(reinterpret_cast<const char*>(&Material.Transparency), sizeof(Material.Transparency));
+        File.write(reinterpret_cast<const char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.write(reinterpret_cast<const char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
 
-        Serializer::WriteFString(File, Material.DiffuseColorTextureName);
-        Serializer::WriteFWString(File, Material.DiffuseColorTexturePath);
-        Serializer::WriteFString(File, Material.AmbientColorTextureName);
-        Serializer::WriteFWString(File, Material.AmbientColorTexturePath);
-        Serializer::WriteFString(File, Material.SpecularColorTextureName);
-        Serializer::WriteFWString(File, Material.SpecularColorTexturePath);
-        Serializer::WriteFString(File, Material.BumpTextureName);
-        Serializer::WriteFWString(File, Material.BumpTexturePath);
-        Serializer::WriteFString(File, Material.AlphaTextureName);
-        Serializer::WriteFWString(File, Material.AlphaTexturePath);
+        for (uint8 i = 0; i < static_cast<uint8>(EMaterialTextureSlots::MTS_MAX); ++i)
+        {
+            Serializer::WriteFString(File, Material.TextureNames[i]);
+            Serializer::WriteFWString(File, Material.TexturePaths[i]);
+        }
     }
 
     // Material Subsets
@@ -775,47 +773,28 @@ bool FObjManager::LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMesh
     {
         Serializer::ReadFString(File, Material.MaterialName);
         File.read(reinterpret_cast<char*>(&Material.TextureFlag), sizeof(Material.TextureFlag));
-        //File.read(reinterpret_cast<char*>(&Material.bHasTexture), sizeof(Material.bHasTexture));
-        //File.read(reinterpret_cast<char*>(&Material.bHasNormalMap), sizeof(Material.bHasNormalMap));
+        
         File.read(reinterpret_cast<char*>(&Material.bTransparent), sizeof(Material.bTransparent));
         File.read(reinterpret_cast<char*>(&Material.DiffuseColor), sizeof(Material.DiffuseColor));
         File.read(reinterpret_cast<char*>(&Material.SpecularColor), sizeof(Material.SpecularColor));
         File.read(reinterpret_cast<char*>(&Material.AmbientColor), sizeof(Material.AmbientColor));
         File.read(reinterpret_cast<char*>(&Material.EmissiveColor), sizeof(Material.EmissiveColor));
+        
         File.read(reinterpret_cast<char*>(&Material.SpecularExponent), sizeof(Material.SpecularExponent));
         File.read(reinterpret_cast<char*>(&Material.IOR), sizeof(Material.IOR));
         File.read(reinterpret_cast<char*>(&Material.Transparency), sizeof(Material.Transparency));
+        File.read(reinterpret_cast<char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.read(reinterpret_cast<char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
-        Serializer::ReadFString(File, Material.DiffuseColorTextureName);
-        Serializer::ReadFWString(File, Material.DiffuseColorTexturePath);
-        Serializer::ReadFString(File, Material.AmbientColorTextureName);
-        Serializer::ReadFWString(File, Material.AmbientColorTexturePath);
-        Serializer::ReadFString(File, Material.SpecularColorTextureName);
-        Serializer::ReadFWString(File, Material.SpecularColorTexturePath);
-        Serializer::ReadFString(File, Material.BumpTextureName);
-        Serializer::ReadFWString(File, Material.BumpTexturePath);
-        Serializer::ReadFString(File, Material.AlphaTextureName);
-        Serializer::ReadFWString(File, Material.AlphaTexturePath);
 
-        if (!Material.DiffuseColorTexturePath.empty())
+        uint8 TextureNum = static_cast<uint8>(EMaterialTextureSlots::MTS_MAX);
+        Material.TextureNames.SetNum(TextureNum);
+        Material.TexturePaths.SetNum(TextureNum);
+        for (uint8 i = 0; i < TextureNum; ++i)
         {
-            Textures.AddUnique(Material.DiffuseColorTexturePath);
-        }
-        if (!Material.AmbientColorTexturePath.empty())
-        {
-            Textures.AddUnique(Material.AmbientColorTexturePath);
-        }
-        if (!Material.SpecularColorTexturePath.empty())
-        {
-            Textures.AddUnique(Material.SpecularColorTexturePath);
-        }
-        if (!Material.BumpTexturePath.empty())
-        {
-            Textures.AddUnique(Material.BumpTexturePath);
-        }
-        if (!Material.AlphaTexturePath.empty())
-        {
-            Textures.AddUnique(Material.AlphaTexturePath);
+            Serializer::ReadFString(File, Material.TextureNames[i]);
+            Serializer::ReadFWString(File, Material.TexturePaths[i]);
+
+            Textures.AddUnique(Material.TexturePaths[i]);
         }
     }
 

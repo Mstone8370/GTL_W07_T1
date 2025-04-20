@@ -75,39 +75,21 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 #endif
     }
 
-    // (1) 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
-    uint2 pixelCoord = uint2(Input.Position.xy);
-    uint2 tileCoord = pixelCoord / TileSize; // 각 성분별 나눔
-    uint tilesX = ScreenSize.x / TileSize.x; // 한 행에 존재하는 타일 수
-    uint flatTileIndex = tileCoord.x + tileCoord.y * tilesX;
-    
-    // (2) 현재 타일의 조명 정보 읽기
-    LightPerTiles tileLights = gLightPerTiles[flatTileIndex];
-    
-    // 조명 기여 누적 (예시: 단순히 조명 색상을 더함)
-    float3 lightingAccum = float3(0, 0, 0);
-    for (uint i = 0; i < tileLights.NumLights; ++i)
-    {
-        // tileLights.Indices[i] 는 전역 조명 인덱스
-        uint gPointLightIndex = tileLights.Indices[i];
-        //FPointLightInfo light = gPointLights[gPointLightIndex];
-        
-        float3 lightContribution = PointLight(gPointLightIndex, Input.WorldPosition, 
-            normalize(Input.WorldNormal),
-            ViewWorldLocation, DiffuseColor.rgb,
-            SpecularColor, SpecularExponent
-        );
-        lightingAccum += lightContribution;
-    }
-    //lightingAccum += Ambient[0].AmbientColor.rgb;
-    
+    // Begin for Tile based light culled result
+    // 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
+    uint2 PixelCoord = uint2(Input.Position.xy);
+    uint2 TileCoord = PixelCoord / TileSize; // 각 성분별 나눔
+    uint TilesX = ScreenSize.x / TileSize.x; // 한 행에 존재하는 타일 수
+    uint FlatTileIndex = TileCoord.x + TileCoord.y * TilesX;
+    // End for Tile based light culled result
+
     // Lighting
     if (IsLit)
     {
 #ifdef LIGHTING_MODEL_GOURAUD
         FinalColor = float4(Input.Color.rgb, 1.0);
 #else
-        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent);
+        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent, FlatTileIndex);
         FinalColor = float4(LitColor, 1);
 #endif
     }

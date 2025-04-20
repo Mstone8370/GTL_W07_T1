@@ -18,7 +18,7 @@ class UAmbientLightComponent;
 
 struct PointLightPerTile {
     uint32 NumLights;
-    uint32 Indice[MAX_POINTLIGHT_PER_TILE];
+    uint32 Indices[MAX_POINTLIGHT_PER_TILE];
     uint32 Padding[3];
 };
 
@@ -34,7 +34,8 @@ public:
     virtual void ClearRenderArr() override;
     void UpdateLightBuffer() const;
 
-    void SetPointLightData(TArray<UPointLightComponent*> InPointLights, TArray<TArray<uint32>> InPointLightPerTiles);
+    void SetPointLightData(const TArray<UPointLightComponent*>& InPointLights, TArray<TArray<uint32>> InPointLightPerTiles);
+
     void SetTileConstantBuffer(ID3D11Buffer* InTileConstantBuffer);
 
     void CreatePointLightBuffer();
@@ -62,6 +63,7 @@ private:
 
     ID3D11Buffer* PointLightBuffer;
     ID3D11ShaderResourceView* PointLightSRV;
+    
     ID3D11Buffer* PointLightPerTilesBuffer;
     ID3D11ShaderResourceView* PointLightPerTilesSRV;
 

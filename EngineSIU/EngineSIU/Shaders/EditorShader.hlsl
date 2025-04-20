@@ -1,6 +1,6 @@
 
 #include "EditorShaderConstants.hlsli"
-// #include "ShaderConstants.hlsli"
+ //#include "ShaderConstants.hlsli"
 
 #include "ShaderRegisters.hlsl"
 
@@ -198,8 +198,8 @@ PS_INPUT coneVS(VS_INPUT_POS_ONLY input, uint instanceID : SV_InstanceID)
 {
     PS_INPUT output;
     
-    float3 pos = DataCone[instanceID%2].ApexPosition;
-    float radius = DataCone[instanceID].InnerRadius;
+    float3 pos   = DataCone[instanceID % 2].ApexPosition;
+    float radius = DataCone[instanceID    ].InnerRadius;
     if (instanceID % 2 == 1)
     {
         radius = DataCone[instanceID].OuterRadius;
@@ -209,7 +209,7 @@ PS_INPUT coneVS(VS_INPUT_POS_ONLY input, uint instanceID : SV_InstanceID)
     {
         output.color = float4(0.4157, 0.5765, 0.7765, 1.0); // 짙은 하늘색
     }
-    float3 scale = float3(radius.xx, DataCone[instanceID%2].Height);
+    float3 scale = float3(radius.xx, DataCone[instanceID % 2].Height);
     float3x3 rot = CreateRotationMatrixFromZ(DataCone[instanceID%2].Direction);
     
     float3 localPos3 = input.position.xyz;
