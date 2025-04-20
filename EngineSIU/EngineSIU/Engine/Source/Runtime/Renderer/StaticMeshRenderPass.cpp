@@ -93,6 +93,17 @@ void FStaticMeshRenderPass::CreateShader()
     {
         return;
     }
+
+    D3D_SHADER_MACRO DefinesSG[] =
+    {
+        { SPECULAR_GLOSSINESS, "1" },
+        { nullptr, nullptr }
+    };
+    hr = ShaderManager->AddPixelShader(L"SG_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesSG);
+    if (FAILED(hr))
+    {
+        return;
+    }
     
 #pragma endregion UberShader
     
@@ -132,6 +143,12 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
         PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
         UpdateLitUnlitConstant(0);
+        break;
+    case EViewModeIndex::VMI_LIT_SG:
+        VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+        InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+        PixelShader = ShaderManager->GetPixelShaderByKey(L"SG_StaticMeshPixelShader");
+        UpdateLitUnlitConstant(1);
         break;
     case EViewModeIndex::VMI_Lit_BlinnPhong:
     default:

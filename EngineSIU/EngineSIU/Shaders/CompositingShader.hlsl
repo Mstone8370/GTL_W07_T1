@@ -9,12 +9,13 @@ SamplerState CompositingSampler : register(s0);
 #define VMI_Lit_Gouraud      0
 #define VMI_Lit_Lambert      1
 #define VMI_Lit_BlinnPhong   2
-#define VMI_Unlit            3
-#define VMI_Wireframe        4
-#define VMI_SceneDepth       5
-#define VMI_WorldNormal      6
-#define VMI_WorldTangent     7
-#define VMI_LightHeatMap     8
+#define VMI_Lit_SG           3
+#define VMI_Unlit            4
+#define VMI_Wireframe        5
+#define VMI_SceneDepth       6
+#define VMI_WorldNormal      7
+#define VMI_WorldTangent     8
+#define VMI_LightHeatMap     9
 
 cbuffer ViewMode : register(b0)
 {

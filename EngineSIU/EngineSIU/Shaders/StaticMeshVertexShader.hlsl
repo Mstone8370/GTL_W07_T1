@@ -25,8 +25,6 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
     
     Output.Position = mul(Output.Position, ViewMatrix);
     Output.Position = mul(Output.Position, ProjectionMatrix);
-
-    // Output.WorldViewPosition = float3(InvViewMatrix._41, InvViewMatrix._42, InvViewMatrix._43);
     
     Output.WorldNormal = mul(Input.Normal, (float3x3)InverseTransposedWorld);
 

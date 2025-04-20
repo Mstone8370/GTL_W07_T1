@@ -24,7 +24,11 @@ cbuffer TextureConstants : register(b4)
     float2 TexturePad0;
 }
 
+#ifdef LIGHTING_MODEL_SG
+#include "LightSG.hlsl"
+#else
 #include "Light.hlsl"
+#endif
 
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 {
@@ -88,12 +92,12 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         uint gPointLightIndex = tileLights.Indices[i];
         //FPointLightInfo light = gPointLights[gPointLightIndex];
         
-        float4 lightContribution = PointLight(gPointLightIndex, Input.WorldPosition, 
+        float3 lightContribution = PointLight(gPointLightIndex, Input.WorldPosition, 
             normalize(Input.WorldNormal),
             ViewWorldLocation, DiffuseColor.rgb,
             SpecularColor, SpecularExponent
         );
-        lightingAccum += lightContribution.rgb;
+        lightingAccum += lightContribution;
     }
     //lightingAccum += Ambient[0].AmbientColor.rgb;
     
@@ -103,7 +107,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 #ifdef LIGHTING_MODEL_GOURAUD
         FinalColor = float4(Input.Color.rgb, 1.0);
 #else
-        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent).rgb;
+        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent);
         FinalColor = float4(LitColor, 1);
 #endif
     }
