@@ -214,13 +214,13 @@ float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     float4 FinalColor = float4(0.0, 0.0, 0.0, 0.0);
     
     // 다소 비효율적일 수도 있음.
-/*
+
     [unroll(MAX_POINT_LIGHT)]
     for (int i = 0; i < PointLightsCount; i++)
     {
         FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor);
     }
-*/    
+    
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {
