@@ -40,7 +40,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 
     // Normal
     float3 WorldNormal = normalize(Input.WorldNormal);
-    if (Material.TextureFlag & (1 << 2))
+    if (Material.TextureFlag & TEXTURE_FLAG_NORMAL)
     {
         float3 Tangent = normalize(Input.WorldTangent.xyz);
         float Sign = Input.WorldTangent.w;

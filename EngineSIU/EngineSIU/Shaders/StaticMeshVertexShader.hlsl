@@ -41,7 +41,7 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
 
 #ifdef LIGHTING_MODEL_GOURAUD
     float3 DiffuseColor = Input.Color;
-    if (Material.TextureFlag & (1 << 1))
+    if (Material.TextureFlag & TEXTURE_FLAG_DIFFUSE)
     {
         DiffuseColor = DiffuseTexture.SampleLevel(DiffuseSampler, Input.UV, 0).rgb;
         DiffuseColor = SRGBToLinear(DiffuseColor);

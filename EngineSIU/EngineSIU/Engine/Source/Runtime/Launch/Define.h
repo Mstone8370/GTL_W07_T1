@@ -116,6 +116,12 @@ struct FObjMaterialInfo
     uint32 IlluminanceModel; // illum: illumination Model between 0 and 10.
 
     /* Texture */
+    TArray<FString> TextureNames;
+    TArray<FWString> TexturePaths;
+
+    ////////
+    /// Deprecated Variables
+    ////////
     FString DiffuseColorTextureName;  // map_Kd: Diffuse Color texture
     FWString DiffuseColorTexturePath;
 

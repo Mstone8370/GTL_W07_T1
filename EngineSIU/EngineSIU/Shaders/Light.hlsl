@@ -152,7 +152,7 @@ float4 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float Wor
     float3 Lit = (DiffuseFactor * DiffuseColor) * LightInfo.LightColor.rgb;
 #else
     float3 ViewDir = normalize(WorldViewPosition - WorldPosition);
-    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Material.SpecularScalar);
+    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Material.SpecularExponent);
     float3 Lit = ((DiffuseFactor * DiffuseColor) + (SpecularFactor * Material.SpecularColor)) * LightInfo.LightColor.rgb;
 #endif
     
@@ -185,7 +185,7 @@ float4 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wor
     float3 Lit = DiffuseFactor * DiffuseColor * LightInfo.LightColor.rgb;
 #else
     float3 ViewDir = normalize(WorldViewPosition - WorldPosition);
-    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Material.SpecularScalar);
+    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Material.SpecularExponent);
     float3 Lit = ((DiffuseFactor * DiffuseColor) + (SpecularFactor * Material.SpecularColor)) * LightInfo.LightColor.rgb;
 #endif
     
@@ -203,7 +203,7 @@ float4 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, fl
 #ifdef LIGHTING_MODEL_LAMBERT
     float3 Lit = DiffuseFactor * DiffuseColor * LightInfo.LightColor.rgb;
 #else
-    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Material.SpecularScalar);
+    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Material.SpecularExponent);
     float3 Lit = ((DiffuseFactor * DiffuseColor) + (SpecularFactor * Material.SpecularColor)) * LightInfo.LightColor.rgb;
 #endif
     return float4(Lit * LightInfo.Intensity, 1.0);

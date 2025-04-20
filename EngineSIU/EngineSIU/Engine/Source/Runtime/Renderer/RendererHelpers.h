@@ -40,7 +40,7 @@ namespace MaterialUtils
         {
             if (MaterialInfo.TextureFlag & (1 << i)) // EMaterialTextureFlags와 EMaterialTextureSlots의 순서가 일치한다는 전제 조건.
             {
-                std::shared_ptr<FTexture> Texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.DiffuseColorTexturePath);
+                std::shared_ptr<FTexture> Texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.TexturePaths[i]);
                 SRVs[i] = Texture->TextureSRV;
                 Samplers[i] = Texture->SamplerState;
 
