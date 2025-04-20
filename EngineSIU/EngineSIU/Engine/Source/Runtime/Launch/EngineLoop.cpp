@@ -208,15 +208,17 @@ LRESULT CALLBACK FEngineLoop::AppWndProc(HWND hWnd, uint32 Msg, WPARAM wParam, L
     {
     case WM_DESTROY:
         PostQuitMessage(0);
+        if (auto LevelEditor = GEngineLoop.GetLevelEditor())
+        {
+            LevelEditor->SaveConfig();
+        }
         break;
     case WM_SIZE:
         if (wParam != SIZE_MINIMIZED)
         {
-            auto LevelEditor = GEngineLoop.GetLevelEditor();
-            if (LevelEditor)
+            if (auto LevelEditor = GEngineLoop.GetLevelEditor())
             {
                 FEngineLoop::GraphicDevice.Resize(hWnd);
-                // FEngineLoop::Renderer.DepthPrePass->ResizeDepthStencil();
                 FEngineLoop::Renderer.TileLightCullingPass->ResizeViewBuffers();
                 
                 uint32 ClientWidth = 0;
