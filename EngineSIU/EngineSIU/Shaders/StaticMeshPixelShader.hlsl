@@ -91,11 +91,45 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     // Lighting
     if (IsLit)
     {
+        // Shadow Mapping
+        bool shadowed = false;
+        float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
+        PositionFromLight = mul(PositionFromLight, mLightView);
+        PositionFromLight = mul(PositionFromLight, mLightProj);
+        PositionFromLight /= PositionFromLight.w;
+        float2 shadowUV = {
+            0.5f + PositionFromLight.x * 0.5f,
+            0.5f - PositionFromLight.y * 0.5f
+        };
+        float shadowZ = PositionFromLight.z;
+        shadowZ -= 0.0001f; // bias
         
+        float DepthFromLight = ShadowTexture.Sample(ShadowSampler, shadowUV).r;
+        if (shadowZ > DepthFromLight)
+            shadowed = true;
 #ifdef LIGHTING_MODEL_GOURAUD
-        FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
+        if (shadowed)
+        {
+            FinalColor = float4(0.f, 0.f, 0.f, 1.f);
+        }
+        else
+        {
+            FinalColor = float4(Input.Color.rgb * DiffuseColor, 1.0);
+        }
 #else
-        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
+        float3 LitColor = float3(0.f, 0.f, 0.f);
+        if (shadowed)
+        {
+            [unroll(MAX_AMBIENT_LIGHT)]
+            for (int l = 0; l < AmbientLightsCount; l++)
+            {
+                LitColor += Ambient[l].AmbientColor.rgb;
+            }
+        }
+        else
+        {
+            LitColor = Lighting(Input.WorldPosition, WorldNormal, Input.WorldViewPosition, DiffuseColor).rgb;
+        }
         
         // 디버깅용 ---- PointLight 전역 배열에 대한 라이팅 테스팅
         //LitColor = float3(0, 0, 0);
@@ -109,24 +143,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     {
         FinalColor = float4(DiffuseColor, 1);
     }
-    
-    // Shadow Mapping
-    float shadowFactor = 1.0f;
-    float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
-    PositionFromLight = mul(PositionFromLight, mLightView);
-    PositionFromLight = mul(PositionFromLight, mLightProj);
-    PositionFromLight /= PositionFromLight.w;
-    float2 shadowUV = {
-        0.5f + PositionFromLight.x * 0.5f,
-        0.5f - PositionFromLight.y * 0.5f
-    };
-    float shadowZ = PositionFromLight.z;
-    shadowZ -= 0.0001f; // bias
-    
-    float DepthFromLight = ShadowTexture.Sample(ShadowSampler, shadowUV).r;
-    if (shadowZ > DepthFromLight)
-        shadowFactor = 0.1f;
-    FinalColor *= shadowFactor;
+
     
     if (bIsSelected)
     {
