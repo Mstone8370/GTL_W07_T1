@@ -32,38 +32,28 @@ namespace MaterialUtils
         Data.Transparency = MaterialInfo.Transparency;
 
         BufferManager->UpdateConstantBuffer(TEXT("FMaterialConstants"), Data);
-        
-        // Update Textures
-        if (MaterialInfo.TextureFlag & static_cast<uint16>(EMaterialTextureFlags::Diffuse))
-        {
-            std::shared_ptr<FTexture> texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.DiffuseColorTexturePath);
-            Graphics->DeviceContext->PSSetShaderResources(0, 1, &texture->TextureSRV);
-            Graphics->DeviceContext->PSSetSamplers(0, 1, &texture->SamplerState);
 
-            // for Gouraud shading
-            Graphics->DeviceContext->VSSetShaderResources(0, 1, &texture->TextureSRV);
-            Graphics->DeviceContext->VSSetSamplers(0, 1, &texture->SamplerState);
-        }
-        else
-        {
-            ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
-            ID3D11SamplerState* NullSampler[1] = { nullptr };
-            Graphics->DeviceContext->PSSetShaderResources(0, 1, NullSRV);
-            Graphics->DeviceContext->PSSetSamplers(0, 1, NullSampler);
+        ID3D11ShaderResourceView* SRVs[9] = {};
+        ID3D11SamplerState* Samplers[9] = {};
 
-        }
-        
-        if (MaterialInfo.TextureFlag & static_cast<uint16>(EMaterialTextureFlags::Normal))
+        for (uint8 i = 0; i < static_cast<uint8>(EMaterialTextureSlots::MTS_MAX); ++i)
         {
-            std::shared_ptr<FTexture> texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.BumpTexturePath);
-            Graphics->DeviceContext->PSSetShaderResources(1, 1, &texture->TextureSRV);
-            Graphics->DeviceContext->PSSetSamplers(1, 1, &texture->SamplerState);
+            if (MaterialInfo.TextureFlag & (1 << i)) // EMaterialTextureFlags와 EMaterialTextureSlots의 순서가 일치한다는 전제 조건.
+            {
+                std::shared_ptr<FTexture> Texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.DiffuseColorTexturePath);
+                SRVs[i] = Texture->TextureSRV;
+                Samplers[i] = Texture->SamplerState;
+
+                if (i == static_cast<uint8>(EMaterialTextureSlots::MTS_Diffuse))
+                {
+                    // for Gouraud shading
+                    Graphics->DeviceContext->VSSetShaderResources(0, 1, &Texture->TextureSRV);
+                    Graphics->DeviceContext->VSSetSamplers(0, 1, &Texture->SamplerState);
+                }
+            }
         }
-        else {
-            ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
-            ID3D11SamplerState* NullSampler[1] = { nullptr };
-            Graphics->DeviceContext->PSSetShaderResources(1, 1, NullSRV);
-            Graphics->DeviceContext->PSSetSamplers(1, 1, NullSampler);
-        }
+
+        Graphics->DeviceContext->PSSetShaderResources(0, 8, SRVs);
+        Graphics->DeviceContext->PSSetSamplers(0, 8, Samplers);
     }
 }

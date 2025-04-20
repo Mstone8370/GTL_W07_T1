@@ -1,12 +1,6 @@
 
 #include "ShaderRegisters.hlsl"
 
-SamplerState DiffuseSampler : register(s0);
-SamplerState NormalSampler : register(s1);
-
-Texture2D DiffuseTexture : register(t0);
-Texture2D NormalTexture : register(t1);
-
 cbuffer MaterialConstants : register(b1)
 {
     FMaterial Material;
@@ -38,9 +32,9 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 
     // Diffuse
     float3 DiffuseColor = Material.DiffuseColor;
-    if (Material.TextureFlag & (1 << 1))
+    if (Material.TextureFlag & TEXTURE_FLAG_DIFFUSE)
     {
-        DiffuseColor = DiffuseTexture.Sample(DiffuseSampler, Input.UV).rgb;
+        DiffuseColor = MaterialTextures[TEXTURE_SLOT_DIFFUSE].Sample(MaterialSamplers[TEXTURE_SLOT_DIFFUSE], Input.UV).rgb;
         DiffuseColor = SRGBToLinear(DiffuseColor);
     }
 
@@ -54,7 +48,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 
         float3x3 TBN = float3x3(Tangent, BiTangent, WorldNormal);
         
-        float3 Normal = NormalTexture.Sample(NormalSampler, Input.UV).rgb;
+        float3 Normal = MaterialTextures[TEXTURE_SLOT_NORMAL].Sample(MaterialSamplers[TEXTURE_SLOT_NORMAL], Input.UV).rgb;
         Normal = normalize(2.f * Normal - 1.f);
         WorldNormal = normalize(mul(Normal, TBN));
     }

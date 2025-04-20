@@ -306,7 +306,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
             OutFStaticMesh.Materials[MaterialIndex].DiffuseColorTexturePath = TexturePath;
             if (CreateTextureFromFile(TexturePath))
             {
-                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::Diffuse);
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Diffuse);
             }
         }
         if (Token == "map_Bump")
@@ -328,7 +328,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
                     OutFStaticMesh.Materials[MaterialIndex].BumpTexturePath = TexturePath;
                     if (CreateTextureFromFile(TexturePath))
                     {
-                        OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::Normal);
+                        OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Normal);
                     }
                 }
             }
@@ -342,7 +342,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
             OutFStaticMesh.Materials[MaterialIndex].SpecularColorTexturePath = TexturePath;
             if (CreateTextureFromFile(TexturePath))
             {
-                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::Specular);
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Specular);
             }
         }
         if (Token == "map_Ns")
@@ -354,7 +354,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
             OutFStaticMesh.Materials[MaterialIndex].SpecularExponentTexturePath = TexturePath;
             if (CreateTextureFromFile(TexturePath))
             {
-                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::Shininess);
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Shininess);
             }
         }
         if (Token == "map_Ka")
@@ -366,7 +366,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
             OutFStaticMesh.Materials[MaterialIndex].AmbientColorTexturePath = TexturePath;
             if (CreateTextureFromFile(OutFStaticMesh.Materials[MaterialIndex].AmbientColorTexturePath))
             {
-                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::Ambient);
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Ambient);
             }
         }
         if (Token == "map_Ke")
@@ -378,7 +378,7 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
             OutFStaticMesh.Materials[MaterialIndex].EmissiveColorTexturePath = TexturePath;
             if (CreateTextureFromFile(OutFStaticMesh.Materials[MaterialIndex].EmissiveColorTexturePath))
             {
-                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::Emissive);
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Emissive);
             }
         }
         // TODO: map_d 또는 map_Tr은 나중에 필요할때 구현

@@ -70,15 +70,30 @@ struct FObjInfo
 
 enum class EMaterialTextureFlags : uint16
 {
-    Diffuse      = 1 << 0,
-    Specular     = 1 << 1,
-    Normal       = 1 << 2,
-    Emissive     = 1 << 3,
-    Alpha        = 1 << 4,
-    Ambient      = 1 << 5,
-    Shininess    = 1 << 6,
-    Displacement = 1 << 7,
-    Decal        = 1 << 8,
+    MTF_Diffuse      = 1 << 0,
+    MTF_Specular     = 1 << 1,
+    MTF_Normal       = 1 << 2,
+    MTF_Emissive     = 1 << 3,
+    MTF_Alpha        = 1 << 4,
+    MTF_Ambient      = 1 << 5,
+    MTF_Shininess    = 1 << 6,
+    MTF_Displacement = 1 << 7,
+    MTF_Decal        = 1 << 8,
+    MTF_MAX,
+};
+
+enum class EMaterialTextureSlots : uint8
+{
+    MTS_Diffuse      = 0,
+    MTS_Specular     = 1,
+    MTS_Normal       = 2,
+    MTS_Emissive     = 3,
+    MTS_Alpha        = 4,
+    MTS_Ambient      = 5,
+    MTS_Shininess    = 6,
+    MTS_Displacement = 7,
+    MTS_Decal        = 8,
+    MTS_MAX,
 };
 
 struct FObjMaterialInfo

@@ -47,17 +47,28 @@ struct FMaterial
     float Opacity;
 };
 
-#define MATERIAL_TEXTURE_DIFFUSE       (1 << 0)
-#define MATERIAL_TEXTURE_SPECULAR      (1 << 1)
-#define MATERIAL_TEXTURE_NORMAL        (1 << 2)
-#define MATERIAL_TEXTURE_EMISSIVE      (1 << 3)
-#define MATERIAL_TEXTURE_ALPHA         (1 << 4)
-#define MATERIAL_TEXTURE_AMBIENT       (1 << 5)
-#define MATERIAL_TEXTURE_SHININESS     (1 << 6)
-#define MATERIAL_TEXTURE_DISPLACEMENT  (1 << 7)
-#define MATERIAL_TEXTURE_DECAL         (1 << 8)
+#define TEXTURE_FLAG_DIFFUSE       (1 << 0)
+#define TEXTURE_FLAG_SPECULAR      (1 << 1)
+#define TEXTURE_FLAG_NORMAL        (1 << 2)
+#define TEXTURE_FLAG_EMISSIVE      (1 << 3)
+#define TEXTURE_FLAG_ALPHA         (1 << 4)
+#define TEXTURE_FLAG_AMBIENT       (1 << 5)
+#define TEXTURE_FLAG_SHININESS     (1 << 6)
+#define TEXTURE_FLAG_DISPLACEMENT  (1 << 7)
+#define TEXTURE_FLAG_DECAL         (1 << 8)
+
+#define TEXTURE_SLOT_DIFFUSE       (0)
+#define TEXTURE_SLOT_SPECULAR      (1)
+#define TEXTURE_SLOT_NORMAL        (2)
+#define TEXTURE_SLOT_EMISSIVE      (3)
+#define TEXTURE_SLOT_ALPHA         (4)
+#define TEXTURE_SLOT_AMBIENT       (5)
+#define TEXTURE_SLOT_SHININESS     (6)
+#define TEXTURE_SLOT_DISPLACEMENT  (7)
+#define TEXTURE_SLOT_DECAL         (8)
 
 Texture2D MaterialTextures[9] : register(t0);
+SamplerState MaterialSamplers[9] : register(s0);
 
 struct VS_INPUT_StaticMesh
 {
