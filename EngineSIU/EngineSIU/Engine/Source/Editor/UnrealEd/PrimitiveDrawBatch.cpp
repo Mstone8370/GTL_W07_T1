@@ -227,14 +227,14 @@ void UPrimitiveDrawBatch::ReleaseOBBBuffers()
 void UPrimitiveDrawBatch::AddAABBToBatch(const FBoundingBox& LocalAABB, const FVector& Center, const FMatrix& ModelMatrix)
 {
     FVector LocalVertices[8] = {
-        { LocalAABB.min.X, LocalAABB.min.Y, LocalAABB.min.Z },
-        { LocalAABB.max.X, LocalAABB.min.Y, LocalAABB.min.Z },
-        { LocalAABB.min.X, LocalAABB.max.Y, LocalAABB.min.Z },
-        { LocalAABB.max.X, LocalAABB.max.Y, LocalAABB.min.Z },
-        { LocalAABB.min.X, LocalAABB.min.Y, LocalAABB.max.Z },
-        { LocalAABB.max.X, LocalAABB.min.Y, LocalAABB.max.Z },
-        { LocalAABB.min.X, LocalAABB.max.Y, LocalAABB.max.Z },
-        { LocalAABB.max.X, LocalAABB.max.Y, LocalAABB.max.Z }
+        { LocalAABB.Min.X, LocalAABB.Min.Y, LocalAABB.Min.Z },
+        { LocalAABB.Max.X, LocalAABB.Min.Y, LocalAABB.Min.Z },
+        { LocalAABB.Min.X, LocalAABB.Max.Y, LocalAABB.Min.Z },
+        { LocalAABB.Max.X, LocalAABB.Max.Y, LocalAABB.Min.Z },
+        { LocalAABB.Min.X, LocalAABB.Min.Y, LocalAABB.Max.Z },
+        { LocalAABB.Max.X, LocalAABB.Min.Y, LocalAABB.Max.Z },
+        { LocalAABB.Min.X, LocalAABB.Max.Y, LocalAABB.Max.Z },
+        { LocalAABB.Max.X, LocalAABB.Max.Y, LocalAABB.Max.Z }
     };
 
     FVector WorldVertices[8];
@@ -253,22 +253,22 @@ void UPrimitiveDrawBatch::AddAABBToBatch(const FBoundingBox& LocalAABB, const FV
         Max.Z = (WorldVertices[i].Z > Max.Z) ? WorldVertices[i].Z : Max.Z;
     }
     FBoundingBox BoundingBox;
-    BoundingBox.min = Min;
-    BoundingBox.max = Max;
+    BoundingBox.Min = Min;
+    BoundingBox.Max = Max;
     BoundingBoxes.Add(BoundingBox);
 }
 
 void UPrimitiveDrawBatch::AddOBBToBatch(const FBoundingBox& LocalAABB, const FVector& Center, const FMatrix& ModelMatrix)
 {
     FVector LocalVertices[8] = {
-        { LocalAABB.min.X, LocalAABB.min.Y, LocalAABB.min.Z },
-        { LocalAABB.max.X, LocalAABB.min.Y, LocalAABB.min.Z },
-        { LocalAABB.min.X, LocalAABB.max.Y, LocalAABB.min.Z },
-        { LocalAABB.max.X, LocalAABB.max.Y, LocalAABB.min.Z },
-        { LocalAABB.min.X, LocalAABB.min.Y, LocalAABB.max.Z },
-        { LocalAABB.max.X, LocalAABB.min.Y, LocalAABB.max.Z },
-        { LocalAABB.min.X, LocalAABB.max.Y, LocalAABB.max.Z },
-        { LocalAABB.max.X, LocalAABB.max.Y, LocalAABB.max.Z }
+        { LocalAABB.Min.X, LocalAABB.Min.Y, LocalAABB.Min.Z },
+        { LocalAABB.Max.X, LocalAABB.Min.Y, LocalAABB.Min.Z },
+        { LocalAABB.Min.X, LocalAABB.Max.Y, LocalAABB.Min.Z },
+        { LocalAABB.Max.X, LocalAABB.Max.Y, LocalAABB.Min.Z },
+        { LocalAABB.Min.X, LocalAABB.Min.Y, LocalAABB.Max.Z },
+        { LocalAABB.Max.X, LocalAABB.Min.Y, LocalAABB.Max.Z },
+        { LocalAABB.Min.X, LocalAABB.Max.Y, LocalAABB.Max.Z },
+        { LocalAABB.Max.X, LocalAABB.Max.Y, LocalAABB.Max.Z }
     };
 
     FOBB OBB;

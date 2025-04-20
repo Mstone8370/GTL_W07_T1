@@ -90,13 +90,14 @@ public:
         FPlatformMemory::Free<EAT_Object>(ptr, size);
     }
 
-    FVector4 EncodeUUID() const {
+    FVector4 EncodeUUID() const
+    {
         FVector4 result;
 
-        result.X = UUID % 0xFF;
-        result.Y = UUID >> 8 & 0xFF;
-        result.Z = UUID >> 16 & 0xFF;
-        result.W = UUID >> 24 & 0xFF;
+        result.X = static_cast<float>((UUID >> 0) & 0xFF);
+        result.Y = static_cast<float>((UUID >> 8) & 0xFF);
+        result.Z = static_cast<float>((UUID >> 16) & 0xFF);
+        result.W = static_cast<float>((UUID >> 24) & 0xFF);
 
         return result;
     }

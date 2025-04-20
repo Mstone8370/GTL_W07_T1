@@ -102,7 +102,7 @@ void SSplitterH::OnDrag(const FPoint& Delta)
 {
     // 수평 스플리터의 경우, 좌우로 이동
     float CenterX = GetSplitterLTCenter();
-    CenterX += Delta.x;
+    CenterX += Delta.X;
 
     // 픽셀 단위 이동을 위해 정수형으로 변환 후 계산
     SplitRatio = std::trunc(CenterX) / Rect.Width;
@@ -178,7 +178,7 @@ void SSplitterV::OnResize(uint32 InWidth, uint32 InHeight)
 void SSplitterV::OnDrag(const FPoint& Delta)
 {
     float CenterY = GetSplitterLTCenter();
-    CenterY += Delta.y;
+    CenterY += Delta.Y;
 
     // 픽셀 단위 이동을 위해 정수형으로 변환 후 계산
     SplitRatio = std::trunc(CenterY) / Rect.Height;
