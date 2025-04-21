@@ -87,9 +87,9 @@ void FShadowMapPass::PrepareRenderState(const std::shared_ptr<FEditorViewportCli
 
 void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LgihtProjection)
 {
-    FLightMatrix ObjectData = {};
-    ObjectData.LightViewMat = LightView;
-    ObjectData.LightProjectMat = LgihtProjection;
+    FLightConstants ObjectData = {};
+    ObjectData.LightViewMatrix = LightView;
+    ObjectData.LightProjMatrix = LgihtProjection;
     
     BufferManager->UpdateConstantBuffer(TEXT("FLightMatrix"), ObjectData);
 }

@@ -41,10 +41,9 @@ cbuffer FLightConstants: register(b5)
 
 #include "Light.hlsl"
 
-SamplerComparisonState ShadowPCF : register(s2);
-TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t2);
+TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t3);
 
-cbuffer PointLightConstant : register(b5)
+cbuffer PointLightConstant : register(b6)
 {
     row_major matrix viewMatrix[MAX_POINT_LIGHT*6];
     row_major matrix projectionMatrix[MAX_POINT_LIGHT];
@@ -78,7 +77,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
         return 1.0;
     }
     float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
-        ShadowPCF,
+        ShadowSampler,
         dir,
         clipPos.z - SHADOW_BIAS
     );
