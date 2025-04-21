@@ -821,7 +821,7 @@ void FEditorRenderPass::UpdateTextureIcon(IconType type)
 void FEditorRenderPass::RenderArrows()
 {
     // XYZ한번. Z는 중복으로 적용
-    const float ArrowScale = 1;
+    const float ArrowScale = 1.25f;
 
     SetShaderAndPrepare(L"ArrowVS", L"ArrowPS", Resources.Shaders.Arrow);
     UINT offset = 0;
