@@ -3,6 +3,7 @@
 
 class UPointLightComponent;
 class ULightComponentBase;
+class UDirectionalLightComponent;
 
 class FShadowMapPass : public FStaticMeshRenderPass
 {
@@ -18,7 +19,10 @@ public:
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     virtual void ClearRenderArr() override;
     void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
-    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LgihtProjection);
+    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
     void CraeteShadowShader();
-    TArray<UPointLightComponent*> LightComponents;
+
+private:
+    TArray<UPointLightComponent*> PointLightComponents;
+    TArray<UDirectionalLightComponent*> DirectionalLightComponents;
 };

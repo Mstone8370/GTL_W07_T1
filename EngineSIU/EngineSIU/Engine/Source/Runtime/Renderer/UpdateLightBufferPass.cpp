@@ -123,7 +123,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.SpotLights[SpotLightsCount].Direction = Light->GetDirection();
             SpotLightsCount++;
 
-            RenderShadowMap(Light);
+            // RenderShadowMap(Light);
         }
     }
 
@@ -145,7 +145,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.Directional[DirectionalLightsCount].Direction = Light->GetDirection();
             DirectionalLightsCount++;
             
-            RenderShadowMap(Light);
+            // RenderShadowMap(Light);
         }
     }
 
