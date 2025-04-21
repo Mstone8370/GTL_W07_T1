@@ -187,8 +187,8 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
             float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
             LitColor += LitColor.rgb * shadow;
         }
-        // FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
-        FinalColor = float4(LitColor, 1);
+        FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
+        // FinalColor = float4(LitColor, 1);
 #endif
     }
     else
