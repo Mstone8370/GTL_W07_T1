@@ -65,7 +65,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     // (C) 그 face 에 맞는 뷰·프로젝션으로 깊이 계산
     float4 viewPos = mul( float4(worldPos, 1),viewMatrix[lightIndex * 6 + face]);
     float4 clipPos = mul(viewPos,projectionMatrix[lightIndex]);
-    float  depthRef = clipPos.z / clipPos.w - SHADOW_BIAS;
+    float  depthRef = clipPos.z / clipPos.w;
 
     clipPos.xyz /= clipPos.w;
 
@@ -79,7 +79,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
         ShadowPCF,
         dir,
-        clipPos.z - SHADOW_BIAS
+        clipPos.z
     );
     
     return shadow;

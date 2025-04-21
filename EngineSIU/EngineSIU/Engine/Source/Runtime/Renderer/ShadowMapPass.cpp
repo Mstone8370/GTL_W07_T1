@@ -114,7 +114,7 @@ void FShadowMapPass::PrepareRenderState(const std::shared_ptr<FEditorViewportCli
 
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
+    Graphics->DeviceContext->RSSetState(Graphics->RasterizerShadowMap);
 
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
