@@ -350,11 +350,9 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     {
         UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
         FLightConstants LightData = {};
-        FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, tempDirLight->GetWorldMatrix());
-        // FVector Position = InLightComponent->GetWorldLocation();
-        FVector Position = -Cast<UDirectionalLightComponent>(tempDirLight)->GetDirection()*500;
-        LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
-        LightData.LightProjMatrix = JungleMath::CreateOrthoProjectionMatrix(100, 100, 0.1f, 1000.f);
+        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
+        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
+        LightData.ShadowMapSize = tempDirLight->ShadowMapSize;
         BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
         BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
 

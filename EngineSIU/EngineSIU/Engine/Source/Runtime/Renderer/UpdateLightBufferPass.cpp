@@ -45,8 +45,8 @@ void FUpdateLightBufferPass::Initialize(FDXDBufferManager* InBufferManager, FGra
     CreatePointLightPerTilesBuffer();
 
     // viewport for shadow map
-    ShadowMapViewport.Width = 2048;
-    ShadowMapViewport.Height = 2048;
+    ShadowMapViewport.Width = 4096;
+    ShadowMapViewport.Height = 4096;
     ShadowMapViewport.MinDepth = 0.0f;
     ShadowMapViewport.MaxDepth = 1.0f;
     ShadowMapViewport.TopLeftX = 0;
@@ -88,6 +88,7 @@ void FUpdateLightBufferPass::PrepareRenderArr()
 
 void FUpdateLightBufferPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    ViewportClient = Viewport.get();
     UpdateLightBuffer();
     Graphics->DeviceContext->PSSetShaderResources(10, 1, &PointLightSRV);
     Graphics->DeviceContext->PSSetShaderResources(20, 1, &PointLightPerTilesSRV);
@@ -305,7 +306,6 @@ void FUpdateLightBufferPass::RenderShadowMap(ULightComponentBase* InLightCompone
     UINT OriginalViewportCount = 1;
     D3D11_VIEWPORT OriginalViewport = {};
     Graphics->DeviceContext->RSGetViewports(&OriginalViewportCount, &OriginalViewport);
-    Graphics->DeviceContext->RSSetViewports(1, &ShadowMapViewport);
     
     PrepareRenderState(InLightComponent);
     RenderAllStaticMeshes();
@@ -321,14 +321,10 @@ void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComp
     
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
-
+    Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
     // 뎁스만 필요하므로, 픽셀 쉐이더는 지정 안함.
     Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
-
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-    Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
-
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
     
     // Update Light Constants
@@ -337,11 +333,11 @@ void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComp
    
     if (UDirectionalLightComponent* casted = Cast<UDirectionalLightComponent>(InLightComponent))
     {
-        FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, InLightComponent->GetWorldMatrix());
-        // FVector Position = InLightComponent->GetWorldLocation();
-        FVector Position = -Cast<UDirectionalLightComponent>(InLightComponent)->GetDirection()*500;
-        LightData.LightViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, FVector::UpVector);
-        LightData.LightProjMatrix = JungleMath::CreateOrthoProjectionMatrix(100, 100, 0.1f, 1000.f);
+        ShadowMapViewport.Width = casted->ShadowMapSize;
+        ShadowMapViewport.Height = casted->ShadowMapSize;
+        LightData.LightViewMatrix = casted->GetLightViewMatrix(ViewportClient->GetCameraLocation());
+        LightData.LightProjMatrix = casted->GetLightProjMatrix();
+        LightData.ShadowMapSize = casted->ShadowMapSize;
     }
     else if (USpotLightComponent* casted = Cast<USpotLightComponent>(InLightComponent))
     {
@@ -356,6 +352,9 @@ void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComp
     {
         
     }
+    
+    Graphics->DeviceContext->RSSetViewports(1, &ShadowMapViewport);
+    
     BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Vertex);
     BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
     

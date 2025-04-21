@@ -1,5 +1,6 @@
 #include "DirectionalLightComponent.h"
 #include "Components/SceneComponent.h"
+#include "Math/JungleMath.h"
 #include "Math/Rotator.h"
 #include "Math/Quat.h"
 #include "UObject/Casts.h"
@@ -98,6 +99,24 @@ void UDirectionalLightComponent::SetLightColor(const FLinearColor& InColor)
     DirectionalLightInfo.LightColor = InColor;
 }
 
+FMatrix UDirectionalLightComponent::GetLightViewMatrix(const FVector& CamPosition)
+{
+    FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, GetRotationMatrix());
+    FVector psuedoUp = FVector::UpVector;
+    // if Forward similar with UpVector or DownVector
+    if (abs(Forward.Dot(psuedoUp) - 1.f) < 1e-6f || abs(Forward.Dot(psuedoUp) + 1.f) < 1e-6f)
+    {
+        psuedoUp = FVector::ForwardVector;
+    }
+    FVector Position = CamPosition - GetDirection() * farPlane / 2.f;
+    return  JungleMath::CreateViewMatrix(Position, Position + Forward, psuedoUp);
+}
+
+FMatrix UDirectionalLightComponent::GetLightProjMatrix()
+{
+    return JungleMath::CreateOrthoProjectionMatrix(ShadowFrustumWidth, ShadowFrustumHeight, nearPlane, farPlane);
+}
+
 void UDirectionalLightComponent::InitializeShadowDepthMap()
 {
     
@@ -112,8 +131,8 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapTextureDesc.SampleDesc.Count = 1;
     shadowMapTextureDesc.SampleDesc.Quality = 0;
     shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-    shadowMapTextureDesc.Width = 2048;
-    shadowMapTextureDesc.Height = 2048;
+    shadowMapTextureDesc.Width = static_cast<UINT>(ShadowMapSize);
+    shadowMapTextureDesc.Height = static_cast<UINT>(ShadowMapSize);
     hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
     assert(SUCCEEDED(hr));
 

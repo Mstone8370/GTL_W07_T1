@@ -76,6 +76,8 @@ private:
 
     ID3D11Buffer* TileConstantBuffer;
 
+    FEditorViewportClient* ViewportClient;
+    
     void RenderShadowMap(ULightComponentBase* InLightComponent);
     void PrepareRenderState(ULightComponentBase* InLightComponent);
     void RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;

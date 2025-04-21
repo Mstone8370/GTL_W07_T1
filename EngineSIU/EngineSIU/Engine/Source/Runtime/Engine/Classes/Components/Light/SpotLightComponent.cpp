@@ -50,8 +50,8 @@ void USpotLightComponent::InitializeShadowDepthMap()
     shadowMapTextureDesc.SampleDesc.Count = 1;
     shadowMapTextureDesc.SampleDesc.Quality = 0;
     shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-    shadowMapTextureDesc.Width = 2048;
-    shadowMapTextureDesc.Height = 2048;
+    shadowMapTextureDesc.Width = 4096;
+    shadowMapTextureDesc.Height = 4096;
     hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
     assert(SUCCEEDED(hr));
 

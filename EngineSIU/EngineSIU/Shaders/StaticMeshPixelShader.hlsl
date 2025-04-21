@@ -36,6 +36,7 @@ cbuffer FLightConstants: register(b5)
 {
     row_major matrix mLightView;
     row_major matrix mLightProj;
+    float fShadowMapSize;
 }
 
 #include "Light.hlsl"
@@ -104,10 +105,10 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         shadowZ -= 0.0005f; // bias
 
         // Percentage Closer Filtering
-        // float DepthFromLight = ShadowTexture.Sample(ShadowSampler, shadowUV).r;
+        // float DepthFromLight = ShadowTexture.SampleCmpLevelZero(ShadowSampler, shadowUV, shadowZ).r;
         float DepthFromLight = 0.f;
-        float PCFOffsetX = 1.f / 2048;
-        float PCFOffsetY = 1.f / 2048;
+        float PCFOffsetX = 1.f / fShadowMapSize;
+        float PCFOffsetY = 1.f / fShadowMapSize;
         for (int i = -1; i <= 1; ++i)
         {
             for (int j = -1; j <= 1; ++j)
