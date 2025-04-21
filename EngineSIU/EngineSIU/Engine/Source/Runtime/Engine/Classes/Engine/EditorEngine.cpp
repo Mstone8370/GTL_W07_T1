@@ -40,15 +40,6 @@ void UEditorEngine::Init()
         AssetManager->InitAssetManager();
     }
     LoadLevel("Saved/AutoSaves.scene");
-
-// #ifdef _DEBUG
-//     AActor* Actor = EditorWorld->SpawnActor<ACube>();
-//     
-//     ADirectionalLight* DirLight = EditorWorld->SpawnActor<ADirectionalLight>();
-//     DirLight->SetActorRotation(FRotator(20, -61, 11));
-//     DirLight->SetActorLocation(FVector(0, 0, 20));
-//     DirLight->SetIntensity(2.f);
-// #endif
 }
 
 void UEditorEngine::Release()
