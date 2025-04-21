@@ -67,7 +67,7 @@ void FDepthPrePass::PrepareRenderState(const std::shared_ptr<FEditorViewportClie
     Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
 
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+    
     Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
 
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);

@@ -3,6 +3,7 @@
 #include "EngineBaseTypes.h"
 #include "Container/Set.h"
 
+class UPointLightComponent;
 class FDXDShaderManager;
 class UWorld;
 class UMaterial;
@@ -53,7 +54,9 @@ public:
     void ReleaseShader();
 
     void ChangeViewMode(EViewModeIndex ViewModeIndex);
-    
+
+
+    void UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights);
 protected:
     TArray<UStaticMeshComponent*> StaticMeshComponents;
 

@@ -9,7 +9,7 @@ public:
     UPointLightComponent();
     virtual ~UPointLightComponent() override;
 
-    
+
     virtual UObject* Duplicate(UObject* InOuter) override;
     
     virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
@@ -33,6 +33,23 @@ public:
 
 private:
     FPointLightInfo PointLightInfo;
+#pragma region PointShadow
+public:
+    void CreateShadowMapResources();
+    void UpdateViewProjMatrix();
+    FVector dirs[6] = {
+        { 1,  0,  0}, {-1,  0,  0},
+        { 0,  1,  0}, { 0, -1,  0},
+        { 0,  0,  1}, { 0,  0, -1}
+    };
+    FVector ups[6] = {
+        {0,1,0}, {0,1,0},
+        {0,0,-1},{0,0,1},
+        {0,1,0}, {0,1,0}
+    };
+    FMatrix view[6];
+    FMatrix projection;
+#pragma endregion
 };
 
 

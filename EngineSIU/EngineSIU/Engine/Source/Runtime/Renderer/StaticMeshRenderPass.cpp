@@ -16,6 +16,7 @@
 #include "D3D11RHI/DXDShaderManager.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Components/Light/PointLightComponent.h"
 
 #include "BaseGizmos/GizmoBaseComponent.h"
 #include "Components/Light/DirectionalLightComponent.h"
@@ -136,6 +137,22 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
         UpdateLitUnlitConstant(0);
         break;
     }
+}
+
+void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights)
+{
+    FPointLightMatrix ObjectData = {};
+    uint32 count = FMath::Min((int32)PointLights.Num(), MAX_POINT_LIGHT);
+    for (uint32 i = 0; i < count; ++i)
+    {
+        auto* L = PointLights[i];
+        for (int face = 0; face < 6; ++face)
+        {
+            ObjectData.LightViewMat[i*6 + face] = L->view[face];
+        }
+        ObjectData.LightProjectMat[i] = L->projection;
+    }
+    BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
 }
 
 void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
@@ -317,7 +334,27 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
         {
             continue;
         }
-
+        #pragma region ShadowMap
+                TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
+                ID3D11SamplerState*       PCFSampler = nullptr;
+                TArray<UPointLightComponent*> PointLights;
+                for (auto light :  TObjectRange<UPointLightComponent>())
+                {
+                    PointLights.Add(light);
+                    ShadowCubeSRV.Add(light->PointShadowSRV);
+                    PCFSampler = light->PointShadowComparisonSampler;
+                }
+                UpdatePointLightConstantBuffer(PointLights);
+                Graphics->DeviceContext->PSSetShaderResources(
+                2,         
+                ShadowCubeSRV.Num(),         
+                ShadowCubeSRV.GetData());     
+                Graphics->DeviceContext->PSSetSamplers(
+                   2,         
+                   1,
+                   &PCFSampler);
+        #pragma endregion
+        
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
@@ -337,6 +374,11 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
 
 void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+#pragma region ShadowMap
+    ID3D11Buffer* PointLightBuffer = BufferManager->GetConstantBuffer(TEXT("FPointLightMatrix"));
+    Graphics->DeviceContext->PSSetConstantBuffers(5, 1, &PointLightBuffer);
+    
+#pragma endregion
     const EResourceType ResourceType = EResourceType::ERT_Scene;
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
     FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);

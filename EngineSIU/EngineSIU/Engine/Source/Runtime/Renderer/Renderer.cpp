@@ -48,6 +48,9 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     EditorBillboardRenderPass = new FEditorBillboardRenderPass();
     GizmoRenderPass = new FGizmoRenderPass();
     UpdateLightBufferPass = new FUpdateLightBufferPass();
+#pragma region ShadowMap
+    ShadowMapPass = new FShadowMapPass();
+#pragma endregion
     LineRenderPass = new FLineRenderPass();
     FogRenderPass = new FFogRenderPass();
     EditorRenderPass = new FEditorRenderPass();
@@ -65,6 +68,9 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     EditorBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     GizmoRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     UpdateLightBufferPass->Initialize(BufferManager, Graphics, ShaderManager);
+#pragma region ShadowMap
+    ShadowMapPass->Initialize(BufferManager, Graphics, ShaderManager);
+#pragma endregion
     LineRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     FogRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -88,6 +94,9 @@ void FRenderer::Release()
     delete EditorBillboardRenderPass;
     delete GizmoRenderPass;
     delete UpdateLightBufferPass;
+#pragma region ShadowMap
+    delete ShadowMapPass;
+#pragma endregion
     delete LineRenderPass;
     delete FogRenderPass;
     delete CompositingPass;
@@ -139,6 +148,8 @@ void FRenderer::CreateConstantBuffers()
     // TODO: Light가 Structured Buffer로 관리되면 제거할 것.
     UINT LightConstantsBufferSize = sizeof(FLightConstants);
     BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+    UINT PointLigthMatrixBufferSize = sizeof(FPointLightMatrix);
+    BufferManager->CreateBufferGeneric<FPointLightMatrix>("FPointLightMatrix", nullptr, PointLigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
@@ -205,6 +216,9 @@ void FRenderer::PrepareRenderPass()
     WorldBillboardRenderPass->PrepareRenderArr();
     EditorBillboardRenderPass->PrepareRenderArr();
     UpdateLightBufferPass->PrepareRenderArr();
+#pragma region ShadowMap
+    ShadowMapPass->PrepareRenderArr();
+#pragma endregion
     FogRenderPass->PrepareRenderArr();
     EditorRenderPass->PrepareRender();
     TileLightCullingPass->PrepareRenderArr();
@@ -218,6 +232,9 @@ void FRenderer::ClearRenderArr()
     EditorBillboardRenderPass->ClearRenderArr();
     GizmoRenderPass->ClearRenderArr();
     UpdateLightBufferPass->ClearRenderArr();
+#pragma region ShadowMap
+    ShadowMapPass->ClearRenderArr();
+#pragma endregion
     FogRenderPass->ClearRenderArr();
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();
@@ -290,6 +307,7 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
         UpdateLightBufferPass->SetTileConstantBuffer(TileLightCullingPass->GetTileConstantBuffer());
     }
 
+    
     RenderWorldScene(Viewport);
     RenderPostProcess(Viewport);
     RenderEditorOverlay(Viewport);
@@ -319,6 +337,8 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_Primitives)
     {
         UpdateLightBufferPass->Render(Viewport);
+        // TODO : Shodow Map RenderPass
+        ShadowMapPass->Render(Viewport);
         StaticMeshRenderPass->Render(Viewport);
     }
     

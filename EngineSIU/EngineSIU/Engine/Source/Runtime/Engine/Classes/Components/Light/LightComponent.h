@@ -18,7 +18,6 @@ public:
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
     
 protected:
-
     FBoundingBox AABB;
     FDepthStencilRHI ShadowDepthMap;
     virtual void InitializeShadowDepthMap() {}
