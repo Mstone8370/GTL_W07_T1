@@ -1,5 +1,5 @@
 #include "ShaderRegisters.hlsl"
-cbuffer LightMatrix : register(b1)
+cbuffer LightMatrix : register(b5)
 {
     row_major matrix LightViewMat;
     row_major matrix LightProjectMat;

@@ -5,6 +5,7 @@ cbuffer FLightConstants: register(b5)
 {
     row_major matrix mLightView;
     row_major matrix mLightProj;
+    float fShadowMapSize;
 }
 
 PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
