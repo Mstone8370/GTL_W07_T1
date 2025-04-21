@@ -10,10 +10,10 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd fuse_lgnd_v23_opbundle_body_albedoTexture.png
+map_Kd fuse_lgnd_v23_opbundle_body_baseColorTexture.png
 map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_body_normalTexture.png
-map_Ks fuse_lgnd_v23_opbundle_body_specTexture.png
-map_Ns fuse_lgnd_v23_opbundle_body_glossTexture.png
+map_Pm fuse_lgnd_v23_opbundle_body_metallicTexture.png
+map_Pr fuse_lgnd_v23_opbundle_body_roughnessTexture.png
 map_Ke fuse_lgnd_v23_opbundle_body_emissiveTexture.png
 
 newmtl fuse_lgnd_v23_opbundle_gear
@@ -25,10 +25,10 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd fuse_lgnd_v23_opbundle_gear_albedoTexture.png
+map_Kd fuse_lgnd_v23_opbundle_gear_baseColorTexture.png
 map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_gear_normalTexture.png
-map_Ks fuse_lgnd_v23_opbundle_gear_specTexture.png
-map_Ns fuse_lgnd_v23_opbundle_gear_glossTexture.png
+map_Pm fuse_lgnd_v23_opbundle_gear_metallicTexture.png
+map_Pr fuse_lgnd_v23_opbundle_gear_roughnessTexture.png
 
 newmtl fuse_lgnd_v23_opbundle_hair
 Ns 360.000000
@@ -39,10 +39,10 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd fuse_lgnd_v23_opbundle_hair_albedoTexture.png
+map_Kd fuse_lgnd_v23_opbundle_hair_baseColorTexture.png
 map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_hair_normalTexture.png
-map_Ks fuse_lgnd_v23_opbundle_hair_specTexture.png
-map_Ns fuse_lgnd_v23_opbundle_hair_glossTexture.png
+map_Pm fuse_lgnd_v23_opbundle_hair_metallicTexture.png
+map_Pr fuse_lgnd_v23_opbundle_hair_roughnessTexture.png
 map_Ke fuse_lgnd_v23_opbundle_hair_emissiveTexture.png
 
 newmtl fuse_lgnd_v23_opbundle_head
@@ -54,10 +54,10 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd fuse_lgnd_v23_opbundle_head_albedoTexture.png
+map_Kd fuse_lgnd_v23_opbundle_head_baseColorTexture.png
 map_Bump -bm 1.000000 fuse_lgnd_v23_opbundle_head_normalTexture.png
-map_Ks fuse_lgnd_v23_opbundle_head_specTexture.png
-map_Ns fuse_lgnd_v23_opbundle_head_glossTexture.png
+map_Pm fuse_lgnd_v23_opbundle_head_metallicTexture.png
+map_Pr fuse_lgnd_v23_opbundle_head_roughnessTexture.png
 
 newmtl repeater3030_base_main
 Ns 360.000000
@@ -68,8 +68,8 @@ Ke 0.000000 0.000000 0.000000
 Ni 1.000000
 d 1.000000
 illum 2
-map_Kd repeater3030_base_main_albedoTexture.png
+map_Kd repeater3030_base_main_baseColorTexture.png
 map_Bump -bm 1.000000 repeater3030_base_main_normalTexture.png
-map_Ks repeater3030_base_main_specTexture.png
-map_Ns repeater3030_base_main_glossTexture.png
+map_Pm repeater3030_base_main_metallicTexture.png
+map_Pr repeater3030_base_main_roughnessTexture.png
 map_Ke repeater3030_base_main_emissiveTexture.png

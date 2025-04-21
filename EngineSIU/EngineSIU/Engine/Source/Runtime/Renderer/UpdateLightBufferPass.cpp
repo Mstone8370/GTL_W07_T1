@@ -48,7 +48,7 @@ void FUpdateLightBufferPass::PrepareRenderArr()
         {
             if (UPointLightComponent* PointLight = Cast<UPointLightComponent>(iter))
             {
-                //PointLights.Add(PointLight); // 당분간 UnUsed : Structured Buffer로 전달
+                PointLights.Add(PointLight); // 당분간 UnUsed : Structured Buffer로 전달
             }
             else if (USpotLightComponent* SpotLight = Cast<USpotLightComponent>(iter))
             {

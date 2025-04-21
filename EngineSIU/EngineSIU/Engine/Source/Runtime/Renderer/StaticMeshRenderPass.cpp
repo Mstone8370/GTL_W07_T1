@@ -125,7 +125,7 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     case EViewModeIndex::VMI_Lit_Gouraud:
         PixelShader = ShaderManager->GetPixelShaderByKey(L"GOURAUD_StaticMeshPixelShader");
         break;
-    case EViewModeIndex::VMI_LIT_SG:
+    case EViewModeIndex::VMI_LIT_PBR:
         PixelShader = ShaderManager->GetPixelShaderByKey(L"SG_StaticMeshPixelShader");
         break;
     case EViewModeIndex::VMI_Lit_BlinnPhong:

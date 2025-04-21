@@ -207,7 +207,8 @@ float3 BRDF(float3 L, float3 V, float3 N, float3 BaseColor, float Metallic, floa
 ////////
 float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 BaseColor, float Metallic, float Roughness)
 {
-    FPointLightInfo LightInfo = gPointLights[Index];
+    // FPointLightInfo LightInfo = gPointLights[Index];
+    FPointLightInfo LightInfo = PointLights[Index];
 
     float3 ToLight = LightInfo.Position - WorldPosition;
     float Distance = length(ToLight);

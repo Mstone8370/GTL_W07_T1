@@ -690,7 +690,7 @@ FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFi
         return nullptr;
     }
 
-    // SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh);
+    SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh);
     ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
     return NewStaticMesh;
 }

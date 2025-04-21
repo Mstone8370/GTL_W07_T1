@@ -1,0 +1,47 @@
+# Blender 4.3.2 MTL File: 'None'
+# www.blender.org
+
+newmtl caustic_lgnd_v20_assim_body
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+Pr 0.400000
+Pm 0.000000
+map_Kd caustic_lgnd_v20_assim_body_baseColorTexture.png
+map_Bump -bm 1.000000 caustic_lgnd_v20_assim_body_normalTexture.png
+map_Pm caustic_lgnd_v20_assim_body_metallicTexture.png
+map_Pr caustic_lgnd_v20_assim_body_roughnessTexture.png
+map_Ke caustic_lgnd_v20_assim_body_emissiveTexture.png
+
+newmtl caustic_lgnd_v20_assim_gear
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+Pr 0.400000
+Pm 0.000000
+map_Kd caustic_lgnd_v20_assim_gear_baseColorTexture.png
+map_Bump -bm 1.000000 caustic_lgnd_v20_assim_gear_normalTexture.png
+map_Pm caustic_lgnd_v20_assim_gear_metallicTexture.png
+map_Pr caustic_lgnd_v20_assim_gear_roughnessTexture.png
+map_Ke caustic_lgnd_v20_assim_gear_emissiveTexture.png
+
+newmtl caustic_lgnd_v20_assim_head
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2
+Pr 0.400000
+Pm 0.000000
+map_Kd caustic_lgnd_v20_assim_head_baseColorTexture.png
+map_Bump -bm 1.000000 caustic_lgnd_v20_assim_head_normalTexture.png
+map_Pm caustic_lgnd_v20_assim_head_metallicTexture.png
+map_Pr caustic_lgnd_v20_assim_head_roughnessTexture.png
+map_Ke caustic_lgnd_v20_assim_head_emissiveTexture.png

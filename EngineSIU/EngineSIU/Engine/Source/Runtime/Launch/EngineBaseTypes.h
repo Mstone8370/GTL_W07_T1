@@ -10,7 +10,7 @@ enum class EViewModeIndex : uint8
     VMI_Lit_Gouraud = 0,
     VMI_Lit_Lambert,
     VMI_Lit_BlinnPhong,
-    VMI_LIT_SG,
+    VMI_LIT_PBR,
     VMI_Unlit, // Lit 모드들은 이 위에 적어주세요.
     VMI_Wireframe,
     VMI_SceneDepth,

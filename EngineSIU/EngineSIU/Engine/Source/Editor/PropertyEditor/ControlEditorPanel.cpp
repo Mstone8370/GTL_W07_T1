@@ -427,7 +427,7 @@ void ControlEditorPanel::CreateFlagButton() const
     ImGui::SameLine();
 
     const char* ViewModeNames[] = { 
-        "Lit_Gouraud", "Lit_Lambert", "Lit_Blinn-Phong", "Lit_Specular-Glossiness",
+        "Lit_Gouraud", "Lit_Lambert", "Lit_Blinn-Phong", "Lit_PBR",
         "Unlit", "Wireframe",
         "Scene Depth", "World Normal", "World Tangent","Light Heat Map"
     };

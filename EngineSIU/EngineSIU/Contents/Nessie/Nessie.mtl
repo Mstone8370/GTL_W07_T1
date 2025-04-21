@@ -8,9 +8,9 @@ Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.000000
-map_Kd plushie_nessie_01_albedoTexture.png
-map_Ns plushie_nessie_01_glossTexture.png
-map_Ks plushie_nessie_01_specTexture.png
-map_Bump plushie_nessie_01_normalTexture.png
+map_Kd plushie_nessie_01_baseColorTexture.png
+map_Bump -bm 1.000000 plushie_nessie_01_normalTexture.png
+map_Pm plushie_nessie_01_metallicTexture.png
+map_Pr plushie_nessie_01_roughnessTexture.png
 d 1.000000
 illum 2
