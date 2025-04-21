@@ -114,6 +114,9 @@ protected:
     float CameraSpeed = 1.0f;
     float GridSize;
 
+private:
+    float CameraSpeedMultiplier = 10.0f;
+
 public:
     FViewport* Viewport;
     int32 ViewportIndex;

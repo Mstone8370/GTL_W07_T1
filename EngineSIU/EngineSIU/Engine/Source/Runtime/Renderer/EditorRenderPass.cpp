@@ -440,29 +440,24 @@ void FEditorRenderPass::PrepareRender()
     {
         return;
     }
+
+    const AActor* SelectedActor = nullptr;
+    if (const UEditorEngine* EdEngine = Cast<UEditorEngine>(GEngine))
+    {
+        SelectedActor = EdEngine->GetSelectedActor();
+    }
+    
     for (const auto& actor : TObjectRange<AActor>())
     {
         for (const auto& comp : actor->GetComponents())
         {
-            // AABB용 static mesh component
-            if (UStaticMeshComponent* staticmesh = Cast<UStaticMeshComponent>(comp))
-            {
-                if (!staticmesh->IsA<UGizmoBaseComponent>())
-                {
-                    Resources.Components.StaticMesh.Add(staticmesh);
-                }
-            }
-
             // light
             if (ULightComponentBase* light = Cast<ULightComponentBase>(comp))
             {
-                Resources.Components.Light.Add(light);
-            }
-
-            // fog
-            if (UHeightFogComponent* fog = Cast<UHeightFogComponent>(comp))
-            {
-                Resources.Components.Fog.Add(fog);
+                if (light->IsA<UDirectionalLightComponent>() || (SelectedActor && light->GetOwner() == SelectedActor))
+                {
+                    Resources.Components.Light.Add(light);
+                }
             }
         }
     }
@@ -505,20 +500,7 @@ void FEditorRenderPass::Render(std::shared_ptr<FEditorViewportClient> Viewport)
     }
 
     PrepareRendertarget(Viewport);
-    
-    // PrepareConstantbufferGlobal();
 
-    // FConstantBufferCamera buf;
-    // buf.ViewMatrix = Viewport->GetViewMatrix();
-    // buf.ProjMatrix = Viewport->GetProjectionMatrix();
-    // buf.CameraPos = Viewport->GetCameraLocation();
-    // buf.CameraLookAt = ActiveViewport->ViewTransformPerspective.GetLookAt();
-    // UpdateConstantbufferGlobal(buf);
-
-    // ID3D11DepthStencilState* DepthStateEnable = Graphics->DepthStencilState;
-    // Graphics->DeviceContext->OMSetDepthStencilState(DepthStateEnable, 0);
-
-    // [NOTE] ----------- Light Culling 프레임 보호 위해 잠시 주석처리 ---------- //
     RenderPointlightInstanced();
     RenderSpotlightInstanced();
     RenderArrows();    // Directional Light Arrow : Depth Test Enabled
@@ -664,8 +646,8 @@ void FEditorRenderPass::RenderSpotlightInstanced()
         {
             FConstantBufferDebugCone b;
             b.ApexPosiiton = SpotComp->GetWorldLocation();
-            b.InnerRadius = SpotComp->GetRadius()*  FMath::Tan(SpotComp->GetInnerRad() * 0.5);
-            b.OuterRadius = SpotComp->GetRadius() * FMath::Tan(SpotComp->GetOuterRad() * 0.5);
+            b.InnerRadius = SpotComp->GetRadius() * FMath::Tan(SpotComp->GetInnerRad());
+            b.OuterRadius = SpotComp->GetRadius() * FMath::Tan(SpotComp->GetOuterRad());
             b.Height = SpotComp->GetRadius();
             b.Direction = SpotComp->GetDirection();
             BufferAll.Add(b);
@@ -839,7 +821,7 @@ void FEditorRenderPass::UpdateTextureIcon(IconType type)
 void FEditorRenderPass::RenderArrows()
 {
     // XYZ한번. Z는 중복으로 적용
-    const float ArrowScale = 1;
+    const float ArrowScale = 1.25f;
 
     SetShaderAndPrepare(L"ArrowVS", L"ArrowPS", Resources.Shaders.Arrow);
     UINT offset = 0;

@@ -37,25 +37,49 @@ float3 SRGBToLinear(float3 color)
 
 struct FMaterial
 {
+    uint TextureFlag;
     float3 DiffuseColor;
-    float TransparencyScalar;
     
     float3 SpecularColor;
-    float SpecularScalar;
-    
+    float Shininess;
+
     float3 EmissiveColor;
-    float DensityScalar;
-    
-    float3 AmbientColor;
-    uint TextureFlag;
+    float Opacity;
+
+    float Metallic;
+    float Roughness;
+    float2 MaterialPadding;
 };
+
+#define TEXTURE_FLAG_DIFFUSE       (1 << 0)
+#define TEXTURE_FLAG_SPECULAR      (1 << 1)
+#define TEXTURE_FLAG_NORMAL        (1 << 2)
+#define TEXTURE_FLAG_EMISSIVE      (1 << 3)
+#define TEXTURE_FLAG_ALPHA         (1 << 4)
+#define TEXTURE_FLAG_AMBIENT       (1 << 5)
+#define TEXTURE_FLAG_SHININESS     (1 << 6)
+#define TEXTURE_FLAG_METALLIC      (1 << 7)
+#define TEXTURE_FLAG_ROUGHNESS     (1 << 8)
+
+#define TEXTURE_SLOT_DIFFUSE       (0)
+#define TEXTURE_SLOT_SPECULAR      (1)
+#define TEXTURE_SLOT_NORMAL        (2)
+#define TEXTURE_SLOT_EMISSIVE      (3)
+#define TEXTURE_SLOT_ALPHA         (4)
+#define TEXTURE_SLOT_AMBIENT       (5)
+#define TEXTURE_SLOT_SHININESS     (6)
+#define TEXTURE_SLOT_METALLIC      (7)
+#define TEXTURE_SLOT_ROUGHNESS     (8)
+
+Texture2D MaterialTextures[9] : register(t0);
+SamplerState MaterialSamplers[9] : register(s0);
 
 struct VS_INPUT_StaticMesh
 {
     float3 Position : POSITION;
     float4 Color : COLOR;
     float3 Normal : NORMAL;
-    float3 Tangent : TANGENT;
+    float4 Tangent : TANGENT;
     float2 UV : TEXCOORD;
     uint MaterialIndex : MATERIAL_INDEX;
 };
@@ -64,12 +88,11 @@ struct PS_INPUT_StaticMesh
 {
     float4 Position : SV_POSITION;
     float4 Color : COLOR;
-    float3 WorldNormal : NORMAL;
     float2 UV : TEXCOORD0;
-    float3 WorldPosition : TEXCOORD1;
-    float3 WorldViewPosition : TEXCOORD2;
-    float3x3 TBN : TBN;
-    int MaterialIndex : MATERIAL_INDEX;
+    float3 WorldNormal : TEXCOORD1;
+    float4 WorldTangent : TEXCOORD2;
+    float3 WorldPosition : TEXCOORD3;
+    nointerpolation int MaterialIndex : MATERIAL_INDEX;
 };
 
 ////////
@@ -107,7 +130,7 @@ cbuffer CameraBuffer : register(b13)
     row_major matrix ProjectionMatrix;
     row_major matrix InvProjectionMatrix;
     
-    float3 ViewWorldLocation; // TODO: 가능하면 버퍼에서 빼기
+    float3 ViewWorldLocation;
     float ViewPadding;
     
     float NearClip;

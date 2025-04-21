@@ -14,7 +14,11 @@ cbuffer MaterialConstants : register(b1)
 #include "Light.hlsl"
 #endif
 
-
+cbuffer LightMatrix : register(b1)
+{
+    row_major matrix LightViewMat;
+    row_major matrix LightProjectMat;
+};
 PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
 {
     PS_INPUT_StaticMesh Output;
@@ -25,24 +29,27 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
     
     Output.Position = mul(Output.Position, ViewMatrix);
     Output.Position = mul(Output.Position, ProjectionMatrix);
-
-    Output.WorldViewPosition = float3(InvViewMatrix._41, InvViewMatrix._42, InvViewMatrix._43);
     
     Output.WorldNormal = mul(Input.Normal, (float3x3)InverseTransposedWorld);
 
-    float3 BiTangent = cross(Input.Normal, Input.Tangent);
-    matrix<float, 3, 3> TBN = {
-        Input.Tangent.x, Input.Tangent.y, Input.Tangent.z,        // column 0
-        BiTangent.x, BiTangent.y, BiTangent.z,                    // column 1
-        Input.Normal.x, Input.Normal.y, Input.Normal.z            // column 2
-    };
-    Output.TBN = TBN;
+    // Begin Tangent
+    float3 WorldTangent = mul(Input.Tangent.xyz, (float3x3)WorldMatrix);
+    WorldTangent = normalize(WorldTangent);
+    WorldTangent = normalize(WorldTangent - Output.WorldNormal * dot(Output.WorldNormal, WorldTangent));
+
+    Output.WorldTangent = float4(WorldTangent, Input.Tangent.w);
+    // End Tangent
     
     Output.UV = Input.UV;
     Output.MaterialIndex = Input.MaterialIndex;
 
 #ifdef LIGHTING_MODEL_GOURAUD
-    float4 Diffuse = Lighting(Output.WorldPosition, Output.WorldNormal, ViewWorldLocation, float3(1,1,1));
+    float3 DiffuseColor = Input.Color;
+    if (Material.TextureFlag & TEXTURE_FLAG_DIFFUSE)
+    {
+        DiffuseColor = DiffuseTexture.SampleLevel(DiffuseSampler, Input.UV, 0).rgb;
+    }
+    float3 Diffuse = Lighting(Output.WorldPosition, Output.WorldNormal, ViewWorldLocation, DiffuseColor, Material.SpecularColor, Material.Shininess);
     Output.Color = float4(Diffuse.rgb, 1.0);
 #else
     Output.Color = Input.Color;

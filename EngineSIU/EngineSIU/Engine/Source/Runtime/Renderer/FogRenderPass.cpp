@@ -52,6 +52,12 @@ void FFogRenderPass::CreateShader()
     PixelShader = ShaderManager->GetPixelShaderByKey(L"FogPixelShader");
 }
 
+void FFogRenderPass::UpdateShader()
+{
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"FogVertexShader");
+    PixelShader = ShaderManager->GetPixelShaderByKey(L"FogPixelShader");
+}
+
 void FFogRenderPass::ReleaseShader()
 {
 }
@@ -111,6 +117,8 @@ void FFogRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewpo
 
     Graphics->DeviceContext->PSSetShaderResources(static_cast<UINT>(EShaderSRVSlot::SRV_SceneDepth), 1, &ViewportResource->GetDepthStencil(EResourceType::ERT_Scene)->SRV);
     
+    UpdateShader();
+
     PrepareRenderState();
     
     for (const auto& Fog : FogComponents)

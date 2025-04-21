@@ -5,7 +5,7 @@ struct FMaterialConstants
     float3 AmbientColor;
     float DensityScalar;
     float3 SpecularColor;
-    float SpecularScalar;
+    float SpecularExponent;
     float3 EmmisiveColor;
     float MaterialPad0;
 };

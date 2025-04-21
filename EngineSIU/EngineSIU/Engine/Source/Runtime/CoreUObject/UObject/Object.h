@@ -6,10 +6,11 @@ extern FEngineLoop GEngineLoop;
 
 class UClass;
 class UWorld;
-
+class AActor;
 
 class UObject
 {
+    friend class AActor;
 private:
     UObject(const UObject&) = delete;
     UObject& operator=(const UObject&) = delete;
@@ -34,6 +35,10 @@ private:
     UClass* ClassPrivate = nullptr;
     UObject* OuterPrivate = nullptr;
 
+    
+    // FName을 키값으로 넣어주는 컨테이너를 모두 업데이트 해야합니다.
+    void SetFName(const FName& InName) { NamePrivate = InName; }
+
 public:
     UObject();
     virtual ~UObject() = default;
@@ -46,6 +51,7 @@ public:
 
     FName GetFName() const { return NamePrivate; }
     FString GetName() const { return NamePrivate.ToString(); }
+
 
     uint32 GetUUID() const { return UUID; }
     uint32 GetInternalIndex() const { return InternalIndex; }
@@ -84,13 +90,14 @@ public:
         FPlatformMemory::Free<EAT_Object>(ptr, size);
     }
 
-    FVector4 EncodeUUID() const {
+    FVector4 EncodeUUID() const
+    {
         FVector4 result;
 
-        result.X = UUID % 0xFF;
-        result.Y = UUID >> 8 & 0xFF;
-        result.Z = UUID >> 16 & 0xFF;
-        result.W = UUID >> 24 & 0xFF;
+        result.X = static_cast<float>((UUID >> 0) & 0xFF);
+        result.Y = static_cast<float>((UUID >> 8) & 0xFF);
+        result.Z = static_cast<float>((UUID >> 16) & 0xFF);
+        result.W = static_cast<float>((UUID >> 24) & 0xFF);
 
         return result;
     }

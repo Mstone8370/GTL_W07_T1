@@ -132,6 +132,13 @@ void FBillboardRenderPass::CreateShader()
     PixelShader = ShaderManager->GetPixelShaderByKey(L"PixelBillboardShader");
 }
 
+void FBillboardRenderPass::UpdateShader()
+{
+    VertexShader = ShaderManager->GetVertexShaderByKey(L"VertexBillboardShader");
+    InputLayout = ShaderManager->GetInputLayoutByKey(L"VertexBillboardShader");
+    PixelShader = ShaderManager->GetPixelShaderByKey(L"PixelBillboardShader");
+}
+
 void FBillboardRenderPass::ReleaseShader()
 {
 }
@@ -144,6 +151,8 @@ void FBillboardRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& 
 
     // 뎁스 비교는 렌더 타겟과는 상관 없이 항상 씬 기준으로
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, ViewportResource->GetDepthStencil(EResourceType::ERT_Scene)->DSV);
+
+    UpdateShader();
 
     PrepareTextureShader();
 

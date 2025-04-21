@@ -48,6 +48,9 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     EditorBillboardRenderPass = new FEditorBillboardRenderPass();
     GizmoRenderPass = new FGizmoRenderPass();
     UpdateLightBufferPass = new FUpdateLightBufferPass();
+#pragma region ShadowMap
+    ShadowMapPass = new FShadowMapPass();
+#pragma endregion
     LineRenderPass = new FLineRenderPass();
     FogRenderPass = new FFogRenderPass();
     EditorRenderPass = new FEditorRenderPass();
@@ -65,6 +68,9 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     EditorBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     GizmoRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     UpdateLightBufferPass->Initialize(BufferManager, Graphics, ShaderManager);
+#pragma region ShadowMap
+    ShadowMapPass->Initialize(BufferManager, Graphics, ShaderManager);
+#pragma endregion
     LineRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     FogRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -88,6 +94,9 @@ void FRenderer::Release()
     delete EditorBillboardRenderPass;
     delete GizmoRenderPass;
     delete UpdateLightBufferPass;
+#pragma region ShadowMap
+    delete ShadowMapPass;
+#pragma endregion
     delete LineRenderPass;
     delete FogRenderPass;
     delete CompositingPass;
@@ -136,6 +145,11 @@ void FRenderer::CreateConstantBuffers()
     UINT ViewportSizeBufferSize = sizeof(FViewportSize);
     BufferManager->CreateBufferGeneric<FViewportSize>("FViewportSize", nullptr, ViewportSizeBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    // TODO: Light가 Structured Buffer로 관리되면 제거할 것.
+    UINT LightConstantsBufferSize = sizeof(FLightConstants);
+    BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+    UINT PointLigthMatrixBufferSize = sizeof(FPointLightMatrix);
+    BufferManager->CreateBufferGeneric<FPointLightMatrix>("FPointLightMatrix", nullptr, PointLigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
@@ -159,7 +173,7 @@ void FRenderer::CreateCommonShader()
         {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
-        {"TANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
         {"MATERIAL_INDEX", 0, DXGI_FORMAT_R32_UINT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
@@ -202,6 +216,9 @@ void FRenderer::PrepareRenderPass()
     WorldBillboardRenderPass->PrepareRenderArr();
     EditorBillboardRenderPass->PrepareRenderArr();
     UpdateLightBufferPass->PrepareRenderArr();
+#pragma region ShadowMap
+    ShadowMapPass->PrepareRenderArr();
+#pragma endregion
     FogRenderPass->PrepareRenderArr();
     EditorRenderPass->PrepareRender();
     TileLightCullingPass->PrepareRenderArr();
@@ -215,6 +232,9 @@ void FRenderer::ClearRenderArr()
     EditorBillboardRenderPass->ClearRenderArr();
     GizmoRenderPass->ClearRenderArr();
     UpdateLightBufferPass->ClearRenderArr();
+#pragma region ShadowMap
+    ShadowMapPass->ClearRenderArr();
+#pragma endregion
     FogRenderPass->ClearRenderArr();
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();
@@ -270,7 +290,7 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
      *   2. 렌더 타겟의 생명주기와 용도가 명확함
      *   3. RTV -> SRV 전환 타이밍이 정확히 지켜짐
      */
-
+/*
 	if (DepthPrePass) // Depth Pre Pass : 렌더타겟 nullptr 및 렌더 후 복구
     {
         DepthPrePass->Render(Viewport);
@@ -287,19 +307,20 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
         UpdateLightBufferPass->SetTileConstantBuffer(TileLightCullingPass->GetTileConstantBuffer());
     }
 
+    */
     RenderWorldScene(Viewport);
     RenderPostProcess(Viewport);
     RenderEditorOverlay(Viewport);
     
     // Compositing: 위에서 렌더한 결과들을 하나로 합쳐서 뷰포트의 최종 이미지를 만드는 작업
-    
+/*
     Graphics->DeviceContext->PSSetShaderResources(
         static_cast<UINT>(EShaderSRVSlot::SRV_Debug),
         1,
         &TileLightCullingPass->GetDebugHeatmapSRV()
     ); // TODO: 최악의 코드
+*/
     CompositingPass->Render(Viewport);
-
     EndRender();
 }
 
@@ -316,13 +337,15 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_Primitives)
     {
         UpdateLightBufferPass->Render(Viewport);
+        // TODO : Shodow Map RenderPass
+        ShadowMapPass->Render(Viewport);
         StaticMeshRenderPass->Render(Viewport);
     }
     
     // Render World Billboard
     if (ShowFlag & EEngineShowFlags::SF_BillboardText)
     {
-        WorldBillboardRenderPass->Render(Viewport);
+        // WorldBillboardRenderPass->Render(Viewport);
     }
 }
 
@@ -379,7 +402,7 @@ void FRenderer::RenderEditorOverlay(const std::shared_ptr<FEditorViewportClient>
         EditorBillboardRenderPass->Render(Viewport);
     }
 
-    EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요.
+    EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요. 또한 디버거 경고 뜨는 중.
 
     LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
     

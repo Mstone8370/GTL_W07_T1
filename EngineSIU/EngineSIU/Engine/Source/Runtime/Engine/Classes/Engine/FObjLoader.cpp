@@ -36,11 +36,14 @@ bool FObjLoader::ParseOBJ(const FString& ObjFilePath, FObjInfo& OutObjInfo)
 
     /**
      * 블렌더 Export 설정
-     *   - General
+     *   > General
      *       Forward Axis:  Y
      *       Up Axis:       Z
-     *   - Geometry
+     *   > Geometry
      *       ✅ Triangulated Mesh
+     *   > Materials
+     *       ✅ PBR Extensions
+     *       Path Mode:     Strip
      */
 
     std::string Line;
@@ -244,6 +247,10 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
 
             FObjMaterialInfo Material;
             Material.MaterialName = Line;
+            
+            constexpr uint32 TexturesNum = static_cast<uint32>(EMaterialTextureSlots::MTS_MAX);
+            Material.TextureInfos.SetNum(TexturesNum);
+
             OutFStaticMesh.Materials.Add(Material);
         }
 
@@ -251,73 +258,83 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
         {
             float x, y, z;
             LineStream >> x >> y >> z;
-            OutFStaticMesh.Materials[MaterialIndex].Diffuse = FVector(x, y, z);
+            OutFStaticMesh.Materials[MaterialIndex].DiffuseColor = FVector(x, y, z);
         }
-
         if (Token == "Ks")
         {
             float x, y, z;
             LineStream >> x >> y >> z;
-            OutFStaticMesh.Materials[MaterialIndex].Specular = FVector(x, y, z);
+            OutFStaticMesh.Materials[MaterialIndex].SpecularColor = FVector(x, y, z);
         }
-
         if (Token == "Ka")
         {
             float x, y, z;
             LineStream >> x >> y >> z;
-            OutFStaticMesh.Materials[MaterialIndex].Ambient = FVector(x, y, z);
+            OutFStaticMesh.Materials[MaterialIndex].AmbientColor = FVector(x, y, z);
         }
-
         if (Token == "Ke")
         {
             float x, y, z;
             LineStream >> x >> y >> z;
-            OutFStaticMesh.Materials[MaterialIndex].Emissive = FVector(x, y, z);
+            OutFStaticMesh.Materials[MaterialIndex].EmissiveColor = FVector(x, y, z);
         }
-
         if (Token == "Ns")
         {
             float x;
             LineStream >> x;
-            OutFStaticMesh.Materials[MaterialIndex].SpecularScalar = x;
+            OutFStaticMesh.Materials[MaterialIndex].SpecularExponent = x;
         }
-
         if (Token == "Ni")
         {
             float x;
             LineStream >> x;
-            OutFStaticMesh.Materials[MaterialIndex].DensityScalar = x;
+            OutFStaticMesh.Materials[MaterialIndex].IOR = x;
         }
-
         if (Token == "d" || Token == "Tr")
         {
             float x;
             LineStream >> x;
-            OutFStaticMesh.Materials[MaterialIndex].TransparencyScalar = x;
+            OutFStaticMesh.Materials[MaterialIndex].Transparency = (Token == "Tr") ? x : 1.f - x;
             OutFStaticMesh.Materials[MaterialIndex].bTransparent = true;
         }
-
         if (Token == "illum")
         {
             uint32 x;
             LineStream >> x;
             OutFStaticMesh.Materials[MaterialIndex].IlluminanceModel = x;
         }
+        if (Token == "Pm")
+        {
+            float x;
+            LineStream >> x;
+            OutFStaticMesh.Materials[MaterialIndex].Metallic = x;
+        }
+        if (Token == "Pr")
+        {
+            float x;
+            LineStream >> x;
+            OutFStaticMesh.Materials[MaterialIndex].Roughness = x;
+        }
 
         if (Token == "map_Kd")
         {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Diffuse);
+            
             LineStream >> Line;
-            OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName = Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
 
-            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].DiffuseTextureName.ToWideString();
-            OutFStaticMesh.Materials[MaterialIndex].DiffuseTexturePath = TexturePath;
-            OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= (1 << 1);
-
-            CreateTextureFromFile(OutFStaticMesh.Materials[MaterialIndex].DiffuseTexturePath);
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = true;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Diffuse);
+            }
         }
-
         if (Token == "map_Bump")
         {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Normal);
+            
             std::string Option;
             while (LineStream >> Option)
             {
@@ -329,15 +346,109 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
                 }
                 else
                 {
-                    OutFStaticMesh.Materials[MaterialIndex].BumpTextureName = Option;
-                    FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].BumpTextureName.ToWideString();
-                    OutFStaticMesh.Materials[MaterialIndex].BumpTexturePath = TexturePath;
-                    OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= (1 << 2);
+                    OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Option;
 
-                    CreateTextureFromFile(OutFStaticMesh.Materials[MaterialIndex].BumpTexturePath);
+                    FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+                    if (CreateTextureFromFile(TexturePath, false))
+                    {
+                        OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                        OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = false;
+                        OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Normal);
+                    }
                 }
             }
         }
+        if (Token == "map_Ks")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Specular);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = true;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Specular);
+            }
+        }
+        if (Token == "map_Ns")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Shininess);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath, false))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = false;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Shininess);
+            }
+        }
+        if (Token == "map_Ka")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Ambient);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = true;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Ambient);
+            }
+        }
+        if (Token == "map_Ke")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Emissive);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = true;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Emissive);
+            }
+        }
+        if (Token == "map_Pm")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Metallic);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath, false))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = false;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Metallic);
+            }
+        }
+        if (Token == "map_Pr")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Roughness);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath, false))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = false;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Roughness);
+            }
+        }
+        // TODO: map_d 또는 map_Tr은 나중에 필요할때 구현
     }
 
     return true;
@@ -426,14 +537,14 @@ bool FObjLoader::ConvertToStaticMesh(const FObjInfo& RawData, FStaticMeshRenderD
     return true;
 }
 
-bool FObjLoader::CreateTextureFromFile(const FWString& Filename)
+bool FObjLoader::CreateTextureFromFile(const FWString& Filename, bool bIsSRGB)
 {
     if (FEngineLoop::ResourceManager.GetTexture(Filename))
     {
         return true;
     }
 
-    HRESULT hr = FEngineLoop::ResourceManager.LoadTextureFromFile(FEngineLoop::GraphicDevice.Device, nullptr, Filename.c_str());
+    HRESULT hr = FEngineLoop::ResourceManager.LoadTextureFromFile(FEngineLoop::GraphicDevice.Device, Filename.c_str(), bIsSRGB);
 
     if (FAILED(hr))
     {
@@ -477,16 +588,24 @@ void FObjLoader::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
     const float E2z = Vertex2.Z - PivotVertex.Z;
 
     const float Denominator = s1 * t2 - s2 * t1;
-    FVector Tangent;
+    FVector Tangent(1, 0, 0);
+    FVector BiTangent(0, 1, 0);
+    FVector Normal(PivotVertex.NormalX, PivotVertex.NormalY, PivotVertex.NormalZ);
     
     if (FMath::Abs(Denominator) > SMALL_NUMBER)
     {
         // 정상적인 계산 진행
         const float f = 1.f / Denominator;
+        
         const float Tx = f * (t2 * E1x - t1 * E2x);
         const float Ty = f * (t2 * E1y - t1 * E2y);
         const float Tz = f * (t2 * E1z - t1 * E2z);
         Tangent = FVector(Tx, Ty, Tz).GetSafeNormal();
+
+        const float Bx = f * (-s2 * E1x + s1 * E2x);
+        const float By = f * (-s2 * E1y + s1 * E2y);
+        const float Bz = f * (-s2 * E1z + s1 * E2z);
+        BiTangent = FVector(Bx, By, Bz).GetSafeNormal();
     }
     else
     {
@@ -506,9 +625,14 @@ void FObjLoader::CalculateTangent(FStaticMeshVertex& PivotVertex, const FStaticM
         }
     }
 
+    Tangent = (Tangent - Normal * FVector::DotProduct(Normal, Tangent)).GetSafeNormal();
+    
+    const float Sign = (FVector::DotProduct(FVector::CrossProduct(Normal, Tangent), BiTangent) < 0.f) ? -1.f : 1.f;
+
     PivotVertex.TangentX = Tangent.X;
     PivotVertex.TangentY = Tangent.Y;
     PivotVertex.TangentZ = Tangent.Z;
+    PivotVertex.TangentW = Sign;
 }
 
 FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFileName)
@@ -566,7 +690,7 @@ FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFi
         return nullptr;
     }
 
-    // SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh); // TODO: refactoring 끝나면 활성화하기
+    SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh);
     ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
     return NewStaticMesh;
 }
@@ -618,28 +742,30 @@ bool FObjManager::SaveStaticMeshToBinary(const FWString& FilePath, const FStatic
     for (const FObjMaterialInfo& Material : StaticMesh.Materials)
     {
         Serializer::WriteFString(File, Material.MaterialName);
+        
         File.write(reinterpret_cast<const char*>(&Material.TextureFlag), sizeof(Material.TextureFlag));
-        //File.write(reinterpret_cast<const char*>(&Material.bHasNormalMap), sizeof(Material.bHasNormalMap));
+        
         File.write(reinterpret_cast<const char*>(&Material.bTransparent), sizeof(Material.bTransparent));
-        File.write(reinterpret_cast<const char*>(&Material.Diffuse), sizeof(Material.Diffuse));
-        File.write(reinterpret_cast<const char*>(&Material.Specular), sizeof(Material.Specular));
-        File.write(reinterpret_cast<const char*>(&Material.Ambient), sizeof(Material.Ambient));
-        File.write(reinterpret_cast<const char*>(&Material.Emissive), sizeof(Material.Emissive));
-        File.write(reinterpret_cast<const char*>(&Material.SpecularScalar), sizeof(Material.SpecularScalar));
-        File.write(reinterpret_cast<const char*>(&Material.DensityScalar), sizeof(Material.DensityScalar));
-        File.write(reinterpret_cast<const char*>(&Material.TransparencyScalar), sizeof(Material.TransparencyScalar));
+        File.write(reinterpret_cast<const char*>(&Material.DiffuseColor), sizeof(Material.DiffuseColor));
+        File.write(reinterpret_cast<const char*>(&Material.SpecularColor), sizeof(Material.SpecularColor));
+        File.write(reinterpret_cast<const char*>(&Material.AmbientColor), sizeof(Material.AmbientColor));
+        File.write(reinterpret_cast<const char*>(&Material.EmissiveColor), sizeof(Material.EmissiveColor));
+        
+        File.write(reinterpret_cast<const char*>(&Material.SpecularExponent), sizeof(Material.SpecularExponent));
+        File.write(reinterpret_cast<const char*>(&Material.IOR), sizeof(Material.IOR));
+        File.write(reinterpret_cast<const char*>(&Material.Transparency), sizeof(Material.Transparency));
+        File.write(reinterpret_cast<const char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.write(reinterpret_cast<const char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
 
-        Serializer::WriteFString(File, Material.DiffuseTextureName);
-        Serializer::WriteFWString(File, Material.DiffuseTexturePath);
-        Serializer::WriteFString(File, Material.AmbientTextureName);
-        Serializer::WriteFWString(File, Material.AmbientTexturePath);
-        Serializer::WriteFString(File, Material.SpecularTextureName);
-        Serializer::WriteFWString(File, Material.SpecularTexturePath);
-        Serializer::WriteFString(File, Material.BumpTextureName);
-        Serializer::WriteFWString(File, Material.BumpTexturePath);
-        Serializer::WriteFString(File, Material.AlphaTextureName);
-        Serializer::WriteFWString(File, Material.AlphaTexturePath);
+        File.write(reinterpret_cast<const char*>(&Material.Metallic), sizeof(Material.Metallic));
+        File.write(reinterpret_cast<const char*>(&Material.Roughness), sizeof(Material.Roughness));
+
+        for (uint8 i = 0; i < static_cast<uint8>(EMaterialTextureSlots::MTS_MAX); ++i)
+        {
+            Serializer::WriteFString(File, Material.TextureInfos[i].TextureName);
+            Serializer::WriteFWString(File, Material.TextureInfos[i].TexturePath);
+            File.write(reinterpret_cast<const char*>(&Material.TextureInfos[i].bIsSRGB), sizeof(Material.TextureInfos[i].bIsSRGB));
+        }
     }
 
     // Material Subsets
@@ -670,7 +796,7 @@ bool FObjManager::LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMesh
         return false;
     }
 
-    TArray<FWString> Textures;
+    TArray<TPair<FWString, bool>> Textures;
 
     // Object Name
     Serializer::ReadFWString(File, OutStaticMesh.ObjectName);
@@ -701,47 +827,31 @@ bool FObjManager::LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMesh
     {
         Serializer::ReadFString(File, Material.MaterialName);
         File.read(reinterpret_cast<char*>(&Material.TextureFlag), sizeof(Material.TextureFlag));
-        //File.read(reinterpret_cast<char*>(&Material.bHasTexture), sizeof(Material.bHasTexture));
-        //File.read(reinterpret_cast<char*>(&Material.bHasNormalMap), sizeof(Material.bHasNormalMap));
+        
         File.read(reinterpret_cast<char*>(&Material.bTransparent), sizeof(Material.bTransparent));
-        File.read(reinterpret_cast<char*>(&Material.Diffuse), sizeof(Material.Diffuse));
-        File.read(reinterpret_cast<char*>(&Material.Specular), sizeof(Material.Specular));
-        File.read(reinterpret_cast<char*>(&Material.Ambient), sizeof(Material.Ambient));
-        File.read(reinterpret_cast<char*>(&Material.Emissive), sizeof(Material.Emissive));
-        File.read(reinterpret_cast<char*>(&Material.SpecularScalar), sizeof(Material.SpecularScalar));
-        File.read(reinterpret_cast<char*>(&Material.DensityScalar), sizeof(Material.DensityScalar));
-        File.read(reinterpret_cast<char*>(&Material.TransparencyScalar), sizeof(Material.TransparencyScalar));
+        File.read(reinterpret_cast<char*>(&Material.DiffuseColor), sizeof(Material.DiffuseColor));
+        File.read(reinterpret_cast<char*>(&Material.SpecularColor), sizeof(Material.SpecularColor));
+        File.read(reinterpret_cast<char*>(&Material.AmbientColor), sizeof(Material.AmbientColor));
+        File.read(reinterpret_cast<char*>(&Material.EmissiveColor), sizeof(Material.EmissiveColor));
+        
+        File.read(reinterpret_cast<char*>(&Material.SpecularExponent), sizeof(Material.SpecularExponent));
+        File.read(reinterpret_cast<char*>(&Material.IOR), sizeof(Material.IOR));
+        File.read(reinterpret_cast<char*>(&Material.Transparency), sizeof(Material.Transparency));
+        File.read(reinterpret_cast<char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.read(reinterpret_cast<char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
-        Serializer::ReadFString(File, Material.DiffuseTextureName);
-        Serializer::ReadFWString(File, Material.DiffuseTexturePath);
-        Serializer::ReadFString(File, Material.AmbientTextureName);
-        Serializer::ReadFWString(File, Material.AmbientTexturePath);
-        Serializer::ReadFString(File, Material.SpecularTextureName);
-        Serializer::ReadFWString(File, Material.SpecularTexturePath);
-        Serializer::ReadFString(File, Material.BumpTextureName);
-        Serializer::ReadFWString(File, Material.BumpTexturePath);
-        Serializer::ReadFString(File, Material.AlphaTextureName);
-        Serializer::ReadFWString(File, Material.AlphaTexturePath);
 
-        if (!Material.DiffuseTexturePath.empty())
+        File.read(reinterpret_cast<char*>(&Material.Metallic), sizeof(Material.Metallic));
+        File.read(reinterpret_cast<char*>(&Material.Roughness), sizeof(Material.Roughness));
+
+        uint8 TextureNum = static_cast<uint8>(EMaterialTextureSlots::MTS_MAX);
+        Material.TextureInfos.SetNum(TextureNum);
+        for (uint8 i = 0; i < TextureNum; ++i)
         {
-            Textures.AddUnique(Material.DiffuseTexturePath);
-        }
-        if (!Material.AmbientTexturePath.empty())
-        {
-            Textures.AddUnique(Material.AmbientTexturePath);
-        }
-        if (!Material.SpecularTexturePath.empty())
-        {
-            Textures.AddUnique(Material.SpecularTexturePath);
-        }
-        if (!Material.BumpTexturePath.empty())
-        {
-            Textures.AddUnique(Material.BumpTexturePath);
-        }
-        if (!Material.AlphaTexturePath.empty())
-        {
-            Textures.AddUnique(Material.AlphaTexturePath);
+            Serializer::ReadFString(File, Material.TextureInfos[i].TextureName);
+            Serializer::ReadFWString(File, Material.TextureInfos[i].TexturePath);
+            File.read(reinterpret_cast<char*>(&Material.TextureInfos[i].bIsSRGB), sizeof(Material.TextureInfos[i].bIsSRGB));
+
+            Textures.AddUnique({Material.TextureInfos[i].TexturePath, Material.TextureInfos[i].bIsSRGB});
         }
     }
 
@@ -766,11 +876,11 @@ bool FObjManager::LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMesh
     // Texture Load
     if (Textures.Num() > 0)
     {
-        for (const FWString& Texture : Textures)
+        for (const TPair<FWString, bool>& Texture : Textures)
         {
-            if (FEngineLoop::ResourceManager.GetTexture(Texture) == nullptr)
+            if (FEngineLoop::ResourceManager.GetTexture(Texture.Key) == nullptr)
             {
-                FEngineLoop::ResourceManager.LoadTextureFromFile(FEngineLoop::GraphicDevice.Device, nullptr, Texture.c_str());
+                FEngineLoop::ResourceManager.LoadTextureFromFile(FEngineLoop::GraphicDevice.Device, Texture.Key.c_str(), Texture.Value);
             }
         }
     }

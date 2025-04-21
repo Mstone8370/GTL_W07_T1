@@ -170,6 +170,7 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\Plane.cpp" />
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.cpp" />
     <ClCompile Include="Engine\Source\Editor\LevelEditor\SLevelEditor.cpp" />
     <ClCompile Include="Engine\Source\Editor\PropertyEditor\ControlEditorPanel.cpp" />
@@ -270,6 +271,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\LineRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcessCompositingPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\ShadowMapPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\SlateRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\TileLightCullingPass.cpp" />
@@ -292,6 +294,8 @@
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.cpp" />
+    <None Include="Shaders\LightPBR.hlsl" />
+    <None Include="Shaders\StaticMeshPixelShaderWorldTangent.hlsl" />
     <None Include="Shaders\CompositingShader.hlsl" />
     <None Include="Shaders\DepthBufferPixelShader.hlsl" />
     <None Include="Shaders\DepthBufferVertexShader.hlsl" />
@@ -306,6 +310,7 @@
     <None Include="Shaders\ShaderLine.hlsl" />
     <None Include="Shaders\ShaderRegisters.hlsl" />
     <None Include="Shaders\ShaderW0.hlsl" />
+    <None Include="Shaders\ShadowMapVertexShader.hlsl" />
     <None Include="Shaders\SlateShader.hlsl" />
     <None Include="Shaders\StaticMeshPixelShader.hlsl" />
     <None Include="Shaders\StaticMeshPixelShaderDepth.hlsl" />
@@ -315,6 +320,7 @@
     <None Include="Shaders\VertexBillBoardShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Engine\Source\Runtime\Core\Math\Plane.h" />
     <ClInclude Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.h" />
     <ClInclude Include="Engine\Source\Editor\LevelEditor\SLevelEditor.h" />
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\ControlEditorPanel.h" />
@@ -444,6 +450,7 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RendererHelpers.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResources.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderConstants.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\ShadowMapPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\SlateRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\TileLightCullingPass.h" />
@@ -513,6 +520,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\ShadowVertexShader.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">mainVS</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">mainVS</EntryPointName>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

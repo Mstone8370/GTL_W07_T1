@@ -5,6 +5,7 @@
 
 USpotLightComponent::USpotLightComponent()
 {
+    // SpotLightInfo
     SpotLightInfo.Position = GetWorldLocation();
     SpotLightInfo.Radius = 30.0f;
     SpotLightInfo.Direction = GetForwardVector();
@@ -14,10 +15,14 @@ USpotLightComponent::USpotLightComponent()
     SpotLightInfo.InnerRad = 0.2618;
     SpotLightInfo.OuterRad = 0.5236;
     SpotLightInfo.Attenuation = 20.0f;
+
+    // DepthStencil for Shadow Mapping
+    InitializeShadowDepthMap();
 }
 
 USpotLightComponent::~USpotLightComponent()
 {
+    ReleaseShadowDepthMap();
 }
 
 UObject* USpotLightComponent::Duplicate(UObject* InOuter)
@@ -29,6 +34,40 @@ UObject* USpotLightComponent::Duplicate(UObject* InOuter)
     }
     
     return NewComponent;
+}
+
+void USpotLightComponent::InitializeShadowDepthMap()
+{
+    ID3D11Device* device = FEngineLoop::Renderer.Graphics->Device;
+    HRESULT hr;
+    
+    D3D11_TEXTURE2D_DESC shadowMapTextureDesc = {};
+    shadowMapTextureDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    shadowMapTextureDesc.MipLevels = 0;
+    shadowMapTextureDesc.ArraySize = 1;
+    shadowMapTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+    shadowMapTextureDesc.CPUAccessFlags = 0;
+    shadowMapTextureDesc.SampleDesc.Count = 1;
+    shadowMapTextureDesc.SampleDesc.Quality = 0;
+    shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+    shadowMapTextureDesc.Width = 4096;
+    shadowMapTextureDesc.Height = 4096;
+    hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
+    assert(SUCCEEDED(hr));
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC shadowMapSRVDesc = {};
+    shadowMapSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    shadowMapSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shadowMapSRVDesc.Texture2D.MipLevels = 1;
+    hr = device->CreateShaderResourceView(ShadowDepthMap.Texture2D, &shadowMapSRVDesc, &ShadowDepthMap.SRV);
+    assert(SUCCEEDED(hr));
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC shadowMapDSVDesc = {};
+    shadowMapDSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    shadowMapDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    shadowMapDSVDesc.Texture2D.MipSlice = 0;
+    hr = device->CreateDepthStencilView(ShadowDepthMap.Texture2D, &shadowMapDSVDesc, &ShadowDepthMap.DSV);
+    assert(SUCCEEDED(hr));
 }
 
 void USpotLightComponent::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -183,8 +222,9 @@ float USpotLightComponent::GetInnerDegree() const
 
 void USpotLightComponent::SetInnerDegree(float InInnerDegree)
 {
-    SpotLightInfo.InnerRad = InInnerDegree * (PI / 180.0f);
-}
+    SpotLightInfo.InnerRad = FMath::Max(InInnerDegree * (PI / 180.0f), 0.f);
+    SpotLightInfo.OuterRad = FMath::Clamp(SpotLightInfo.OuterRad, SpotLightInfo.InnerRad, FMath::DegreesToRadians(80.0f));
+}   
 
 float USpotLightComponent::GetOuterDegree() const
 {
@@ -193,5 +233,6 @@ float USpotLightComponent::GetOuterDegree() const
 
 void USpotLightComponent::SetOuterDegree(float InOuterDegree)
 {
-    SpotLightInfo.OuterRad = InOuterDegree * (PI / 180.0f);
+    SpotLightInfo.OuterRad = FMath::Max(InOuterDegree * (PI / 180.0f), 0.f);
+    SpotLightInfo.InnerRad = FMath::Clamp(SpotLightInfo.InnerRad, 0.0f, SpotLightInfo.OuterRad);
 }

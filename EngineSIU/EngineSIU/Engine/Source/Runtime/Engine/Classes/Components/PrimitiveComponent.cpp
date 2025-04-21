@@ -105,8 +105,8 @@ void UPrimitiveComponent::GetProperties(TMap<FString, FString>& OutProperties) c
 {
     Super::GetProperties(OutProperties);
     OutProperties.Add(TEXT("m_Type"), m_Type);
-    OutProperties.Add(TEXT("AABB_min"), AABB.min.ToString());
-    OutProperties.Add(TEXT("AABB_max"), AABB.max.ToString());
+    OutProperties.Add(TEXT("AABB_min"), AABB.Min.ToString());
+    OutProperties.Add(TEXT("AABB_max"), AABB.Max.ToString());
 }
 
 
@@ -126,9 +126,9 @@ void UPrimitiveComponent::SetProperties(const TMap<FString, FString>& InProperti
     }
 
     const FString* AABBminStr = InProperties.Find(TEXT("AABB_min"));
-    if (AABBminStr) AABB.min.InitFromString(*AABBminStr); 
+    if (AABBminStr) AABB.Min.InitFromString(*AABBminStr); 
 
     
     const FString* AABBmaxStr = InProperties.Find(TEXT("AABB_max"));
-    if (AABBmaxStr) AABB.max.InitFromString(*AABBmaxStr); 
+    if (AABBmaxStr) AABB.Max.InitFromString(*AABBmaxStr); 
 }

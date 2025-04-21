@@ -168,8 +168,17 @@ void PropertyEditorPanel::Render()
                 if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
                     pointlightObj->SetRadius(Radius);
                 }
+                for (int face = 0; face < 6; ++face)
+                {
+                    ImGui::PushID(face);
 
-
+                    ImGui::Text("Face %d", face);
+                    // UV 좌표를 뒤집어(depth 텍스처 상 Y축 반전) 제대로 보이게
+                    ImGui::Image(
+                        (ImTextureID)pointlightObj->faceSRVs[face],
+                        ImVec2(512,512));   // UV1
+                    ImGui::PopID();
+                }
                 ImGui::TreePop();
             }
 
@@ -200,14 +209,16 @@ void PropertyEditorPanel::Render()
                 FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
                 
                 float InnerDegree = spotlightObj->GetInnerDegree();
-                if (ImGui::SliderFloat("InnerDegree", &InnerDegree, 0.01f, 180.f, "%.1f")) {
+                if (ImGui::SliderFloat("InnerDegree", &InnerDegree, 0.01f, 80.f, "%.1f")) {
                     spotlightObj->SetInnerDegree(InnerDegree);
                 }
 
                 float OuterDegree = spotlightObj->GetOuterDegree();
-                if (ImGui::SliderFloat("OuterDegree", &OuterDegree, 0.01f, 180.f, "%.1f")) {
+                if (ImGui::SliderFloat("OuterDegree", &OuterDegree, 0.01f, 80.f, "%.1f")) {
                     spotlightObj->SetOuterDegree(OuterDegree);
                 }
+
+                ImGui::Image((ImTextureID)spotlightObj->GetShadowDepthMap().SRV, ImVec2(256, 256));
 
                 ImGui::TreePop();
             }
@@ -233,6 +244,7 @@ void PropertyEditorPanel::Render()
                 LightDirection = dirlightObj->GetDirection();
                 FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
 
+                ImGui::Image((ImTextureID)dirlightObj->GetShadowDepthMap().SRV, ImVec2(256, 256));
                 ImGui::TreePop();
             }
 
@@ -635,10 +647,10 @@ void PropertyEditorPanel::RenderMaterialView(UMaterial* Material)
 
     static ImGuiSelectableFlags BaseFlag = ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel | ImGuiColorEditFlags_None | ImGuiColorEditFlags_NoAlpha;
 
-    FVector MatDiffuseColor = Material->GetMaterialInfo().Diffuse;
-    FVector MatSpecularColor = Material->GetMaterialInfo().Specular;
-    FVector MatAmbientColor = Material->GetMaterialInfo().Ambient;
-    FVector MatEmissiveColor = Material->GetMaterialInfo().Emissive;
+    FVector MatDiffuseColor = Material->GetMaterialInfo().DiffuseColor;
+    FVector MatSpecularColor = Material->GetMaterialInfo().SpecularColor;
+    FVector MatAmbientColor = Material->GetMaterialInfo().AmbientColor;
+    FVector MatEmissiveColor = Material->GetMaterialInfo().EmissiveColor;
 
     float dr = MatDiffuseColor.X;
     float dg = MatDiffuseColor.Y;
@@ -756,10 +768,10 @@ void PropertyEditorPanel::RenderCreateMaterialView()
         tempMaterialInfo.MaterialName = materialName;
     }
 
-    FVector MatDiffuseColor = tempMaterialInfo.Diffuse;
-    FVector MatSpecularColor = tempMaterialInfo.Specular;
-    FVector MatAmbientColor = tempMaterialInfo.Ambient;
-    FVector MatEmissiveColor = tempMaterialInfo.Emissive;
+    FVector MatDiffuseColor = tempMaterialInfo.DiffuseColor;
+    FVector MatSpecularColor = tempMaterialInfo.SpecularColor;
+    FVector MatAmbientColor = tempMaterialInfo.AmbientColor;
+    FVector MatEmissiveColor = tempMaterialInfo.EmissiveColor;
 
     float dr = MatDiffuseColor.X;
     float dg = MatDiffuseColor.Y;
@@ -775,7 +787,7 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Diffuse##Color", (float*)&DiffuseColorPick, BaseFlag))
     {
         FVector NewColor = { DiffuseColorPick[0], DiffuseColorPick[1], DiffuseColorPick[2] };
-        tempMaterialInfo.Diffuse = NewColor;
+        tempMaterialInfo.DiffuseColor = NewColor;
     }
 
     float sr = MatSpecularColor.X;
@@ -789,7 +801,7 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Specular##Color", (float*)&SpecularColorPick, BaseFlag))
     {
         FVector NewColor = { SpecularColorPick[0], SpecularColorPick[1], SpecularColorPick[2] };
-        tempMaterialInfo.Specular = NewColor;
+        tempMaterialInfo.SpecularColor = NewColor;
     }
 
 
@@ -804,7 +816,7 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Ambient##Color", (float*)&AmbientColorPick, BaseFlag))
     {
         FVector NewColor = { AmbientColorPick[0], AmbientColorPick[1], AmbientColorPick[2] };
-        tempMaterialInfo.Ambient = NewColor;
+        tempMaterialInfo.AmbientColor = NewColor;
     }
 
 
@@ -819,7 +831,7 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Emissive##Color", (float*)&EmissiveColorPick, BaseFlag))
     {
         FVector NewColor = { EmissiveColorPick[0], EmissiveColorPick[1], EmissiveColorPick[2] };
-        tempMaterialInfo.Emissive = NewColor;
+        tempMaterialInfo.EmissiveColor = NewColor;
     }
     ImGui::Unindent();
 

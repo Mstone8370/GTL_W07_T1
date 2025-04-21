@@ -129,6 +129,12 @@ void FGraphicsDevice::CreateRasterizerState()
     RasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
     RasterizerDesc.CullMode = D3D11_CULL_BACK;
     Device->CreateRasterizerState(&RasterizerDesc, &RasterizerWireframeBack);
+    
+    RasterizerDesc.FillMode = D3D11_FILL_SOLID;
+    RasterizerDesc.CullMode = D3D11_CULL_NONE;
+    RasterizerDesc.DepthBias = 3;
+    RasterizerDesc.SlopeScaledDepthBias = 3;
+    Device->CreateRasterizerState(&RasterizerDesc, &RasterizerShadowMap);
 }
 
 void FGraphicsDevice::ReleaseDeviceAndSwapChain()
@@ -302,6 +308,9 @@ void FGraphicsDevice::ChangeRasterizer(EViewModeIndex ViewModeIndex)
     case EViewModeIndex::VMI_Unlit:
     case EViewModeIndex::VMI_SceneDepth:
     case EViewModeIndex::VMI_WorldNormal:
+    case EViewModeIndex::VMI_WorldTangent:
+    case EViewModeIndex::VMI_LightHeatMap:
+    default:
         CurrentRasterizer = RasterizerSolidBack;
         break;
     }

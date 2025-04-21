@@ -427,9 +427,9 @@ void ControlEditorPanel::CreateFlagButton() const
     ImGui::SameLine();
 
     const char* ViewModeNames[] = { 
-        "Lit_Gouraud", "Lit_Lambert", "Lit_Phong", 
+        "Lit_Gouraud", "Lit_Lambert", "Lit_Blinn-Phong", "Lit_PBR",
         "Unlit", "Wireframe",
-        "Scene Depth", "World Normal", "Light Heat Map"
+        "Scene Depth", "World Normal", "World Tangent","Light Heat Map"
     };
     uint32 ViewModeCount = sizeof(ViewModeNames) / sizeof(ViewModeNames[0]);
     

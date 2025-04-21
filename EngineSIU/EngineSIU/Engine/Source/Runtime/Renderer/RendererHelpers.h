@@ -20,46 +20,43 @@ namespace MaterialUtils
     inline void UpdateMaterial(FDXDBufferManager* BufferManager, FGraphicsDevice* Graphics, const FObjMaterialInfo& MaterialInfo)
     {
         FMaterialConstants Data;
-        Data.DiffuseColor = MaterialInfo.Diffuse;
-        Data.TransparencyScalar = MaterialInfo.TransparencyScalar;
         
-        Data.SpecularColor = MaterialInfo.Specular;
-        Data.SpecularScalar = MaterialInfo.SpecularScalar;
-        
-        Data.EmissiveColor = MaterialInfo.Emissive;
-        Data.DensityScalar = MaterialInfo.DensityScalar;
-        
-        Data.AmbientColor = MaterialInfo.Ambient;
         Data.TextureFlag = MaterialInfo.TextureFlag;
+        
+        Data.DiffuseColor = MaterialInfo.DiffuseColor;
+        
+        Data.SpecularColor = MaterialInfo.SpecularColor;
+        Data.SpecularExponent = MaterialInfo.SpecularExponent;
+        
+        Data.EmissiveColor = MaterialInfo.EmissiveColor;
+        Data.Transparency = MaterialInfo.Transparency;
+
+        Data.Metallic = MaterialInfo.Metallic;
+        Data.Roughness = MaterialInfo.Roughness;
 
         BufferManager->UpdateConstantBuffer(TEXT("FMaterialConstants"), Data);
-        
-        // Update Textures
-        if (MaterialInfo.TextureFlag & (1 << 1)) {
-            std::shared_ptr<FTexture> texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.DiffuseTexturePath);
-            Graphics->DeviceContext->PSSetShaderResources(0, 1, &texture->TextureSRV);
-            Graphics->DeviceContext->PSSetSamplers(0, 1, &texture->SamplerState);
-        }
-        else
-        {
-            ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
-            ID3D11SamplerState* nullSampler[1] = { nullptr };
-            Graphics->DeviceContext->PSSetShaderResources(0, 1, nullSRV);
-            Graphics->DeviceContext->PSSetSamplers(0, 1, nullSampler);
 
-        }
-        
-        if (MaterialInfo.TextureFlag & (1 << 2))
+        ID3D11ShaderResourceView* SRVs[9] = {};
+        ID3D11SamplerState* Samplers[9] = {};
+
+        for (uint8 i = 0; i < static_cast<uint8>(EMaterialTextureSlots::MTS_MAX); ++i)
         {
-            std::shared_ptr<FTexture> texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.BumpTexturePath);
-            Graphics->DeviceContext->PSSetShaderResources(1, 1, &texture->TextureSRV);
-            Graphics->DeviceContext->PSSetSamplers(1, 1, &texture->SamplerState);
+            if (MaterialInfo.TextureFlag & (1 << i)) // EMaterialTextureFlags와 EMaterialTextureSlots의 순서가 일치한다는 전제 조건.
+            {
+                std::shared_ptr<FTexture> Texture = FEngineLoop::ResourceManager.GetTexture(MaterialInfo.TextureInfos[i].TexturePath);
+                SRVs[i] = Texture->TextureSRV;
+                Samplers[i] = Texture->SamplerState;
+
+                if (i == static_cast<uint8>(EMaterialTextureSlots::MTS_Diffuse))
+                {
+                    // for Gouraud shading
+                    Graphics->DeviceContext->VSSetShaderResources(0, 1, &Texture->TextureSRV);
+                    Graphics->DeviceContext->VSSetSamplers(0, 1, &Texture->SamplerState);
+                }
+            }
         }
-        else {
-            ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
-            ID3D11SamplerState* nullSampler[1] = { nullptr };
-            Graphics->DeviceContext->PSSetShaderResources(1, 1, nullSRV);
-            Graphics->DeviceContext->PSSetSamplers(1, 1, nullSampler);
-        }
+
+        Graphics->DeviceContext->PSSetShaderResources(0, 9, SRVs);
+        Graphics->DeviceContext->PSSetSamplers(0, 9, Samplers);
     }
 }

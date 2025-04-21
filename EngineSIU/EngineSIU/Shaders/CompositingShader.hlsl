@@ -6,6 +6,17 @@ Texture2D DebugTexture : register(t104);
 
 SamplerState CompositingSampler : register(s0);
 
+#define VMI_Lit_Gouraud      0
+#define VMI_Lit_Lambert      1
+#define VMI_Lit_BlinnPhong   2
+#define VMI_Lit_SG           3
+#define VMI_Unlit            4
+#define VMI_Wireframe        5
+#define VMI_SceneDepth       6
+#define VMI_WorldNormal      7
+#define VMI_WorldTangent     8
+#define VMI_LightHeatMap     9
+
 cbuffer ViewMode : register(b0)
 {
     uint ViewMode; 
@@ -50,7 +61,7 @@ float4 mainPS(PS_Input Input) : SV_TARGET
     float4 Debug = DebugTexture.Sample(CompositingSampler, Input.UV);
 
     float4 FinalColor = float4(0, 0, 0, 0);
-    if (ViewMode == 7)
+    if (ViewMode == VMI_LightHeatMap)
     {
         FinalColor = lerp(Scene, Debug, 0.5);
         FinalColor = lerp(FinalColor, Editor, Editor.a);

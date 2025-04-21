@@ -67,32 +67,32 @@ void FEditorViewportClient::UpdateEditorCameraMovement(float DeltaTime)
 {
     if (PressedKeys.Contains(EKeys::A))
     {
-        CameraMoveRight(-100.f * DeltaTime);
+        CameraMoveRight(-CameraSpeedMultiplier * DeltaTime);
     }
 
     if (PressedKeys.Contains(EKeys::D))
     {
-        CameraMoveRight(100.f * DeltaTime);
+        CameraMoveRight(CameraSpeedMultiplier * DeltaTime);
     }
 
     if (PressedKeys.Contains(EKeys::W))
     {
-        CameraMoveForward(100.f * DeltaTime);
+        CameraMoveForward(CameraSpeedMultiplier * DeltaTime);
     }
 
     if (PressedKeys.Contains(EKeys::S))
     {
-        CameraMoveForward(-100.f * DeltaTime);
+        CameraMoveForward(-CameraSpeedMultiplier * DeltaTime);
     }
 
     if (PressedKeys.Contains(EKeys::E))
     {
-        CameraMoveUp(100.f * DeltaTime);
+        CameraMoveUp(CameraSpeedMultiplier * DeltaTime);
     }
 
     if (PressedKeys.Contains(EKeys::Q))
     {
-        CameraMoveUp(-100.f * DeltaTime);
+        CameraMoveUp(-CameraSpeedMultiplier * DeltaTime);
     }
 }
 
@@ -559,6 +559,7 @@ void FEditorViewportClient::LoadConfig(const TMap<FString, FString>& config)
     PerspectiveCamera.ViewRotation.X = GetValueFromConfig(config, "PerspectiveCameraRotX" + ViewportNum, 0.0f);
     PerspectiveCamera.ViewRotation.Y = GetValueFromConfig(config, "PerspectiveCameraRotY" + ViewportNum, 0.0f);
     PerspectiveCamera.ViewRotation.Z = GetValueFromConfig(config, "PerspectiveCameraRotZ" + ViewportNum, 0.0f);
+    ViewFOV = GetValueFromConfig(config, "FOV" + ViewportNum, 90.0f);
     ShowFlag = GetValueFromConfig(config, "ShowFlag" + ViewportNum, 31.0f);
     ViewMode = static_cast<EViewModeIndex>(GetValueFromConfig(config, "ViewMode" + ViewportNum, 0));
     ViewportType = static_cast<ELevelViewportType>(GetValueFromConfig(config, "ViewportType" + ViewportNum, 3));
@@ -576,7 +577,8 @@ void FEditorViewportClient::SaveConfig(TMap<FString, FString>& config) const
     config["PerspectiveCameraRotX" + ViewportNum] = std::to_string(PerspectiveCamera.GetRotation().X);
     config["PerspectiveCameraRotY" + ViewportNum] = std::to_string(PerspectiveCamera.GetRotation().Y);
     config["PerspectiveCameraRotZ" + ViewportNum] = std::to_string(PerspectiveCamera.GetRotation().Z);
-    config["ShowFlag"+ ViewportNum] = std::to_string(ShowFlag);
+    config["FOV" + ViewportNum] = std::to_string(ViewFOV);
+    config["ShowFlag" + ViewportNum] = std::to_string(ShowFlag);
     config["ViewMode" + ViewportNum] = std::to_string(int32(ViewMode));
     config["ViewportType" + ViewportNum] = std::to_string(int32(ViewportType));
 }

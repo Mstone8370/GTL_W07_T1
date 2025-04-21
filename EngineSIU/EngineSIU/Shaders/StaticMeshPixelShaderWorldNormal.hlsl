@@ -1,10 +1,6 @@
 
 #include "ShaderRegisters.hlsl"
 
-SamplerState NormalSampler : register(s1);
-
-Texture2D NormalTexture : register(t1);
-
 cbuffer MaterialConstants : register(b1)
 {
     FMaterial Material;
@@ -13,12 +9,18 @@ cbuffer MaterialConstants : register(b1)
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 {
     // Normal
-    float3 WorldNormal = Input.WorldNormal;
-    if (Material.TextureFlag & (1 << 2))
+    float3 WorldNormal = normalize(Input.WorldNormal);
+    if (Material.TextureFlag & TEXTURE_FLAG_NORMAL)
     {
-        float3 Normal = NormalTexture.Sample(NormalSampler, Input.UV).rgb;
+        float3 Tangent = normalize(Input.WorldTangent.xyz);
+        float Sign = Input.WorldTangent.w;
+        float3 BiTangent = cross(WorldNormal, Tangent) * Sign;
+
+        float3x3 TBN = float3x3(Tangent, BiTangent, WorldNormal);
+        
+        float3 Normal = MaterialTextures[TEXTURE_SLOT_NORMAL].Sample(MaterialSamplers[TEXTURE_SLOT_NORMAL], Input.UV).rgb;
         Normal = normalize(2.f * Normal - 1.f);
-        WorldNormal = normalize(mul(mul(Normal, Input.TBN), (float3x3) InverseTransposedWorld));
+        WorldNormal = normalize(mul(Normal, TBN));
     }
     
     float4 FinalColor = float4(WorldNormal, 1.f);

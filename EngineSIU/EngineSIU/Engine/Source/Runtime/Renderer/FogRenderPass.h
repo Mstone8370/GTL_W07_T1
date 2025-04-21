@@ -28,6 +28,7 @@ public:
 
     // Fog 렌더링용 셰이더 생성 및 입력 레이아웃 설정
     void CreateShader();
+    void UpdateShader();
     void ReleaseShader();
 
     void PrepareRenderState();

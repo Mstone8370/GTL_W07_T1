@@ -5,8 +5,8 @@
 USphereComp::USphereComp()
 {
     SetType(StaticClass()->GetName());
-    AABB.max = {1, 1, 1};
-    AABB.min = {-1, -1, -1};
+    AABB.Max = {1, 1, 1};
+    AABB.Min = {-1, -1, -1};
 }
 
 void USphereComp::InitializeComponent()

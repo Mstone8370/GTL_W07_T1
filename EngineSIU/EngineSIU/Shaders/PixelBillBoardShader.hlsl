@@ -20,9 +20,9 @@ float4 main(PS_Input input) : SV_TARGET
     
     float2 UV = input.UV * uvScale + uvOffset;
     float4 Color = Texture.Sample(Sampler, UV);
-    float threshold = 0.1f;
+    float Threshold = 0.2f;
 
-    if (max(max(Color.r, Color.g), Color.b) < threshold || Color.a < 0.5f)
+    if (Color.a < Threshold)
     {
         discard;
     }

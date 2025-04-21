@@ -36,8 +36,8 @@ void UWorld::InitializeNewWorld()
 void UWorld::InitializeLightScene()
 {
 	const int TotalLights = 1000;		// 최대 개수
-	const int HalfCountPerAxis = 5;	// -4 ~ +4. 9*9*9 개수만큼 생성
-	const float Spacing = 25.0f;		// 오브젝트간의 간격
+	const int HalfCountPerAxis = 0;	// -4 ~ +4. 9*9*9 개수만큼 생성
+	const float Spacing = 5.0f;		// 오브젝트간의 간격
 	const float JitterAmount = 100.0f;	// 랜덤 흔들림 정도. 
 
 	//고정 시드 랜덤 오프셋. 매 실행마다 같은 결과.
@@ -72,19 +72,19 @@ void UWorld::InitializeLightScene()
 				FVector jitter = HashOffset(x, y, z);		//랜덤 오프셋 추가.
 				FVector finalPos = basePos+jitter;
 
-				if (LightCount % 2 == 0)
+				/*if (LightCount % 2 == 0)
 				{
 					APointLight* PointLightActor = SpawnActor<APointLight>();
 					PointLightActor->SetActorLabel(FString::Printf(TEXT("OBJ_PointLight_%d"), LightCount));
 					PointLightActor->SetActorLocation(finalPos);
 				}
-				//else
-				//{
-    //                //continue;
-				//	ASpotLight* SpotLightActor = SpawnActor<ASpotLight>();
-				//	SpotLightActor->SetActorLabel(FString::Printf(TEXT("OBJ_SpotLight_%d"), LightCount));
-				//	SpotLightActor->SetActorLocation(finalPos);
-				//}
+				else*/
+				{
+                    //continue;
+					ASpotLight* SpotLightActor = SpawnActor<ASpotLight>();
+					SpotLightActor->SetActorLabel(FString::Printf(TEXT("OBJ_SpotLight_%d"), LightCount));
+					SpotLightActor->SetActorLocation(finalPos);
+				}
 
 				++LightCount;
 				UE_LOG(LogLevel::Display,"LightCount %d", LightCount);

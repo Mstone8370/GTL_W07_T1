@@ -1,20 +1,24 @@
 #include "DirectionalLightComponent.h"
 #include "Components/SceneComponent.h"
+#include "Math/JungleMath.h"
 #include "Math/Rotator.h"
 #include "Math/Quat.h"
 #include "UObject/Casts.h"
 
 UDirectionalLightComponent::UDirectionalLightComponent()
 {
-
-    DirectionalLightInfo.Direction = -GetUpVector();
+    // DirectionalLight Info
+    DirectionalLightInfo.Direction = GetForwardVector();
     DirectionalLightInfo.Intensity = 10.0f;
-
     DirectionalLightInfo.LightColor = FLinearColor(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // DepthStencil for Shadow Mapping
+    InitializeShadowDepthMap();
 }
 
 UDirectionalLightComponent::~UDirectionalLightComponent()
 {
+    ReleaseShadowDepthMap();
 }
 
 UObject* UDirectionalLightComponent::Duplicate(UObject* InOuter)
@@ -61,7 +65,7 @@ void UDirectionalLightComponent::SetProperties(const TMap<FString, FString>& InP
 FVector UDirectionalLightComponent::GetDirection()  
 {
     FRotator rotator = GetWorldRotation();
-    FVector WorldDown= rotator.ToQuaternion().RotateVector(-GetUpVector());
+    FVector WorldDown= rotator.ToQuaternion().RotateVector(GetForwardVector());
     return WorldDown;  
 }
 
@@ -93,4 +97,56 @@ FLinearColor UDirectionalLightComponent::GetLightColor() const
 void UDirectionalLightComponent::SetLightColor(const FLinearColor& InColor)
 {
     DirectionalLightInfo.LightColor = InColor;
+}
+
+FMatrix UDirectionalLightComponent::GetLightViewMatrix(const FVector& CamPosition)
+{
+    FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, GetRotationMatrix());
+    FVector psuedoUp = FVector::UpVector;
+    // if Forward similar with UpVector or DownVector
+    if (abs(Forward.Dot(psuedoUp) - 1.f) < 1e-6f || abs(Forward.Dot(psuedoUp) + 1.f) < 1e-6f)
+    {
+        psuedoUp = FVector::ForwardVector;
+    }
+    FVector Position = CamPosition - GetDirection() * farPlane / 2.f;
+    return  JungleMath::CreateViewMatrix(Position, Position + Forward, psuedoUp);
+}
+
+FMatrix UDirectionalLightComponent::GetLightProjMatrix()
+{
+    return JungleMath::CreateOrthoProjectionMatrix(ShadowFrustumWidth, ShadowFrustumHeight, nearPlane, farPlane);
+}
+
+void UDirectionalLightComponent::InitializeShadowDepthMap()
+{
+    
+    ID3D11Device* device = FEngineLoop::Renderer.Graphics->Device;
+    HRESULT hr;
+    
+    D3D11_TEXTURE2D_DESC shadowMapTextureDesc = {};
+    shadowMapTextureDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    shadowMapTextureDesc.MipLevels = 0;
+    shadowMapTextureDesc.ArraySize = 1;
+    shadowMapTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+    shadowMapTextureDesc.SampleDesc.Count = 1;
+    shadowMapTextureDesc.SampleDesc.Quality = 0;
+    shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+    shadowMapTextureDesc.Width = static_cast<UINT>(ShadowMapSize);
+    shadowMapTextureDesc.Height = static_cast<UINT>(ShadowMapSize);
+    hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
+    assert(SUCCEEDED(hr));
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC shadowMapSRVDesc = {};
+    shadowMapSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    shadowMapSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shadowMapSRVDesc.Texture2D.MipLevels = 1;
+    hr = device->CreateShaderResourceView(ShadowDepthMap.Texture2D, &shadowMapSRVDesc, &ShadowDepthMap.SRV);
+    assert(SUCCEEDED(hr));
+
+    D3D11_DEPTH_STENCIL_VIEW_DESC shadowMapDSVDesc = {};
+    shadowMapDSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    shadowMapDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    shadowMapDSVDesc.Texture2D.MipSlice = 0;
+    hr = device->CreateDepthStencilView(ShadowDepthMap.Texture2D, &shadowMapDSVDesc, &ShadowDepthMap.DSV);
+    assert(SUCCEEDED(hr));
 }

@@ -3,6 +3,7 @@
 #include "EngineBaseTypes.h"
 #include "Container/Set.h"
 
+class UPointLightComponent;
 class FDXDShaderManager;
 class UWorld;
 class UMaterial;
@@ -12,6 +13,7 @@ struct FStaticMaterial;
 struct FStaticMeshRenderData;
 struct FMatrix;
 struct FVector4;
+struct ID3D11SamplerState;
 
 class ID3D11Buffer;
 class ID3D11VertexShader;
@@ -52,7 +54,9 @@ public:
     void ReleaseShader();
 
     void ChangeViewMode(EViewModeIndex ViewModeIndex);
-    
+
+
+    void UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights);
 protected:
     TArray<UStaticMeshComponent*> StaticMeshComponents;
 
@@ -60,10 +64,10 @@ protected:
     ID3D11InputLayout* InputLayout;
     
     ID3D11PixelShader* PixelShader;
-    ID3D11PixelShader* DebugDepthShader;
-    ID3D11PixelShader* DebugWorldNormalShader;
 
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
     FDXDShaderManager* ShaderManager;
+
+    ID3D11SamplerState* ShadowSampler;
 };

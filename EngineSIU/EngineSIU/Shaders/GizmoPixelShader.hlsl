@@ -51,7 +51,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         float Z = SceneDepthTexture.Sample(Sampler, DepthUV).r;
         float3 SceneWorldPosition = ReconstructWorldPosition(DepthUV, Z);
 
-        if (IsShaded(SceneWorldPosition, Input.WorldPosition, Input.WorldViewPosition))
+        if (IsShaded(SceneWorldPosition, Input.WorldPosition, ViewWorldLocation))
         {
             float GridSize = 3.f;
             float2 GridCoord = floor(Input.Position.xy / GridSize);

@@ -22,7 +22,8 @@
 
 #define GOURAUD "LIGHTING_MODEL_GOURAUD"
 #define LAMBERT "LIGHTING_MODEL_LAMBERT"
-#define PHONG "LIGHTING_MODEL_BLINN_PHONG"
+#define BLINN_PHONG "LIGHTING_MODEL_BLINN_PHONG"
+#define PBR "LIGHTING_MODEL_PBR"
 
 // Material Subset
 struct FMaterialSubset
@@ -68,40 +69,65 @@ struct FObjInfo
     TArray<FMaterialSubset> MaterialSubsets;
 };
 
+enum class EMaterialTextureFlags : uint16
+{
+    MTF_Diffuse      = 1 << 0,
+    MTF_Specular     = 1 << 1,
+    MTF_Normal       = 1 << 2,
+    MTF_Emissive     = 1 << 3,
+    MTF_Alpha        = 1 << 4,
+    MTF_Ambient      = 1 << 5,
+    MTF_Shininess    = 1 << 6,
+    MTF_Metallic     = 1 << 7,
+    MTF_Roughness    = 1 << 8,
+    MTF_MAX,
+};
+
+enum class EMaterialTextureSlots : uint8
+{
+    MTS_Diffuse      = 0,
+    MTS_Specular     = 1,
+    MTS_Normal       = 2,
+    MTS_Emissive     = 3,
+    MTS_Alpha        = 4,
+    MTS_Ambient      = 5,
+    MTS_Shininess    = 6,
+    MTS_Metallic     = 7,
+    MTS_Roughness    = 8,
+    MTS_MAX,
+};
+
+struct FTextureInfo
+{
+    FString TextureName;
+    FWString TexturePath;
+    bool bIsSRGB;
+};
+
 struct FObjMaterialInfo
 {
-    FString MaterialName;  // newmtl : Material Name.
+    FString MaterialName;  // newmtl: Material Name.
 
     uint32 TextureFlag = 0;
 
     bool bTransparent = false; // Has alpha channel?
 
-    FVector Diffuse = FVector(0.7f, 0.7f, 0.7f);  // Kd : Diffuse (Vector4)
-    FVector Specular = FVector(0.5f, 0.5f, 0.5f);  // Ks : Specular (Vector) 
-    FVector Ambient = FVector(0.01f, 0.01f, 0.01f);   // Ka : Ambient (Vector)
-    FVector Emissive = FVector::ZeroVector;  // Ke : Emissive (Vector)
+    FVector DiffuseColor = FVector(0.7f, 0.7f, 0.7f);      // Kd: Diffuse Color
+    FVector SpecularColor = FVector(0.5f, 0.5f, 0.5f);     // Ks: Specular Color
+    FVector AmbientColor = FVector(0.01f, 0.01f, 0.01f);   // Ka: Ambient Color
+    FVector EmissiveColor = FVector::ZeroVector;                   // Ke: Emissive Color
 
-    float SpecularScalar = 64.f; // Ns : Specular Power (Float)
-    float DensityScalar;  // Ni : Optical Density (Float)
-    float TransparencyScalar; // d or Tr  : Transparency of surface (Float)
-    float BumpMultiplier;     // -bm : Bump Mulitplier ex) normalMap.xy *= BumpMultiplier; 
-    uint32 IlluminanceModel; // illum: illumination Model between 0 and 10. (UINT)
+    float SpecularExponent = 250.f;                                // Ns: Specular Power
+    float IOR = 1.5f;                                              // Ni: Index of Refraction
+    float Transparency = 0.f;                                      // d or Tr: Transparency of surface
+    float BumpMultiplier = 1.f;                                    // -bm: Bump Multiplier
+    uint32 IlluminanceModel;                                       // illum: illumination Model between 0 and 10.
 
+    float Metallic = 0.0f;                                         // Pm: Metallic
+    float Roughness = 0.5f;                                        // Pr: Roughness
+    
     /* Texture */
-    FString DiffuseTextureName;  // map_Kd : Diffuse texture
-    FWString DiffuseTexturePath;
-
-    FString AmbientTextureName;  // map_Ka : Ambient texture
-    FWString AmbientTexturePath;
-
-    FString SpecularTextureName; // map_Ks : Specular texture
-    FWString SpecularTexturePath;
-
-    FString BumpTextureName;     // map_Bump : Bump texture
-    FWString BumpTexturePath;
-
-    FString AlphaTextureName;    // map_d : Alpha texture
-    FWString AlphaTexturePath;
+    TArray<FTextureInfo> TextureInfos;
 };
 
 struct FVertexTexture
@@ -139,94 +165,121 @@ struct FRect
 
 struct FPoint
 {
-    FPoint() : x(0), y(0) {}
-    FPoint(float _x, float _y) : x(_x), y(_y) {}
-    FPoint(long _x, long _y) : x(_x), y(_y) {}
-    FPoint(int _x, int _y) : x(_x), y(_y) {}
+    FPoint() : X(0), Y(0) {}
+    FPoint(float InX, float InY) : X(InX), Y(InY) {}
+    FPoint(long InX, long InY) : X(static_cast<float>(InX)), Y(static_cast<float>(InY)) {}
+    FPoint(int InX, int InY) : X(static_cast<float>(InX)), Y(static_cast<float>(InY)) {}
 
-    float x, y;
+    float X, Y;
 };
 
 struct FBoundingBox
 {
     FBoundingBox() = default;
-    FBoundingBox(FVector _min, FVector _max) : min(_min), max(_max) {}
-    FVector min; // Minimum extents
+    FBoundingBox(const FVector& InMin, const FVector& InMax) : Min(InMin), Max(InMax) {}
+    
+    FVector Min; // Minimum extents
     float pad;
-    FVector max; // Maximum extents
+    
+    FVector Max; // Maximum extents
     float pad1;
+    
     bool Intersect(const FVector& rayOrigin, const FVector& rayDir, float& outDistance) const
     {
-        float tmin = -FLT_MAX;
-        float tmax = FLT_MAX;
-        constexpr float epsilon = 1e-6f;
+        float TMin = -FLT_MAX;
+        float TMax = FLT_MAX;
+        constexpr float Epsilon = 1e-6f;
 
         // X축 처리
-        if (fabs(rayDir.X) < epsilon)
+        if (fabs(rayDir.X) < Epsilon)
         {
             // 레이가 X축 방향으로 거의 평행한 경우,
             // 원점의 x가 박스 [min.X, max.X] 범위 밖이면 교차 없음
-            if (rayOrigin.X < min.X || rayOrigin.X > max.X)
+            if (rayOrigin.X < Min.X || rayOrigin.X > Max.X)
+            {
                 return false;
+            }
         }
         else
         {
-            float t1 = (min.X - rayOrigin.X) / rayDir.X;
-            float t2 = (max.X - rayOrigin.X) / rayDir.X;
-            if (t1 > t2)  std::swap(t1, t2);
+            float T1 = (Min.X - rayOrigin.X) / rayDir.X;
+            float T2 = (Max.X - rayOrigin.X) / rayDir.X;
+            if (T1 > T2)
+            {
+                std::swap(T1, T2);
+            }
 
             // tmin은 "현재까지의 교차 구간 중 가장 큰 min"
-            tmin = (t1 > tmin) ? t1 : tmin;
+            TMin = (T1 > TMin) ? T1 : TMin;
             // tmax는 "현재까지의 교차 구간 중 가장 작은 max"
-            tmax = (t2 < tmax) ? t2 : tmax;
-            if (tmin > tmax)
+            TMax = (T2 < TMax) ? T2 : TMax;
+            
+            if (TMin > TMax)
+            {
                 return false;
+            }
         }
 
         // Y축 처리
-        if (fabs(rayDir.Y) < epsilon)
+        if (fabs(rayDir.Y) < Epsilon)
         {
-            if (rayOrigin.Y < min.Y || rayOrigin.Y > max.Y)
+            if (rayOrigin.Y < Min.Y || rayOrigin.Y > Max.Y)
+            {
                 return false;
+            }
         }
         else
         {
-            float t1 = (min.Y - rayOrigin.Y) / rayDir.Y;
-            float t2 = (max.Y - rayOrigin.Y) / rayDir.Y;
-            if (t1 > t2)  std::swap(t1, t2);
+            float t1 = (Min.Y - rayOrigin.Y) / rayDir.Y;
+            float t2 = (Max.Y - rayOrigin.Y) / rayDir.Y;
+            if (t1 > t2)
+            {
+                std::swap(t1, t2);
+            }
 
-            tmin = (t1 > tmin) ? t1 : tmin;
-            tmax = (t2 < tmax) ? t2 : tmax;
-            if (tmin > tmax)
+            TMin = (t1 > TMin) ? t1 : TMin;
+            TMax = (t2 < TMax) ? t2 : TMax;
+            if (TMin > TMax)
+            {
                 return false;
+            }
         }
 
         // Z축 처리
-        if (fabs(rayDir.Z) < epsilon)
+        if (fabs(rayDir.Z) < Epsilon)
         {
-            if (rayOrigin.Z < min.Z || rayOrigin.Z > max.Z)
+            if (rayOrigin.Z < Min.Z || rayOrigin.Z > Max.Z)
+            {
                 return false;
+            }
         }
         else
         {
-            float t1 = (min.Z - rayOrigin.Z) / rayDir.Z;
-            float t2 = (max.Z - rayOrigin.Z) / rayDir.Z;
-            if (t1 > t2)  std::swap(t1, t2);
+            float t1 = (Min.Z - rayOrigin.Z) / rayDir.Z;
+            float t2 = (Max.Z - rayOrigin.Z) / rayDir.Z;
+            if (t1 > t2)
+            {
+                std::swap(t1, t2);
+            }
 
-            tmin = (t1 > tmin) ? t1 : tmin;
-            tmax = (t2 < tmax) ? t2 : tmax;
-            if (tmin > tmax)
+            TMin = (t1 > TMin) ? t1 : TMin;
+            TMax = (t2 < TMax) ? t2 : TMax;
+            if (TMin > TMax)
+            {
                 return false;
+            }
         }
 
         // 여기까지 왔으면 교차 구간 [tmin, tmax]가 유효하다.
         // tmax < 0 이면, 레이가 박스 뒤쪽에서 교차하므로 화면상 보기엔 교차 안 한다고 볼 수 있음
-        if (tmax < 0.0f)
+        if (TMax < 0.0f)
+        {
             return false;
+        }
 
         // outDistance = tmin이 0보다 크면 그게 레이가 처음으로 박스를 만나는 지점
         // 만약 tmin < 0 이면, 레이의 시작점이 박스 내부에 있다는 의미이므로, 거리를 0으로 처리해도 됨.
-        outDistance = (tmin >= 0.0f) ? tmin : 0.0f;
+        outDistance = (TMin >= 0.0f) ? TMin : 0.0f;
 
         return true;
     }
@@ -255,7 +308,8 @@ struct FPrimitiveCounts
 };
 
 #define MAX_LIGHTS 16
-enum ELightType {
+enum ELightType
+{
     POINT_LIGHT = 1,
     SPOT_LIGHT = 2,
     DIRECTIONAL_LIGHT = 3,
@@ -265,17 +319,18 @@ enum ELightType {
 
 struct FMaterialConstants
 {
+    uint32 TextureFlag;
     FVector DiffuseColor;
-    float TransparencyScalar;
-
+    
     FVector SpecularColor;
-    float SpecularScalar;
+    float SpecularExponent; // or Glossiness
 
     FVector EmissiveColor;
-    float DensityScalar;
+    float Transparency;
 
-    FVector AmbientColor;
-    uint32 TextureFlag;
+    float Metallic;
+    float Roughness;
+    FVector2D MaterialPadding;
 };
 
 struct FObjectConstantBuffer
@@ -393,4 +448,18 @@ struct FFogConstants
     float FogDistanceWeight;
     float padding1;
     float padding2;
+};
+
+// TODO: Light가 Structured Buffer로 관리되면 제거할 것.
+struct FLightConstants
+{
+    FMatrix LightViewMatrix;
+    FMatrix LightProjMatrix;
+    float ShadowMapSize;
+    FVector Padding;
+};
+struct FPointLightMatrix
+{
+    FMatrix LightViewMat[MAX_POINT_LIGHT * 6];
+    FMatrix LightProjectMat[MAX_POINT_LIGHT];
 };

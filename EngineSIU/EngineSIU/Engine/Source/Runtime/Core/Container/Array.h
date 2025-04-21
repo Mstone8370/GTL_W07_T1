@@ -49,6 +49,8 @@ public:
     // 이동 생성자
     TArray(TArray&& Other) noexcept;
 
+    TArray(uint32 Count);
+
     // 복사 할당 연산자
     TArray& operator=(const TArray& Other);
 
@@ -165,6 +167,12 @@ TArray<T, Allocator>::TArray(const TArray& Other)
 template <typename T, typename Allocator>
 TArray<T, Allocator>::TArray(TArray&& Other) noexcept
     : ContainerPrivate(std::move(Other.ContainerPrivate))
+{
+}
+
+template <typename T, typename Allocator>
+TArray<T, Allocator>::TArray(uint32 Count)
+    : ContainerPrivate(Count)
 {
 }
 
