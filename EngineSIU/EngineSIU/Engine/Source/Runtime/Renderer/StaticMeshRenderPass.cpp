@@ -85,7 +85,7 @@ void FStaticMeshRenderPass::CreateShader()
     
     D3D_SHADER_MACRO DefinesBlinnPhong[] =
     {
-        { PHONG, "1" },
+        { BLINN_PHONG, "1" },
         { nullptr, nullptr }
     };
     hr = ShaderManager->AddPixelShader(L"PHONG_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesBlinnPhong);
@@ -96,7 +96,7 @@ void FStaticMeshRenderPass::CreateShader()
 
     D3D_SHADER_MACRO DefinesSG[] =
     {
-        { SPECULAR_GLOSSINESS, "1" },
+        { PBR, "1" },
         { nullptr, nullptr }
     };
     hr = ShaderManager->AddPixelShader(L"SG_StaticMeshPixelShader", L"Shaders/StaticMeshPixelShader.hlsl", "mainPS", DefinesSG);

@@ -36,11 +36,14 @@ bool FObjLoader::ParseOBJ(const FString& ObjFilePath, FObjInfo& OutObjInfo)
 
     /**
      * 블렌더 Export 설정
-     *   - General
+     *   > General
      *       Forward Axis:  Y
      *       Up Axis:       Z
-     *   - Geometry
+     *   > Geometry
      *       ✅ Triangulated Mesh
+     *   > Materials
+     *       ✅ PBR Extensions
+     *       Path Mode:     Strip
      */
 
     std::string Line;
@@ -300,6 +303,18 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
             LineStream >> x;
             OutFStaticMesh.Materials[MaterialIndex].IlluminanceModel = x;
         }
+        if (Token == "Pm")
+        {
+            float x;
+            LineStream >> x;
+            OutFStaticMesh.Materials[MaterialIndex].Metallic = x;
+        }
+        if (Token == "Pr")
+        {
+            float x;
+            LineStream >> x;
+            OutFStaticMesh.Materials[MaterialIndex].Roughness = x;
+        }
 
         if (Token == "map_Kd")
         {
@@ -401,6 +416,36 @@ bool FObjLoader::ParseMaterial(FObjInfo& OutObjInfo, FStaticMeshRenderData& OutF
                 OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
                 OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = true;
                 OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Emissive);
+            }
+        }
+        if (Token == "map_Pm")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Metallic);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath, false))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = false;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Metallic);
+            }
+        }
+        if (Token == "map_Pr")
+        {
+            const uint32 SlotIdx = static_cast<uint32>(EMaterialTextureSlots::MTS_Roughness);
+            
+            LineStream >> Line;
+            OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName = Line;
+
+            FWString TexturePath = OutObjInfo.FilePath + OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TextureName.ToWideString();
+            if (CreateTextureFromFile(TexturePath, false))
+            {
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].TexturePath = TexturePath;
+                OutFStaticMesh.Materials[MaterialIndex].TextureInfos[SlotIdx].bIsSRGB = false;
+                OutFStaticMesh.Materials[MaterialIndex].TextureFlag |= static_cast<uint16>(EMaterialTextureFlags::MTF_Roughness);
             }
         }
         // TODO: map_d 또는 map_Tr은 나중에 필요할때 구현
@@ -645,7 +690,7 @@ FStaticMeshRenderData* FObjManager::LoadObjStaticMeshAsset(const FString& PathFi
         return nullptr;
     }
 
-    SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh);
+    // SaveStaticMeshToBinary(BinaryPath, *NewStaticMesh);
     ObjStaticMeshMap.Add(PathFileName, NewStaticMesh);
     return NewStaticMesh;
 }
@@ -711,6 +756,9 @@ bool FObjManager::SaveStaticMeshToBinary(const FWString& FilePath, const FStatic
         File.write(reinterpret_cast<const char*>(&Material.Transparency), sizeof(Material.Transparency));
         File.write(reinterpret_cast<const char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.write(reinterpret_cast<const char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
+
+        File.write(reinterpret_cast<const char*>(&Material.Metallic), sizeof(Material.Metallic));
+        File.write(reinterpret_cast<const char*>(&Material.Roughness), sizeof(Material.Roughness));
 
         for (uint8 i = 0; i < static_cast<uint8>(EMaterialTextureSlots::MTS_MAX); ++i)
         {
@@ -791,6 +839,9 @@ bool FObjManager::LoadStaticMeshFromBinary(const FWString& FilePath, FStaticMesh
         File.read(reinterpret_cast<char*>(&Material.Transparency), sizeof(Material.Transparency));
         File.read(reinterpret_cast<char*>(&Material.BumpMultiplier), sizeof(Material.BumpMultiplier));
         File.read(reinterpret_cast<char*>(&Material.IlluminanceModel), sizeof(Material.IlluminanceModel));
+
+        File.read(reinterpret_cast<char*>(&Material.Metallic), sizeof(Material.Metallic));
+        File.read(reinterpret_cast<char*>(&Material.Roughness), sizeof(Material.Roughness));
 
         uint8 TextureNum = static_cast<uint8>(EMaterialTextureSlots::MTS_MAX);
         Material.TextureInfos.SetNum(TextureNum);

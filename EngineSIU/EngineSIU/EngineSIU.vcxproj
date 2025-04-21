@@ -293,7 +293,7 @@
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_tables.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\include\ImGUI\imgui_widgets.cpp" />
     <ClCompile Include="Engine\Source\ThirdParty\tinyfiledialogs\tinyfiledialogs.cpp" />
-    <None Include="Shaders\LightSG.hlsl" />
+    <None Include="Shaders\LightPBR.hlsl" />
     <None Include="Shaders\StaticMeshPixelShaderWorldTangent.hlsl" />
     <None Include="Shaders\CompositingShader.hlsl" />
     <None Include="Shaders\DepthBufferPixelShader.hlsl" />

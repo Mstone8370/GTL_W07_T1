@@ -133,7 +133,7 @@ float CalculateSpecular(float3 WorldNormal, float3 ToLightDir, float3 ViewDir, f
     return Spec * SpecularStrength;
 }
 
-float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float SpecularExponent)
+float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess)
 {
     FPointLightInfo LightInfo = gPointLights[Index];
     
@@ -152,14 +152,14 @@ float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wo
     float3 Lit = (DiffuseFactor * DiffuseColor) * LightInfo.LightColor.rgb;
 #else
     float3 ViewDir = normalize(WorldViewPosition - WorldPosition);
-    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, SpecularExponent);
+    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Shininess);
     float3 Lit = ((DiffuseFactor * DiffuseColor) + (SpecularFactor * SpecularColor)) * LightInfo.LightColor.rgb;
 #endif
     
     return Lit * Attenuation * LightInfo.Intensity;
 }
 
-float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float SpecularExponent)
+float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess)
 {
     FSpotLightInfo LightInfo = SpotLights[Index];
     
@@ -185,14 +185,14 @@ float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wor
     float3 Lit = DiffuseFactor * DiffuseColor * LightInfo.LightColor.rgb;
 #else
     float3 ViewDir = normalize(WorldViewPosition - WorldPosition);
-    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, SpecularExponent);
+    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Shininess);
     float3 Lit = ((DiffuseFactor * DiffuseColor) + (SpecularFactor * SpecularColor)) * LightInfo.LightColor.rgb;
 #endif
     
     return Lit * Attenuation * SpotlightFactor * LightInfo.Intensity;
 }
 
-float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float SpecularExponent)
+float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess)
 {
     FDirectionalLightInfo LightInfo = Directional[nIndex];
     
@@ -203,13 +203,13 @@ float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, fl
 #ifdef LIGHTING_MODEL_LAMBERT
     float3 Lit = DiffuseFactor * DiffuseColor * LightInfo.LightColor.rgb;
 #else
-    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, SpecularExponent);
+    float SpecularFactor = CalculateSpecular(WorldNormal, LightDir, ViewDir, Shininess);
     float3 Lit = ((DiffuseFactor * DiffuseColor) + (SpecularFactor * SpecularColor)) * LightInfo.LightColor.rgb;
 #endif
     return Lit * LightInfo.Intensity;
 }
 
-float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float SpecularExponent, uint TileIndex)
+float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess, uint TileIndex)
 {
     float3 FinalColor = float3(0.0, 0.0, 0.0);
 
@@ -221,17 +221,17 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     {
         // tileLights.Indices[i] 는 전역 조명 인덱스
         uint gPointLightIndex = TileLights.Indices[i];
-        FinalColor += PointLight(gPointLightIndex, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, SpecularExponent);
+        FinalColor += PointLight(gPointLightIndex, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {
-        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, SpecularExponent);
+        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
     [unroll(MAX_DIRECTIONAL_LIGHT)]
     for (int k = 0; k < DirectionalLightsCount; k++)
     {
-        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, SpecularExponent);
+        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
     [unroll(MAX_AMBIENT_LIGHT)]
     for (int l = 0; l < AmbientLightsCount; l++)
@@ -242,7 +242,7 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     return FinalColor;
 }
 
-float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float SpecularExponent)
+float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess)
 {
     float3 FinalColor = float3(0.0, 0.0, 0.0);
 
@@ -250,17 +250,17 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     [unroll(MAX_POINT_LIGHT)]
     for (int i = 0; i < PointLightsCount; i++)
     {
-        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, SpecularExponent);
+        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {
-        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, SpecularExponent);
+        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
     [unroll(MAX_DIRECTIONAL_LIGHT)]
     for (int k = 0; k < DirectionalLightsCount; k++)
     {
-        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, SpecularExponent);
+        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
     [unroll(MAX_AMBIENT_LIGHT)]
     for (int l = 0; l < AmbientLightsCount; l++)

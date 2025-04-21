@@ -41,10 +41,14 @@ struct FMaterial
     float3 DiffuseColor;
     
     float3 SpecularColor;
-    float SpecularExponent; // or Glossiness
+    float Shininess;
 
     float3 EmissiveColor;
     float Opacity;
+
+    float Metallic;
+    float Roughness;
+    float3 MaterialPadding;
 };
 
 #define TEXTURE_FLAG_DIFFUSE       (1 << 0)
@@ -54,8 +58,8 @@ struct FMaterial
 #define TEXTURE_FLAG_ALPHA         (1 << 4)
 #define TEXTURE_FLAG_AMBIENT       (1 << 5)
 #define TEXTURE_FLAG_SHININESS     (1 << 6)
-#define TEXTURE_FLAG_DISPLACEMENT  (1 << 7)
-#define TEXTURE_FLAG_DECAL         (1 << 8)
+#define TEXTURE_FLAG_METALLIC      (1 << 7)
+#define TEXTURE_FLAG_ROUGHNESS     (1 << 8)
 
 #define TEXTURE_SLOT_DIFFUSE       (0)
 #define TEXTURE_SLOT_SPECULAR      (1)
@@ -64,8 +68,8 @@ struct FMaterial
 #define TEXTURE_SLOT_ALPHA         (4)
 #define TEXTURE_SLOT_AMBIENT       (5)
 #define TEXTURE_SLOT_SHININESS     (6)
-#define TEXTURE_SLOT_DISPLACEMENT  (7)
-#define TEXTURE_SLOT_DECAL         (8)
+#define TEXTURE_SLOT_METALLIC      (7)
+#define TEXTURE_SLOT_ROUGHNESS     (8)
 
 Texture2D MaterialTextures[9] : register(t0);
 SamplerState MaterialSamplers[9] : register(s0);

@@ -24,16 +24,14 @@ cbuffer TextureConstants : register(b4)
     float2 TexturePad0;
 }
 
-#ifdef LIGHTING_MODEL_SG
-#include "LightSG.hlsl"
+#ifdef LIGHTING_MODEL_PBR
+#include "LightPBR.hlsl"
 #else
 #include "Light.hlsl"
 #endif
 
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 {
-    float4 FinalColor = float4(0.f, 0.f, 0.f, 1.f);
-
     // Diffuse
     float3 DiffuseColor = Material.DiffuseColor;
     if (Material.TextureFlag & TEXTURE_FLAG_DIFFUSE)
@@ -56,6 +54,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         WorldNormal = normalize(mul(Normal, TBN));
     }
 
+#ifndef LIGHTING_MODEL_PBR
     // Specular Color
     float3 SpecularColor = Material.SpecularColor;
     if (Material.TextureFlag & TEXTURE_FLAG_SPECULAR)
@@ -64,14 +63,13 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     }
 
     // Specular Exponent or Glossiness
-    float SpecularExponent = Material.SpecularExponent;
+    float Shininess = Material.Shininess;
     if (Material.TextureFlag & TEXTURE_FLAG_SHININESS)
     {
-        SpecularExponent = MaterialTextures[TEXTURE_SLOT_SHININESS].Sample(MaterialSamplers[TEXTURE_SLOT_SHININESS], Input.UV).r;
-#ifdef LIGHTING_MODEL_BLINN_PHONG
-        SpecularExponent = 1000 * SpecularExponent * SpecularExponent; // y = 1000 * x ^ 2
-#endif
+        Shininess = MaterialTextures[TEXTURE_SLOT_SHININESS].Sample(MaterialSamplers[TEXTURE_SLOT_SHININESS], Input.UV).r;
+        Shininess = 1000 * Shininess * Shininess; // y = 1000 * x ^ 2
     }
+#endif
 
     // Emissive Color
     float3 EmissiveColor = Material.EmissiveColor;
@@ -80,6 +78,22 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         EmissiveColor = MaterialTextures[TEXTURE_SLOT_EMISSIVE].Sample(MaterialSamplers[TEXTURE_SLOT_EMISSIVE], Input.UV).rgb;
     }
 
+#ifdef LIGHTING_MODEL_PBR
+    // Metallic
+    float Metallic = Material.Metallic;
+    if (Material.TextureFlag & TEXTURE_FLAG_METALLIC)
+    {
+        Metallic = MaterialTextures[TEXTURE_SLOT_METALLIC].Sample(MaterialSamplers[TEXTURE_SLOT_METALLIC], Input.UV).r;
+    }
+
+    // Roughness
+    float Roughness = Material.Roughness;
+    if (Material.TextureFlag & TEXTURE_FLAG_ROUGHNESS)
+    {
+        Roughness = MaterialTextures[TEXTURE_SLOT_ROUGHNESS].Sample(MaterialSamplers[TEXTURE_SLOT_ROUGHNESS], Input.UV).r;
+    }
+#endif
+    
     // Begin for Tile based light culled result
     // 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
     uint2 PixelCoord = uint2(Input.Position.xy);
@@ -88,17 +102,22 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     uint FlatTileIndex = TileCoord.x + TileCoord.y * TilesX;
     // End for Tile based light culled result
 
+    float4 FinalColor = float4(0.f, 0.f, 0.f, 1.f);
+
     // Lighting
     if (IsLit)
     {
+        float3 LitColor = float3(0, 0, 0);
 #ifdef LIGHTING_MODEL_GOURAUD
-        FinalColor = float4(Input.Color.rgb, 1.0);
+        LitColor = Input.Color.rgb;
+#elif defined(LIGHTING_MODEL_PBR)
+        LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, Metallic, Roughness);
 #else
-        // float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent, FlatTileIndex);
-        float3 LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, SpecularExponent);
+        // LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, Shininess, FlatTileIndex);
+        LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, Shininess);
+#endif
         LitColor += EmissiveColor * 5.f; // 5는 임의의 값
         FinalColor = float4(LitColor, 1);
-#endif
     }
     else
     {

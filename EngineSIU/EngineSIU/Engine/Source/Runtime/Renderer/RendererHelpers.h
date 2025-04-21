@@ -31,6 +31,9 @@ namespace MaterialUtils
         Data.EmissiveColor = MaterialInfo.EmissiveColor;
         Data.Transparency = MaterialInfo.Transparency;
 
+        Data.Metallic = MaterialInfo.Metallic;
+        Data.Roughness = MaterialInfo.Roughness;
+
         BufferManager->UpdateConstantBuffer(TEXT("FMaterialConstants"), Data);
 
         ID3D11ShaderResourceView* SRVs[9] = {};
@@ -53,7 +56,7 @@ namespace MaterialUtils
             }
         }
 
-        Graphics->DeviceContext->PSSetShaderResources(0, 8, SRVs);
-        Graphics->DeviceContext->PSSetSamplers(0, 8, Samplers);
+        Graphics->DeviceContext->PSSetShaderResources(0, 9, SRVs);
+        Graphics->DeviceContext->PSSetSamplers(0, 9, Samplers);
     }
 }

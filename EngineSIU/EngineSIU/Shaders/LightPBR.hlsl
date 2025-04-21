@@ -170,9 +170,7 @@ float3 F_Schlick(float3 F0, float LdotH)
 float3 CookTorranceSpecular(
     float3  F0,        // base reflectance (metallic → albedo)
     float   Roughness, // 0 = mirror, 1 = diffuse
-    float3  N,
-    float3  V,
-    float3  L)
+    float3  N, float3  V, float3  L)
 {
     float3  H      = normalize(V + L);
     float   NdotL  = saturate(dot(N, L));
@@ -189,11 +187,25 @@ float3 CookTorranceSpecular(
     return (D * G * F) * (NdotL / (4.0 * NdotV * NdotL + 1e-5));
 }
 
+float3 BRDF(float3 L, float3 V, float3 N, float3 BaseColor, float Metallic, float Roughness)
+{
+    float3 F0 = lerp(0.04, BaseColor, Metallic);
+
+    float KdScale = 1.0 - Metallic;
+    float3 Kd = BaseColor * KdScale;
+    
+    float3 Diffuse = DisneyDiffuse(N, L, V, Roughness) * Kd;
+    float3 Specular = CookTorranceSpecular(F0, Roughness, N, V, L);
+
+    return Diffuse + Specular;
+}
+
+
 
 ////////
 /// Calculate Light
 ////////
-float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness)
+float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 BaseColor, float Metallic, float Roughness)
 {
     FPointLightInfo LightInfo = gPointLights[Index];
 
@@ -208,35 +220,16 @@ float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wo
     
     float3 L = normalize(ToLight);
     float3 V = normalize(WorldViewPosition - WorldPosition);
-    float3 H = normalize(L + V);
-
-    float Roughness = 1.0 - Glossiness;
-    float3 F0 = SpecularColor;
-
-    float KdScale = 1.0 - max(F0.r, max(F0.g, F0.b));
-    float3 Kd = DiffuseColor * KdScale;
+    float3 BRDF_Term = BRDF(L, V, WorldNormal, BaseColor, Metallic, Roughness);
     
-    float3 Diffuse = DisneyDiffuse(WorldNormal, L, V, Roughness) * Kd;
-    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, L);
-
-    float3 BRDF_Term = Diffuse + Specular;
-    
-    return BRDF_Term * LightInfo.LightColor * LightInfo.Intensity;
+    return BRDF_Term * LightInfo.LightColor * LightInfo.Intensity * Attenuation;
 }
 
-float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness)
+float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 BaseColor, float Metallic, float Roughness)
 {
     FSpotLightInfo LightInfo = SpotLights[Index];
 
     float3 ToLight = LightInfo.Position - WorldPosition;
-    float Distance = length(ToLight);
-
-    float Attenuation = CalculateAttenuation(Distance, LightInfo.Attenuation, LightInfo.Radius);
-    if (Attenuation <= 0.0)
-    {
-        return float3(0.0, 0.0, 0.0);
-    }
-    
     float3 LightDir = normalize(ToLight);
     float SpotlightFactor = CalculateSpotEffect(LightDir, normalize(LightInfo.Direction), LightInfo.InnerRad, LightInfo.OuterRad, LightInfo.Attenuation);
     if (SpotlightFactor <= 0.0)
@@ -246,52 +239,25 @@ float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wor
     
     float3 L = normalize(ToLight);
     float3 V = normalize(WorldViewPosition - WorldPosition);
-    float3 H = normalize(L + V);
-
-    float Roughness = 1.0 - Glossiness;
-    float3 F0 = SpecularColor;
-
-    float KdScale = 1.0 - max(F0.r, max(F0.g, F0.b));
-    float3 Kd = DiffuseColor * KdScale;
-    
-    float3 Diffuse = DisneyDiffuse(WorldNormal, L, V, Roughness) * Kd;
-    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, L);
-
-    float3 BRDF_Term = Diffuse + Specular;
+    float3 BRDF_Term = BRDF(L, V, WorldNormal, BaseColor, Metallic, Roughness);
     
     return BRDF_Term * LightInfo.LightColor * LightInfo.Intensity * SpotlightFactor;
 }
 
-float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness)
+float3 DirectionalLight(int nIndex, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 BaseColor, float Metallic, float Roughness)
 {
     FDirectionalLightInfo LightInfo = Directional[nIndex];
     
     float3 L = normalize(-LightInfo.Direction);
     float3 V = normalize(WorldViewPosition - WorldPosition);
-    float3 H = normalize(L + V);
-
-    float Roughness = 1.0 - Glossiness;
-    float3 F0 = SpecularColor;
-
-    float KdScale = 1.0 - max(F0.r, max(F0.g, F0.b));
-    float3 Kd = DiffuseColor * KdScale;
-    
-    float3 Diffuse = DisneyDiffuse(WorldNormal, L, V, Roughness) * Kd;
-    float3 Specular = CookTorranceSpecular(F0, Roughness, WorldNormal, V, L);
-
-    float3 BRDF_Term = Diffuse + Specular;
+    float3 BRDF_Term = BRDF(L, V, WorldNormal, BaseColor, Metallic, Roughness);
     
     return BRDF_Term * LightInfo.LightColor * LightInfo.Intensity;
 }
 
-float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness, uint TileIndex)
+float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float Metallic, float Roughness, uint TileIndex)
 {
     float3 FinalColor = float3(0.0, 0.0, 0.0);
-
-    if (Glossiness > 1.0)
-    {
-        Glossiness = 0.5;
-    }
     
     // 현재 타일의 조명 정보 읽기
     LightPerTiles TileLights = gLightPerTiles[TileIndex];
@@ -301,18 +267,18 @@ float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     for (int i = 0; i < PointLightsCount; i++)
     {
         uint gPointLightIndex = TileLights.Indices[i];
-        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
     }
 
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {
-        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
     }
     [unroll(MAX_DIRECTIONAL_LIGHT)]
     for (int k = 0; k < DirectionalLightsCount; k++)
     {
-        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
     }
     [unroll(MAX_AMBIENT_LIGHT)]
     for (int l = 0; l < AmbientLightsCount; l++)
@@ -323,31 +289,26 @@ float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     return float4(FinalColor, 1);
 }
 
-float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Glossiness)
+float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float Metallic, float Roughness)
 {
     float3 FinalColor = float3(0.0, 0.0, 0.0);
 
-    if (Glossiness > 1.0)
-    {
-        Glossiness = 0.5;
-    }
-    
     // 다소 비효율적일 수도 있음.
     [unroll(MAX_POINT_LIGHT)]
     for (int i = 0; i < PointLightsCount; i++)
     {
-        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+        FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
     }
 
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {
-        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+        FinalColor += SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
     }
     [unroll(MAX_DIRECTIONAL_LIGHT)]
     for (int k = 0; k < DirectionalLightsCount; k++)
     {
-        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Glossiness);
+        FinalColor += DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
     }
     [unroll(MAX_AMBIENT_LIGHT)]
     for (int l = 0; l < AmbientLightsCount; l++)

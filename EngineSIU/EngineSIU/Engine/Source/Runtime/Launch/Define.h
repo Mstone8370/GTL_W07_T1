@@ -22,8 +22,8 @@
 
 #define GOURAUD "LIGHTING_MODEL_GOURAUD"
 #define LAMBERT "LIGHTING_MODEL_LAMBERT"
-#define PHONG "LIGHTING_MODEL_BLINN_PHONG"
-#define SPECULAR_GLOSSINESS "LIGHTING_MODEL_SG"
+#define BLINN_PHONG "LIGHTING_MODEL_BLINN_PHONG"
+#define PBR "LIGHTING_MODEL_PBR"
 
 // Material Subset
 struct FMaterialSubset
@@ -78,8 +78,8 @@ enum class EMaterialTextureFlags : uint16
     MTF_Alpha        = 1 << 4,
     MTF_Ambient      = 1 << 5,
     MTF_Shininess    = 1 << 6,
-    MTF_Displacement = 1 << 7,
-    MTF_Decal        = 1 << 8,
+    MTF_Metallic     = 1 << 7,
+    MTF_Roughness    = 1 << 8,
     MTF_MAX,
 };
 
@@ -92,8 +92,8 @@ enum class EMaterialTextureSlots : uint8
     MTS_Alpha        = 4,
     MTS_Ambient      = 5,
     MTS_Shininess    = 6,
-    MTS_Displacement = 7,
-    MTS_Decal        = 8,
+    MTS_Metallic     = 7,
+    MTS_Roughness    = 8,
     MTS_MAX,
 };
 
@@ -112,17 +112,20 @@ struct FObjMaterialInfo
 
     bool bTransparent = false; // Has alpha channel?
 
-    FVector DiffuseColor = FVector(0.7f, 0.7f, 0.7f);  // Kd: Diffuse Color
-    FVector SpecularColor = FVector(0.5f, 0.5f, 0.5f);  // Ks: Specular Color
+    FVector DiffuseColor = FVector(0.7f, 0.7f, 0.7f);      // Kd: Diffuse Color
+    FVector SpecularColor = FVector(0.5f, 0.5f, 0.5f);     // Ks: Specular Color
     FVector AmbientColor = FVector(0.01f, 0.01f, 0.01f);   // Ka: Ambient Color
-    FVector EmissiveColor = FVector::ZeroVector;  // Ke: Emissive Color
+    FVector EmissiveColor = FVector::ZeroVector;                   // Ke: Emissive Color
 
-    float SpecularExponent = 250.f; // Ns: Specular Power
-    float IOR = 1.5f;  // Ni: Index of Refraction
-    float Transparency = 0.f; // d or Tr: Transparency of surface
-    float BumpMultiplier = 1.f;     // -bm: Bump Multiplier
-    uint32 IlluminanceModel; // illum: illumination Model between 0 and 10.
+    float SpecularExponent = 250.f;                                // Ns: Specular Power
+    float IOR = 1.5f;                                              // Ni: Index of Refraction
+    float Transparency = 0.f;                                      // d or Tr: Transparency of surface
+    float BumpMultiplier = 1.f;                                    // -bm: Bump Multiplier
+    uint32 IlluminanceModel;                                       // illum: illumination Model between 0 and 10.
 
+    float Metallic = 0.0f;                                         // Pm: Metallic
+    float Roughness = 0.5f;                                        // Pr: Roughness
+    
     /* Texture */
     TArray<FTextureInfo> TextureInfos;
 };
@@ -324,6 +327,10 @@ struct FMaterialConstants
 
     FVector EmissiveColor;
     float Transparency;
+
+    float Metallic;
+    float Roughness;
+    FVector2D MaterialPadding;
 };
 
 struct FObjectConstantBuffer
