@@ -93,26 +93,25 @@ struct LightPerTiles
 StructuredBuffer<FPointLightInfo> gPointLights : register(t10);
 StructuredBuffer<LightPerTiles> gLightPerTiles : register(t20);
 
-float CalculateAttenuation(float Distance, float AttenuationFactor, float Radius)
+float GetDistanceAttenuation(float Distance, float Radius)
 {
-    if (Distance > Radius)
-    {
-        return 0.0;
-    }
-
-    float Falloff = 1.0 / (1.0 + AttenuationFactor * Distance * Distance);
-    float SmoothFactor = (1.0 - (Distance / Radius)); // 부드러운 falloff
-
-    return Falloff * SmoothFactor;
+    float  InvRadius = 1.0 / Radius;
+    float  DistSqr = Distance * Distance;
+    float  RadiusMask = saturate(1.0 - DistSqr * InvRadius * InvRadius);
+    RadiusMask *= RadiusMask;
+    
+    return RadiusMask / (DistSqr + 1.0);
 }
 
-float CalculateSpotEffect(float3 LightDir, float3 SpotDir, float InnerRadius, float OuterRadius, float SpotFalloff)
+float GetSpotLightAttenuation(float Distance, float Radius, float3 LightDir, float3 SpotDir, float InnerRadius, float OuterRadius)
 {
-    float Dot = dot(-LightDir, SpotDir); // [-1,1]
+    float DistAtten = GetDistanceAttenuation(Distance, Radius);
     
-    float SpotEffect = smoothstep(cos(OuterRadius / 2), cos(InnerRadius / 2), Dot);
+    float  CosTheta = dot(SpotDir, -LightDir);
+    float  SpotMask = saturate((CosTheta - cos(OuterRadius)) / (cos(InnerRadius) - cos(OuterRadius)));
+    SpotMask *= SpotMask;
     
-    return SpotEffect * pow(max(Dot, 0.0), SpotFalloff);
+    return DistAtten * SpotMask;
 }
 
 ////////
@@ -213,7 +212,7 @@ float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wo
     float3 ToLight = LightInfo.Position - WorldPosition;
     float Distance = length(ToLight);
 
-    float Attenuation = CalculateAttenuation(Distance, LightInfo.Attenuation, LightInfo.Radius);
+    float Attenuation = GetDistanceAttenuation(Distance, LightInfo.Radius);
     if (Attenuation <= 0.0)
     {
         return float3(0.0, 0.0, 0.0);
@@ -231,8 +230,10 @@ float3 SpotLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 Wor
     FSpotLightInfo LightInfo = SpotLights[Index];
 
     float3 ToLight = LightInfo.Position - WorldPosition;
+    float Distance = length(ToLight);
     float3 LightDir = normalize(ToLight);
-    float SpotlightFactor = CalculateSpotEffect(LightDir, normalize(LightInfo.Direction), LightInfo.InnerRad, LightInfo.OuterRad, LightInfo.Attenuation);
+    
+    float SpotlightFactor = GetSpotLightAttenuation(Distance, LightInfo.Radius, LightDir, normalize(LightInfo.Direction), LightInfo.InnerRad, LightInfo.OuterRad);
     if (SpotlightFactor <= 0.0)
     {
         return float3(0.0, 0.0, 0.0);

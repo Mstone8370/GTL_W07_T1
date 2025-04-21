@@ -183,7 +183,8 @@ float USpotLightComponent::GetInnerDegree() const
 
 void USpotLightComponent::SetInnerDegree(float InInnerDegree)
 {
-    SpotLightInfo.InnerRad = InInnerDegree * (PI / 180.0f);
+    SpotLightInfo.InnerRad = FMath::Max(InInnerDegree * (PI / 180.0f), 0.f);
+    SpotLightInfo.OuterRad = FMath::Clamp(SpotLightInfo.OuterRad, SpotLightInfo.InnerRad, FMath::DegreesToRadians(80.0f));
 }   
 
 float USpotLightComponent::GetOuterDegree() const
@@ -193,5 +194,6 @@ float USpotLightComponent::GetOuterDegree() const
 
 void USpotLightComponent::SetOuterDegree(float InOuterDegree)
 {
-    SpotLightInfo.OuterRad = InOuterDegree * (PI / 180.0f);
+    SpotLightInfo.OuterRad = FMath::Max(InOuterDegree * (PI / 180.0f), 0.f);
+    SpotLightInfo.InnerRad = FMath::Clamp(SpotLightInfo.InnerRad, 0.0f, SpotLightInfo.OuterRad);
 }
