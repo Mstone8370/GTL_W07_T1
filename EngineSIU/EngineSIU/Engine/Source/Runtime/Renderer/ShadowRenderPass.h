@@ -14,7 +14,7 @@ public:
     virtual void PrepareRenderArr() override;
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     virtual void ClearRenderArr() override;
-
+    
     void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
     void CreateShader();
 

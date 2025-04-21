@@ -3,7 +3,7 @@
 #include "Math/Quat.h"
 #include "UObject/Casts.h"
 #include "Math/JungleMath.h"
-
+#include "GameFramework/Actor.h"
 USpotLightComponent::USpotLightComponent()
 {
     SpotLightInfo.Position = GetWorldLocation();
@@ -253,8 +253,8 @@ void USpotLightComponent::SetOuterDegree(float InOuterDegree)
 
 FMatrix USpotLightComponent::GetViewMatrix() const
 {
-    FVector Eye = SpotLightInfo.Position;
-    FVector At = Eye + SpotLightInfo.Direction;
+    FVector Eye = GetWorldLocation();
+    FVector At = Eye + GetOwner()->GetActorForwardVector();
     FVector Up = FVector(0.0f, 0.0f, 1.0f);
 
     return JungleMath::CreateViewMatrix(Eye, At, Up);

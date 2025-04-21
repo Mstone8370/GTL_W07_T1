@@ -60,7 +60,7 @@ void FShadowRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Vie
         ShadowConstants shadowConstant;
         shadowConstant.LightView = SpotLight->GetViewMatrix();
         shadowConstant.LightProjection = SpotLight->GetProjectionMatrix();
-        BufferManager->UpdateConstantBuffer(TEXT("FShadowConstants"), &shadowConstant);
+        BufferManager->UpdateConstantBuffer(TEXT("FShadowConstants"), shadowConstant);
 
         ID3D11DepthStencilView* DSV = SpotLight->GetShadowDepthMap().DSV;
         Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DSV);
