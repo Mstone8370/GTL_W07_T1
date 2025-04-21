@@ -131,13 +131,12 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 
     }
     // lightingAccum += Ambient[0].AmbientColor.rgb;
-    float NdotL = saturate(dot(normalize(Input.WorldNormal), normalize(PointLights[0].Position - Input.WorldPosition)));
 
-    
     // Lighting
     if (IsLit)
     {
         // Shadow Mapping
+        
         float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
         PositionFromLight = mul(PositionFromLight, mLightView);
         PositionFromLight = mul(PositionFromLight, mLightProj);
@@ -187,8 +186,10 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
             float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
             LitColor += LitColor.rgb * shadow;
         }
-        FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
-        // FinalColor = float4(LitColor, 1);
+        if (DirectionalLightsCount > 0)
+             FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
+        else
+            FinalColor = float4(LitColor, 1);
 #endif
     }
     else
