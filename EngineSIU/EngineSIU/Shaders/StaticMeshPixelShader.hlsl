@@ -40,7 +40,7 @@ cbuffer FLightConstants: register(b5)
 }
 
 #include "Light.hlsl"
-
+SamplerComparisonState ShadowPCF : register(s3);
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t3);
 
 cbuffer PointLightConstant : register(b6)
@@ -77,7 +77,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
         return 1.0;
     }
     float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
-        ShadowSampler,
+        ShadowPCF,
         dir,
         clipPos.z - SHADOW_BIAS
     );
@@ -182,12 +182,13 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         //  LitColor = float3(0, 0, 0);
         //  LitColor += lightingAccum;
         // ------------------------------
-        for (int PointlightIndex=0;PointlightIndex< PointLightsCount;++PointlightIndex)
+        for (int PointlightIndex=0;PointlightIndex< PointLightsCount; ++PointlightIndex)
         {
             float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
-            LitColor += LitColor.rgb* shadow;
+            LitColor += LitColor.rgb * shadow;
         }
-        FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
+        // FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
+        FinalColor = float4(LitColor, 1);
 #endif
     }
     else

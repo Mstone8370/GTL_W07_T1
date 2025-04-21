@@ -3,6 +3,8 @@ cbuffer LightMatrix : register(b1)
 {
     row_major matrix LightViewMat;
     row_major matrix LightProjectMat;
+    float ShadowMapSize;
+    float3 Padding;
 };
 
 struct VS_OUTPUT_Shadow

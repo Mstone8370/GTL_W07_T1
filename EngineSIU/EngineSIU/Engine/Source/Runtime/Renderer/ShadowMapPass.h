@@ -18,7 +18,7 @@ public:
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     virtual void ClearRenderArr() override;
     void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
-    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LgihtProjection);
+    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection);
     void CraeteShadowShader();
     TArray<UPointLightComponent*> LightComponents;
 };

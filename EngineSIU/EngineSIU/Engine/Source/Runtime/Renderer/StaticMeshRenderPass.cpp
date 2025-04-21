@@ -350,7 +350,7 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
                 ShadowCubeSRV.Num(),         
                 ShadowCubeSRV.GetData());     
                 Graphics->DeviceContext->PSSetSamplers(
-                   2,         
+                   3,         
                    1,
                    &PCFSampler);
         #pragma endregion
@@ -377,8 +377,8 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
 #pragma region ShadowMap
     ID3D11Buffer* PointLightBuffer = BufferManager->GetConstantBuffer(TEXT("FPointLightMatrix"));
     Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &PointLightBuffer);
-    
 #pragma endregion
+    
     const EResourceType ResourceType = EResourceType::ERT_Scene;
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
     FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
@@ -397,10 +397,10 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
         LightData.ShadowMapSize = tempDirLight->ShadowMapSize;
         BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
         BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
-
+    
         ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
         Graphics->DeviceContext->PSSetShaderResources(2, 1, &ShadowMapSRV);
-
+    
         Graphics->DeviceContext->PSSetSamplers(2, 1, &ShadowSampler);
     }
     PrepareRenderState(Viewport);

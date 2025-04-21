@@ -32,7 +32,7 @@ void FShadowMapPass::PrepareRenderArr()
 
 void FShadowMapPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
-    ID3D11Buffer* LightBuffer = BufferManager->GetConstantBuffer(TEXT("FLightMatrix"));
+    ID3D11Buffer* LightBuffer = BufferManager->GetConstantBuffer(TEXT("FLightConstants"));
     Graphics->DeviceContext->VSSetConstantBuffers(1, 1, &LightBuffer);
     UINT numViewports = 1;
     D3D11_VIEWPORT origVP[16];  
@@ -85,13 +85,13 @@ void FShadowMapPass::PrepareRenderState(const std::shared_ptr<FEditorViewportCli
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
 }
 
-void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LgihtProjection)
+void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection)
 {
     FLightConstants ObjectData = {};
     ObjectData.LightViewMatrix = LightView;
-    ObjectData.LightProjMatrix = LgihtProjection;
-    
-    BufferManager->UpdateConstantBuffer(TEXT("FLightMatrix"), ObjectData);
+    ObjectData.LightProjMatrix = LightProjection;
+    ObjectData.ShadowMapSize = 1024;
+    BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), ObjectData);
 }
 
 void FShadowMapPass::CraeteShadowShader()

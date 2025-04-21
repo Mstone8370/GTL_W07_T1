@@ -401,9 +401,10 @@ struct FLightConstants
     FMatrix LightViewMatrix;
     FMatrix LightProjMatrix;
     float ShadowMapSize;
+    FVector Padding;
 };
 struct FPointLightMatrix
 {
-    FMatrix LightViewMat[MAX_POINT_LIGHT * 5];
+    FMatrix LightViewMat[MAX_POINT_LIGHT * 6];
     FMatrix LightProjectMat[MAX_POINT_LIGHT];
 };
