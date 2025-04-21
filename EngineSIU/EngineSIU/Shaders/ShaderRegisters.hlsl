@@ -48,7 +48,7 @@ struct FMaterial
 
     float Metallic;
     float Roughness;
-    float3 MaterialPadding;
+    float2 MaterialPadding;
 };
 
 #define TEXTURE_FLAG_DIFFUSE       (1 << 0)
