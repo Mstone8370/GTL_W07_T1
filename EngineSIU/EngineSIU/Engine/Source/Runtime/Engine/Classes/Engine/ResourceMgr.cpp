@@ -24,21 +24,21 @@ void FResourceMgr::Initialize(FRenderer* renderer, FGraphicsDevice* device)
     //FManagerOBJ::LoadObjStaticMeshAsset("Assets//AxisCircleZ.obj");
     // FManagerOBJ::LoadObjStaticMeshAsset("Assets/helloBlender.obj");
 
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/ocean_sky.jpg");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/font.png");
     LoadTextureFromDDS(device->Device, device->DeviceContext, L"Assets/Texture/font.dds");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/emart.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/T_Explosion_SubUV.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/UUID_Font.png");
     LoadTextureFromDDS(device->Device, device->DeviceContext, L"Assets/Texture/UUID_Font.dds");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/Wooden Crate_Crate_BaseColor.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Texture/spotLight.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Editor/Icon/SpotLight_64x.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Editor/Icon/PointLight_64x.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Editor/Icon/DirectionalLight_64x.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Editor/Icon/ExponentialHeightFog_64.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Editor/Icon/AtmosphericFog_64.png");
-    LoadTextureFromFile(device->Device, device->DeviceContext, L"Assets/Editor/Icon/AmbientLight_64x.png");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/ocean_sky.jpg");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/font.png");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/emart.png");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/T_Explosion_SubUV.png");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/UUID_Font.png");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/Wooden Crate_Crate_BaseColor.png");
+    LoadTextureFromFile(device->Device, L"Assets/Texture/spotLight.png");
+    LoadTextureFromFile(device->Device, L"Assets/Editor/Icon/SpotLight_64x.png");
+    LoadTextureFromFile(device->Device, L"Assets/Editor/Icon/PointLight_64x.png");
+    LoadTextureFromFile(device->Device, L"Assets/Editor/Icon/DirectionalLight_64x.png");
+    LoadTextureFromFile(device->Device, L"Assets/Editor/Icon/ExponentialHeightFog_64.png");
+    LoadTextureFromFile(device->Device, L"Assets/Editor/Icon/AtmosphericFog_64.png");
+    LoadTextureFromFile(device->Device, L"Assets/Editor/Icon/AmbientLight_64x.png");
 
 }
 
@@ -76,7 +76,7 @@ std::shared_ptr<FTexture> FResourceMgr::GetTexture(const FWString& name) const
     return TempValue ? *TempValue : nullptr;
 }
 
-HRESULT FResourceMgr::LoadTextureFromFile(ID3D11Device* device, ID3D11DeviceContext* context, const wchar_t* filename)
+HRESULT FResourceMgr::LoadTextureFromFile(ID3D11Device* device, const wchar_t* filename, bool bIsSRGB)
 {
     IWICImagingFactory* wicFactory = nullptr;
     IWICBitmapDecoder* decoder = nullptr;
@@ -124,7 +124,7 @@ HRESULT FResourceMgr::LoadTextureFromFile(ID3D11Device* device, ID3D11DeviceCont
     textureDesc.Height = height;
     textureDesc.MipLevels = 1;
     textureDesc.ArraySize = 1;
-    textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    textureDesc.Format = bIsSRGB ? DXGI_FORMAT_R8G8B8A8_UNORM_SRGB : DXGI_FORMAT_R8G8B8A8_UNORM;
     textureDesc.SampleDesc.Count = 1;
     textureDesc.Usage = D3D11_USAGE_IMMUTABLE;
     textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -208,9 +208,9 @@ HRESULT FResourceMgr::LoadTextureFromDDS(ID3D11Device* device, ID3D11DeviceConte
     ID3D11SamplerState* SamplerState;
     D3D11_SAMPLER_DESC samplerDesc = {};
     samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP; // WRAP -> CLAMP로 변경
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
     samplerDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
     samplerDesc.MinLOD = 0;
     samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;

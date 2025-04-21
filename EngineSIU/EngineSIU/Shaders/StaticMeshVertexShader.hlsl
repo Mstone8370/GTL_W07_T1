@@ -44,7 +44,6 @@ PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
     if (Material.TextureFlag & TEXTURE_FLAG_DIFFUSE)
     {
         DiffuseColor = DiffuseTexture.SampleLevel(DiffuseSampler, Input.UV, 0).rgb;
-        DiffuseColor = SRGBToLinear(DiffuseColor);
     }
     float3 Diffuse = Lighting(Output.WorldPosition, Output.WorldNormal, ViewWorldLocation, DiffuseColor, Material.SpecularColor, Material.SpecularExponent);
     Diffuse *= 10; // 임의로 보정. 왜 하필 10을 곱해야 다른 라이팅 모델과 동일한 밝기로 나오는지는 의문.

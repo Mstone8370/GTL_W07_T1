@@ -39,7 +39,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     if (Material.TextureFlag & TEXTURE_FLAG_DIFFUSE)
     {
         DiffuseColor = MaterialTextures[TEXTURE_SLOT_DIFFUSE].Sample(MaterialSamplers[TEXTURE_SLOT_DIFFUSE], Input.UV).rgb;
-        DiffuseColor = SRGBToLinear(DiffuseColor);
     }
 
     // Normal
@@ -62,7 +61,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     if (Material.TextureFlag & TEXTURE_FLAG_SPECULAR)
     {
         SpecularColor = MaterialTextures[TEXTURE_SLOT_SPECULAR].Sample(MaterialSamplers[TEXTURE_SLOT_SPECULAR], Input.UV).rgb;
-        SpecularColor = SRGBToLinear(SpecularColor);
     }
 
     // Specular Exponent or Glossiness
@@ -80,7 +78,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     if (Material.TextureFlag & TEXTURE_FLAG_EMISSIVE)
     {
         EmissiveColor = MaterialTextures[TEXTURE_SLOT_EMISSIVE].Sample(MaterialSamplers[TEXTURE_SLOT_EMISSIVE], Input.UV).rgb;
-        EmissiveColor = SRGBToLinear(EmissiveColor);
     }
 
     // Begin for Tile based light culled result

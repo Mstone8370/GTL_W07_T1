@@ -22,7 +22,7 @@ struct FObjLoader
     // Convert the Raw data to Cooked data (FStaticMeshRenderData)
     static bool ConvertToStaticMesh(const FObjInfo& RawData, FStaticMeshRenderData& OutStaticMesh);
 
-    static bool CreateTextureFromFile(const FWString& Filename);
+    static bool CreateTextureFromFile(const FWString& Filename, bool bIsSRGB = true);
 
     static void ComputeBoundingBox(const TArray<FStaticMeshVertex>& InVertices, FVector& OutMinVector, FVector& OutMaxVector);
 

@@ -97,6 +97,13 @@ enum class EMaterialTextureSlots : uint8
     MTS_MAX,
 };
 
+struct FTextureInfo
+{
+    FString TextureName;
+    FWString TexturePath;
+    bool bIsSRGB;
+};
+
 struct FObjMaterialInfo
 {
     FString MaterialName;  // newmtl: Material Name.
@@ -117,8 +124,7 @@ struct FObjMaterialInfo
     uint32 IlluminanceModel; // illum: illumination Model between 0 and 10.
 
     /* Texture */
-    TArray<FString> TextureNames;
-    TArray<FWString> TexturePaths;
+    TArray<FTextureInfo> TextureInfos;
 };
 
 struct FVertexTexture
