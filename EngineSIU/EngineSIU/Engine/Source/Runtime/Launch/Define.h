@@ -403,7 +403,7 @@ struct FLightMatrix
 };
 struct FPointLightMatrix
 {
-    FMatrix LightViewMat[6];
-    FMatrix LightProjectMat;
+    FMatrix LightViewMat[MAX_POINT_LIGHT * 6];
+    FMatrix LightProjectMat[MAX_POINT_LIGHT];
 };
 #pragma endregion

@@ -3,11 +3,9 @@
 
 SamplerState DiffuseSampler : register(s0);
 SamplerState NormalSampler : register(s1);
-SamplerComparisonState ShadowPCF : register(s2);
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
-TextureCube<float> ShadowMap : register(t2);
 
 cbuffer MaterialConstants : register(b1)
 {
@@ -31,13 +29,16 @@ cbuffer TextureConstants : register(b4)
     float2 UVOffset;
     float2 TexturePad0;
 }
+#include "Light.hlsl"
+
+SamplerComparisonState ShadowPCF : register(s2);
+TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t2);
+
 cbuffer PointLightConstant : register(b5)
 {
-    row_major matrix viewMatrix[6];
-    row_major matrix projectionMatrix;
+    row_major matrix viewMatrix[MAX_POINT_LIGHT*6];
+    row_major matrix projectionMatrix[MAX_POINT_LIGHT];
 }
-
-#include "Light.hlsl"
 int GetCubeFaceIndex(float3 dir)
 {
     float3 a = abs(dir);
@@ -45,16 +46,16 @@ int GetCubeFaceIndex(float3 dir)
     if (a.y >= a.x && a.y >= a.z) return dir.y > 0 ? 2 : 3;  // +Y:2, -Y:3
     return                dir.z > 0 ? 4 : 5;                // +Z:4, -Z:5
 }
-static const float SHADOW_BIAS = 0.0001;
-float ShadowOcclusion(float3 worldPos)
+static const float SHADOW_BIAS = 0.01;
+float ShadowOcclusion(float3 worldPos, uint lightIndex)
 {
-    float3 dir = normalize(worldPos - PointLights[0].Position);
+    float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
 
     int face = GetCubeFaceIndex(dir);
 
     // (C) 그 face 에 맞는 뷰·프로젝션으로 깊이 계산
-    float4 viewPos = mul( float4(worldPos, 1),viewMatrix[face]);
-    float4 clipPos = mul(viewPos,projectionMatrix);
+    float4 viewPos = mul( float4(worldPos, 1),viewMatrix[lightIndex * 6 + face]);
+    float4 clipPos = mul(viewPos,projectionMatrix[lightIndex]);
     float  depthRef = clipPos.z / clipPos.w - SHADOW_BIAS;
 
     clipPos.xyz /= clipPos.w;
@@ -66,11 +67,7 @@ float ShadowOcclusion(float3 worldPos)
     {
         return 1.0;
     }
-    if (abs(clipPos.x) > 1.0f || abs(clipPos.y) > 1.0f || clipPos.z < 0.0f || clipPos.z > 1.0f)
-    {
-        return 1.0f; // fully lit
-    }
-    float shadow = ShadowMap.SampleCmpLevelZero(
+    float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
         ShadowPCF,
         dir,
         clipPos.z - SHADOW_BIAS
@@ -120,11 +117,11 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
             normalize(Input.WorldNormal),
             Input.WorldViewPosition, DiffuseColor.rgb
         );
-        lightingAccum += lightContribution.rgb;
+
     }
     // lightingAccum += Ambient[0].AmbientColor.rgb;
     float NdotL = saturate(dot(normalize(Input.WorldNormal), normalize(PointLights[0].Position - Input.WorldPosition)));
-    float shadow = ShadowOcclusion(Input.WorldPosition);
+
     
     // Lighting
     if (IsLit)
@@ -137,7 +134,11 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         //  LitColor = float3(0, 0, 0);
         //  LitColor += lightingAccum;
         // ------------------------------
-        
+        for (int PointlightIndex=0;PointlightIndex< PointLightsCount;++PointlightIndex)
+        {
+            float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
+            LitColor += LitColor.rgb* shadow;
+        }
         FinalColor = float4(LitColor, 1);
 #endif
     }
@@ -150,6 +151,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     {
         FinalColor += float4(0.01, 0.01, 0.0, 1);
     }
-    
-    return FinalColor * NdotL * shadow;
+
+    return FinalColor;
 }

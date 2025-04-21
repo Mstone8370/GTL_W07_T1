@@ -137,17 +137,19 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     }
 }
 
-void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const FMatrix* ViewMatrix, const FMatrix& ProjectionMatrix)
+void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights)
 {
     FPointLightMatrix ObjectData = {};
-    ObjectData.LightViewMat[0] = ViewMatrix[0];
-    ObjectData.LightViewMat[1] = ViewMatrix[1];
-    ObjectData.LightViewMat[2] = ViewMatrix[2];
-    ObjectData.LightViewMat[3] = ViewMatrix[3];
-    ObjectData.LightViewMat[4] = ViewMatrix[4];
-    ObjectData.LightViewMat[5] = ViewMatrix[5];
-    ObjectData.LightProjectMat = ProjectionMatrix;
-    
+    uint32 count = FMath::Min((int32)PointLights.Num(), MAX_POINT_LIGHT);
+    for (uint32 i = 0; i < count; ++i)
+    {
+        auto* L = PointLights[i];
+        for (int face = 0; face < 6; ++face)
+        {
+            ObjectData.LightViewMat[i*6 + face] = L->view[face];
+        }
+        ObjectData.LightProjectMat[i] = L->projection;
+    }
     BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
 }
 
@@ -315,19 +317,20 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
             continue;
         }
         #pragma region ShadowMap
-                ID3D11ShaderResourceView* ShadowCubeSRV = nullptr;
+                TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
                 ID3D11SamplerState*       PCFSampler = nullptr;
+                TArray<UPointLightComponent*> PointLights;
                 for (auto light :  TObjectRange<UPointLightComponent>())
                 {
-                    UpdatePointLightConstantBuffer(light->view, light->projection);
-                    // ShadowSrv = light->faceSRVs[0];
+                    PointLights.Add(light);
+                    ShadowCubeSRV.Add(light->PointShadowSRV);
                     PCFSampler = light->PointShadowComparisonSampler;
-                    ShadowCubeSRV = light->PointShadowSRV;
                 }
+                UpdatePointLightConstantBuffer(PointLights);
                 Graphics->DeviceContext->PSSetShaderResources(
                 2,         
-                1,         
-                &ShadowCubeSRV);     
+                ShadowCubeSRV.Num(),         
+                ShadowCubeSRV.GetData());     
                 Graphics->DeviceContext->PSSetSamplers(
                    2,         
                    1,
