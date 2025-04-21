@@ -346,11 +346,11 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
                 }
                 UpdatePointLightConstantBuffer(PointLights);
                 Graphics->DeviceContext->PSSetShaderResources(
-                3,         
+                13,         
                 ShadowCubeSRV.Num(),         
                 ShadowCubeSRV.GetData());     
                 Graphics->DeviceContext->PSSetSamplers(
-                   3,         
+                   13,         
                    1,
                    &PCFSampler);
         #pragma endregion
@@ -399,9 +399,9 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
         BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
     
         ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
-        Graphics->DeviceContext->PSSetShaderResources(2, 1, &ShadowMapSRV);
+        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
     
-        Graphics->DeviceContext->PSSetSamplers(2, 1, &ShadowSampler);
+        Graphics->DeviceContext->PSSetSamplers(12, 1, &ShadowSampler);
     }
     PrepareRenderState(Viewport);
     RenderAllStaticMeshes(Viewport);

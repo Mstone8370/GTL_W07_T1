@@ -3,11 +3,11 @@
 
 SamplerState DiffuseSampler : register(s0);
 SamplerState NormalSampler : register(s1);
-SamplerComparisonState ShadowSampler : register(s2);
+
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
-Texture2D ShadowTexture : register(t2);
+
 
 cbuffer MaterialConstants : register(b1)
 {
@@ -40,8 +40,10 @@ cbuffer FLightConstants: register(b5)
 }
 
 #include "Light.hlsl"
-SamplerComparisonState ShadowPCF : register(s3);
-TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t3);
+SamplerComparisonState ShadowSampler : register(s12);
+SamplerComparisonState ShadowPCF : register(s13);
+Texture2D ShadowTexture : register(t12);
+TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t13);
 
 cbuffer PointLightConstant : register(b6)
 {
