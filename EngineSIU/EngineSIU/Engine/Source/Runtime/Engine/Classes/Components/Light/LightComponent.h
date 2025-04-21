@@ -1,25 +1,21 @@
 #pragma once
-#include "Components/SceneComponent.h"
+#include "LightComponentBase.h"
 
-
-class ULightComponentBase : public USceneComponent
+class ULightComponent : public ULightComponentBase
 {
-    DECLARE_CLASS(ULightComponentBase, USceneComponent)
+    DECLARE_CLASS(ULightComponent, ULightComponentBase)
 
 public:
-    ULightComponentBase();
-    virtual ~ULightComponentBase() override;
+    ULightComponent();
+    virtual ~ULightComponent() override;
     virtual UObject* Duplicate(UObject* InOuter) override;
-    
+
     virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
     virtual void SetProperties(const TMap<FString, FString>& InProperties) override;
 
-    virtual void TickComponent(float DeltaTime) override;
-    virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
-protected:
-
-    FBoundingBox AABB;
-
-public:
-    FBoundingBox GetBoundingBox() const {return AABB;}
+    float ShadowResolutionScale;
+    float ShadowBias;
+    float ShadowSlopeBias;
+    float ShadowSharpen;
 };
+

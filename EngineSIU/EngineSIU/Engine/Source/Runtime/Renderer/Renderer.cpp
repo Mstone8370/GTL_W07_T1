@@ -18,13 +18,13 @@
 #include "EditorRenderPass.h"
 #include "DepthPrePass.h"
 #include "TileLightCullingPass.h"
+#include "ShadowRenderPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
 
 #include "CompositingPass.h"
 #include "LightHeatMapRenderPass.h"
 #include "PostProcessCompositingPass.h"
-#include "SlateRenderPass.h"
 #include "UnrealClient.h"
 #include "GameFrameWork/Actor.h"
 
@@ -51,6 +51,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     LineRenderPass = new FLineRenderPass();
     FogRenderPass = new FFogRenderPass();
     EditorRenderPass = new FEditorRenderPass();
+    ShadowRenderPass = new FShadowRenderPass();
     
     DepthPrePass = new FDepthPrePass();
     TileLightCullingPass = new FTileLightCullingPass();
@@ -68,6 +69,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     LineRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     FogRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
+    ShadowRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     
     DepthPrePass->Initialize(BufferManager, Graphics, ShaderManager);
     TileLightCullingPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -93,6 +95,7 @@ void FRenderer::Release()
     delete CompositingPass;
     delete PostProcessCompositingPass;
     delete SlateRenderPass;
+    delete ShadowRenderPass;
 }
 
 //------------------------------------------------------------------------------
@@ -136,6 +139,8 @@ void FRenderer::CreateConstantBuffers()
     UINT ViewportSizeBufferSize = sizeof(FViewportSize);
     BufferManager->CreateBufferGeneric<FViewportSize>("FViewportSize", nullptr, ViewportSizeBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    UINT ShadowConstantsSize = sizeof(ShadowConstants);
+    BufferManager->CreateBufferGeneric< ShadowConstants>("FShadowConstants", nullptr, ShadowConstantsSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
@@ -206,6 +211,7 @@ void FRenderer::PrepareRenderPass()
     EditorRenderPass->PrepareRender();
     TileLightCullingPass->PrepareRenderArr();
     DepthPrePass->PrepareRenderArr();
+    ShadowRenderPass->PrepareRenderArr();
 }
 
 void FRenderer::ClearRenderArr()
@@ -219,6 +225,7 @@ void FRenderer::ClearRenderArr()
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();
     TileLightCullingPass->ClearRenderArr();
+    ShadowRenderPass->ClearRenderArr();
 }
 
 void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -306,7 +313,7 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 void FRenderer::EndRender()
 {
     ClearRenderArr();
-    ShaderManager->ReloadAllShaders(); // 
+    ShaderManager->ReloadAllShaders();
 }
 
 void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -316,6 +323,7 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_Primitives)
     {
         UpdateLightBufferPass->Render(Viewport);
+        ShadowRenderPass->Render(Viewport);
         StaticMeshRenderPass->Render(Viewport);
     }
     
@@ -379,7 +387,7 @@ void FRenderer::RenderEditorOverlay(const std::shared_ptr<FEditorViewportClient>
         EditorBillboardRenderPass->Render(Viewport);
     }
 
-    EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요.
+    //EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요.
 
     LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
     

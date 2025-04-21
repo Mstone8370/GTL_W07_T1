@@ -42,6 +42,7 @@ class FSlateRenderPass;
 class FEditorRenderPass;
 class FDepthPrePass;
 class FTileLightCullingPass;
+class FShadowRenderPass;
 
 class FRenderer
 {
@@ -98,6 +99,7 @@ public:
     FLineRenderPass* LineRenderPass = nullptr;
     FFogRenderPass* FogRenderPass = nullptr;
     FEditorRenderPass* EditorRenderPass = nullptr;
+    FShadowRenderPass* ShadowRenderPass = nullptr;
     
     FDepthPrePass* DepthPrePass = nullptr;
     FTileLightCullingPass* TileLightCullingPass = nullptr;

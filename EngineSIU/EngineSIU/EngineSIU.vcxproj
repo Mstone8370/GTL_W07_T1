@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -225,6 +225,7 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\AmbientLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\DirectionalLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\LightComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\LightComponentBase.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\PointLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\SpotLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Material\Material.cpp" />
@@ -270,6 +271,7 @@
     <ClCompile Include="Engine\Source\Runtime\Renderer\LineRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcessCompositingPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\Renderer.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\ShadowRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\SlateRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\TileLightCullingPass.cpp" />
@@ -386,6 +388,7 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\AmbientLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\DirectionalLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\LightComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\LightComponentBase.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\PointLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\SpotLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Material\Material.h" />
@@ -444,6 +447,7 @@
     <ClInclude Include="Engine\Source\Runtime\Renderer\RendererHelpers.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResources.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderConstants.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\ShadowRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\SlateRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\TileLightCullingPass.h" />
@@ -513,6 +517,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Shaders\ShadowDepthVertexShader.hlsl">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

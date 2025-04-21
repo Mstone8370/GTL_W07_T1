@@ -394,3 +394,9 @@ struct FFogConstants
     float padding1;
     float padding2;
 };
+
+struct ShadowConstants
+{
+    FMatrix LightView;
+    FMatrix LightProjection;
+};

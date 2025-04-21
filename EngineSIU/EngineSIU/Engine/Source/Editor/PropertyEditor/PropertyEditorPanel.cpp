@@ -209,6 +209,26 @@ void PropertyEditorPanel::Render()
                     spotlightObj->SetOuterDegree(OuterDegree);
                 }
 
+                const auto& SM = spotlightObj->GetShadowDepthMap();
+                ID3D11ShaderResourceView* depthSRV = SM.SRV;
+                ID3D11Texture2D* tex = SM.Texture2D;
+                if (depthSRV && tex)
+                {
+                    D3D11_TEXTURE2D_DESC desc = {};
+                    tex->GetDesc(&desc);
+                    float w = (float)desc.Width;
+                    float h = (float)desc.Height;
+
+                    ImGui::Separator();
+                    ImGui::Text("Shadow Depth Map:");
+                    ImGui::Image(
+                        (ImTextureID)depthSRV,
+                        ImVec2(200, 200),
+                        ImVec2(0, 1),
+                        ImVec2(1, 0)
+                    );
+                }
+
                 ImGui::TreePop();
             }
 

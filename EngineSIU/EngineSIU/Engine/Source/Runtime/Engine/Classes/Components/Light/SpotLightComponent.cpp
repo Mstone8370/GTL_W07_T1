@@ -2,6 +2,7 @@
 #include "Math/Rotator.h"
 #include "Math/Quat.h"
 #include "UObject/Casts.h"
+#include "Math/JungleMath.h"
 
 USpotLightComponent::USpotLightComponent()
 {
@@ -29,6 +30,62 @@ UObject* USpotLightComponent::Duplicate(UObject* InOuter)
     }
     
     return NewComponent;
+}
+
+void USpotLightComponent::CreateShadowMapResources()
+{
+    if (ShadowDepthMap.Texture2D || ShadowDepthMap.SRV || ShadowDepthMap.DSV)
+        return;
+
+    ID3D11Device* device = FEngineLoop::Renderer.Graphics->Device;
+    HRESULT hr;
+    
+    D3D11_TEXTURE2D_DESC shadowMapTextureDesc = {};
+    shadowMapTextureDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+    shadowMapTextureDesc.MipLevels = 0;
+    shadowMapTextureDesc.ArraySize = 1;
+    shadowMapTextureDesc.Usage = D3D11_USAGE_DEFAULT;
+    shadowMapTextureDesc.SampleDesc.Count = 1;
+    shadowMapTextureDesc.SampleDesc.Quality = 0;
+    shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
+    shadowMapTextureDesc.Width = 2048;
+    shadowMapTextureDesc.Height = 2048;
+    hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
+    if (FAILED(hr))
+    {
+        std::wstring message = L"[SpotLight] CreateTexture2D failed: HRESULT = 0x" + std::to_wstring(hr) + L"\n";
+        OutputDebugStringW(message.c_str());
+        return;
+    }
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC shadowMapSRVDesc = {};
+    shadowMapSRVDesc.Format = DXGI_FORMAT_R32_FLOAT;
+    shadowMapSRVDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    shadowMapSRVDesc.Texture2D.MipLevels = 1;
+    hr = device->CreateShaderResourceView(ShadowDepthMap.Texture2D, &shadowMapSRVDesc, &ShadowDepthMap.SRV);
+    if (FAILED(hr))
+    {
+        std::wstring message = L"[SpotLight] CreateShaderResourceView failed: HRESULT = 0x" + std::to_wstring(hr) + L"\n";
+        OutputDebugStringW(message.c_str());
+        return;
+    }
+    
+    D3D11_DEPTH_STENCIL_VIEW_DESC shadowMapDSVDesc = {};
+    shadowMapDSVDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    shadowMapDSVDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    shadowMapDSVDesc.Texture2D.MipSlice = 0;
+    hr = device->CreateDepthStencilView(ShadowDepthMap.Texture2D, &shadowMapDSVDesc, &ShadowDepthMap.DSV);
+    if (FAILED(hr))
+    {
+        std::wstring message = L"[SpotLight] CreateDepthStencilView failed: HRESULT = 0x" + std::to_wstring(hr) + L"\n";
+        OutputDebugStringW(message.c_str());
+        return;
+    }
+}
+
+void USpotLightComponent::ReleaseShadowDepthMap()
+{
+    ShadowDepthMap.Release();
 }
 
 void USpotLightComponent::GetProperties(TMap<FString, FString>& OutProperties) const
@@ -134,8 +191,6 @@ void USpotLightComponent::SetLightColor(const FLinearColor& InColor)
     SpotLightInfo.LightColor = InColor;
 }
 
-
-
 float USpotLightComponent::GetIntensity() const
 {
     return SpotLightInfo.Intensity;
@@ -194,4 +249,32 @@ float USpotLightComponent::GetOuterDegree() const
 void USpotLightComponent::SetOuterDegree(float InOuterDegree)
 {
     SpotLightInfo.OuterRad = InOuterDegree * (PI / 180.0f);
+}
+
+FMatrix USpotLightComponent::GetViewMatrix() const
+{
+    FVector Eye = SpotLightInfo.Position;
+    FVector At = Eye + SpotLightInfo.Direction;
+    FVector Up = FVector(0.0f, 0.0f, 1.0f);
+
+    return JungleMath::CreateViewMatrix(Eye, At, Up);
+}
+
+FMatrix USpotLightComponent::GetProjectionMatrix() const
+{
+    float fov = SpotLightInfo.OuterRad * 2.0f; // 원뿔 절반각 × 2 → 전체 시야각
+    float aspectRatio = 1.0f; 
+    float nearZ = 1.0f;
+    float farZ = SpotLightInfo.Radius;
+
+    return JungleMath::CreateProjectionMatrix(fov, aspectRatio, nearZ, farZ);
+}
+
+void USpotLightComponent::SetCastShadows(bool bEnable)
+{
+    bCastShadows = bEnable;
+    if (bCastShadows)
+        CreateShadowMapResources();
+    else
+        ReleaseShadowDepthMap();
 }
