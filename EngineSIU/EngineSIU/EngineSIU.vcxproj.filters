@@ -249,12 +249,6 @@
     <ClInclude Include="Engine\Source\Editor\UnrealEd\UnrealEd.h">
       <Filter>Engine\Source\Editor\UnrealEd</Filter>
     </ClInclude>
-    <ClCompile Include="Engine\Source\Editor\UnrealEd\UnrealEdEventRouter.cpp">
-      <Filter>Engine\Source\Editor\UnrealEd</Filter>
-    </ClCompile>
-    <ClInclude Include="Engine\Source\Editor\UnrealEd\UnrealEdEventRouter.h">
-      <Filter>Engine\Source\Editor\UnrealEd</Filter>
-    </ClInclude>
     <ClCompile Include="Engine\Source\Runtime\Core\EngineStatics.cpp">
       <Filter>Engine\Source\Runtime\Core</Filter>
     </ClCompile>
@@ -486,12 +480,6 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Material\Material.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Components\Material</Filter>
     </ClInclude>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMesh.cpp">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Components\Mesh</Filter>
-    </ClCompile>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMesh.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Components\Mesh</Filter>
-    </ClInclude>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\EditorEngine.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Engine</Filter>
     </ClCompile>
@@ -505,12 +493,6 @@
       <Filter>Engine\Source\Runtime\Engine\Classes\Engine</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\EngineTypes.h">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Engine</Filter>
-    </ClInclude>
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\FLoaderOBJ.cpp">
-      <Filter>Engine\Source\Runtime\Engine\Classes\Engine</Filter>
-    </ClCompile>
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\FLoaderOBJ.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Engine</Filter>
     </ClInclude>
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\ResourceMgr.cpp">
@@ -780,8 +762,6 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\AssetManager.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\BillboardComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\TextComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\DirectionalLightComponent.cpp" />
-    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\AmbientLightComponent.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Renderer\EditorRenderPass.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\SpotLightActor.cpp" />
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\DirectionalLightActor.cpp" />
@@ -791,53 +771,28 @@
     <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Actors\AmbientLightActor.cpp">
       <Filter>Engine\Source\Runtime\Engine\Classes\Actors</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.cpp" />
+    <ClCompile Include="Engine\Source\Editor\UnrealEd\SceneManager.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\CoreUObject\UObject\ObjectGlobals.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Math\Vector4.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Core\Misc\Parse.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\AmbientLightComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Light\DirectionalLightComponent.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMeshRenderData.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Engine\Classes\Engine\FObjLoader.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\InputCore\InputCoreTypes.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\EditorBillboardRenderPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\LightHeatMapRenderPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\PostProcessCompositingPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\ShadowMapPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Renderer\WorldBillboardRenderPass.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\SlateCore\Input\Events.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Windows\RawInput.cpp" />
+    <ClCompile Include="Engine\Source\Runtime\Windows\WindowsCursor.cpp" />
+    <ClCompile Include="LightGridGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="EngineSIU.natvis" />
-  </ItemGroup>
-  <ItemGroup>
-    <FxCompile Include="Shaders\DepthBufferPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\DepthBufferVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\GizmoPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\GizmoVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\PixelBillBoardShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\StaticMeshPixelShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\StaticMeshVertexShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\VertexBillBoardShader.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\ShaderW0.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\ShaderLine.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\Light.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\FogPixelShader.hlsl" />
-    <FxCompile Include="Shaders\FogVertexShader.hlsl" />
-    <FxCompile Include="Shaders\FogQuadPixelShader.hlsl" />
-    <FxCompile Include="Shaders\CompositingShader.hlsl" />
-    <FxCompile Include="Shaders\EditorShader.hlsl" />
-    <FxCompile Include="UberLit.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="Shaders\TileLightCullingComputeShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\FireballActor.h">
@@ -867,6 +822,47 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\LightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\PointLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\SpotLightComponent.h" />
+    <ClInclude Include="Engine\Source\Editor\LevelEditor\SlateAppMessageHandler.h" />
+    <ClInclude Include="Engine\Source\Editor\UnrealEd\SceneManager.h" />
+    <ClInclude Include="Engine\Source\Runtime\CoreUObject\UObject\ObjectGlobals.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\Char.h" />
+    <ClInclude Include="Engine\Source\Runtime\Core\Misc\Parse.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\AmbientLightComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Light\DirectionalLightComponent.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\Mesh\StaticMeshRenderData.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\Asset\StaticMeshAsset.h" />
+    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\FObjLoader.h" />
+    <ClInclude Include="Engine\Source\Runtime\InputCore\InputCoreTypes.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\EditorBillboardRenderPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\LightHeatMapRenderPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\PostProcessCompositingPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\ShadowMapPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\WorldBillboardRenderPass.h" />
+    <ClInclude Include="Engine\Source\Runtime\SlateCore\Input\Events.h" />
+    <ClInclude Include="Engine\Source\Runtime\Windows\RawInput.h" />
+    <ClInclude Include="Engine\Source\Runtime\Windows\WindowsCursor.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\Audio.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\BufferHelpers.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\CommonStates.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\DirectXHelpers.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\Effects.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\GamePad.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\GeometricPrimitive.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\GraphicsMemory.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\Keyboard.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\Model.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\Mouse.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\PostProcess.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\PrimitiveBatch.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\ScreenGrab.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\SimpleMath.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\SimpleMath.inl" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\SpriteBatch.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\SpriteFont.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\VertexTypes.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\WICTextureLoader.h" />
+    <ClInclude Include="Engine\Source\ThirdParty\DirectXTK\Include\XboxDDSTextureLoader.h" />
+    <ClInclude Include="LightGridGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\SlateShader.hlsl" />
@@ -874,8 +870,6 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Engine\AssetManager.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\BillboardComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\TextComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\DirectionalLightComponent.h" />
-    <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Components\AmbientLightComponent.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\EditorRenderPass.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\RenderResources.h" />
     <ClInclude Include="Engine\Source\Runtime\Renderer\ShaderConstants.h" />
@@ -884,6 +878,25 @@
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\AmbientLightActor.h">
       <Filter>Engine\Source\Runtime\Engine\Classes\Actors</Filter>
     </ClInclude>
+    <None Include="Shaders\CompositingShader.hlsl" />
+    <None Include="Shaders\DepthBufferPixelShader.hlsl" />
+    <None Include="Shaders\DepthBufferVertexShader.hlsl" />
+    <None Include="Shaders\EditorShader.hlsl" />
+    <None Include="Shaders\FogQuadPixelShader.hlsl" />
+    <None Include="Shaders\FogShader.hlsl" />
+    <None Include="Shaders\GizmoPixelShader.hlsl" />
+    <None Include="Shaders\GizmoVertexShader.hlsl" />
+    <None Include="Shaders\Light.hlsl" />
+    <None Include="Shaders\PixelBillBoardShader.hlsl" />
+    <None Include="Shaders\PostProcessCompositingShader.hlsl" />
+    <None Include="Shaders\ShaderLine.hlsl" />
+    <None Include="Shaders\ShaderW0.hlsl" />
+    <None Include="Shaders\StaticMeshPixelShader.hlsl" />
+    <None Include="Shaders\StaticMeshPixelShaderDepth.hlsl" />
+    <None Include="Shaders\StaticMeshPixelShaderWorldNormal.hlsl" />
+    <None Include="Shaders\StaticMeshVertexShader.hlsl" />
+    <None Include="Shaders\TileLightCullingComputeShader.hlsl" />
+    <None Include="Shaders\VertexBillBoardShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\EditorShaderConstants.hlsli" />

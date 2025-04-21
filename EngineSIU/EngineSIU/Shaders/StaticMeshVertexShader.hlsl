@@ -14,7 +14,11 @@ cbuffer MaterialConstants : register(b1)
 #include "Light.hlsl"
 #endif
 
-
+cbuffer LightMatrix : register(b1)
+{
+    row_major matrix LightViewMat;
+    row_major matrix LightProjectMat;
+};
 PS_INPUT_StaticMesh mainVS(VS_INPUT_StaticMesh Input)
 {
     PS_INPUT_StaticMesh Output;

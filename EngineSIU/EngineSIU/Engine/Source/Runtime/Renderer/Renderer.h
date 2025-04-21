@@ -9,6 +9,7 @@
 
 #include "EngineBaseTypes.h"
 #include "Define.h"
+#include "ShadowMapPass.h"
 #include "Container/Set.h"
 
 #include "D3D11RHI/GraphicDevice.h"
@@ -95,6 +96,7 @@ public:
     FEditorBillboardRenderPass* EditorBillboardRenderPass = nullptr;
     FGizmoRenderPass* GizmoRenderPass = nullptr;
     FUpdateLightBufferPass* UpdateLightBufferPass = nullptr;
+    FShadowMapPass* ShadowMapPass = nullptr;
     FLineRenderPass* LineRenderPass = nullptr;
     FFogRenderPass* FogRenderPass = nullptr;
     FEditorRenderPass* EditorRenderPass = nullptr;

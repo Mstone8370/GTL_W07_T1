@@ -1,6 +1,6 @@
 #pragma once
 #include "Components/SceneComponent.h"
-
+#include "UnrealClient.h"
 
 class ULightComponentBase : public USceneComponent
 {
@@ -16,10 +16,14 @@ public:
 
     virtual void TickComponent(float DeltaTime) override;
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
+    
 protected:
-
     FBoundingBox AABB;
-
+    FDepthStencilRHI ShadowDepthMap;
+    virtual void InitializeShadowDepthMap() {}
+    void ReleaseShadowDepthMap();
+    
 public:
     FBoundingBox GetBoundingBox() const {return AABB;}
+    FDepthStencilRHI GetShadowDepthMap() const {return ShadowDepthMap;}
 };

@@ -1,8 +1,8 @@
-
+// TODO: structured buffer로 변경
 #define MAX_LIGHTS 16 
 
 #define MAX_DIRECTIONAL_LIGHT 16
-#define MAX_POINT_LIGHT 16
+#define MAX_POINT_LIGHT 5
 #define MAX_SPOT_LIGHT 16
 #define MAX_AMBIENT_LIGHT 16
 
@@ -32,7 +32,7 @@ struct FPointLightInfo
 
     float3 Position;
     float Radius;
-
+    
     int Type;
     float Intensity;
     float Attenuation;
@@ -240,11 +240,13 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     float3 FinalColor = float3(0.0, 0.0, 0.0);
 
     // 다소 비효율적일 수도 있음.
+
     [unroll(MAX_POINT_LIGHT)]
     for (int i = 0; i < PointLightsCount; i++)
     {
         FinalColor += PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
     }
+    
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {

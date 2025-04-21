@@ -16,9 +16,12 @@
 #include "D3D11RHI/DXDShaderManager.h"
 
 #include "Components/StaticMeshComponent.h"
+#include "Components/Light/PointLightComponent.h"
 
 #include "BaseGizmos/GizmoBaseComponent.h"
+#include "Components/Light/DirectionalLightComponent.h"
 #include "Engine/EditorEngine.h"
+#include "Math/JungleMath.h"
 
 #include "PropertyEditor/ShowFlags.h"
 
@@ -176,11 +179,43 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 }
 
+void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights)
+{
+    FPointLightMatrix ObjectData = {};
+    uint32 count = FMath::Min((int32)PointLights.Num(), MAX_POINT_LIGHT);
+    for (uint32 i = 0; i < count; ++i)
+    {
+        auto* L = PointLights[i];
+        for (int face = 0; face < 6; ++face)
+        {
+            ObjectData.LightViewMat[i*6 + face] = L->view[face];
+        }
+        ObjectData.LightProjectMat[i] = L->projection;
+    }
+    BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
+}
+
 void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
     BufferManager = InBufferManager;
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
+
+    D3D11_SAMPLER_DESC ShadowSamplerDesc = {};
+    ShadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    ShadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    ShadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    ShadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    ShadowSamplerDesc.MipLODBias = 0.0f;
+    ShadowSamplerDesc.MaxAnisotropy = 0;
+    ShadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    ShadowSamplerDesc.BorderColor[0] = 1.f;
+    ShadowSamplerDesc.BorderColor[1] = 1.f;
+    ShadowSamplerDesc.BorderColor[2] = 1.f;
+    ShadowSamplerDesc.BorderColor[3] = 1.f;
+    ShadowSamplerDesc.MinLOD = 0;
+    ShadowSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; 
+    Graphics->Device->CreateSamplerState(&ShadowSamplerDesc, &ShadowSampler);
 
     CreateShader();
 }
@@ -313,7 +348,27 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
         {
             continue;
         }
-
+        #pragma region ShadowMap
+                TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
+                ID3D11SamplerState*       PCFSampler = nullptr;
+                TArray<UPointLightComponent*> PointLights;
+                for (auto light :  TObjectRange<UPointLightComponent>())
+                {
+                    PointLights.Add(light);
+                    ShadowCubeSRV.Add(light->PointShadowSRV);
+                    PCFSampler = light->PointShadowComparisonSampler;
+                }
+                UpdatePointLightConstantBuffer(PointLights);
+                Graphics->DeviceContext->PSSetShaderResources(
+                13,         
+                ShadowCubeSRV.Num(),         
+                ShadowCubeSRV.GetData());     
+                Graphics->DeviceContext->PSSetSamplers(
+                   13,         
+                   1,
+                   &PCFSampler);
+        #pragma endregion
+        
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
@@ -333,17 +388,37 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
 
 void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+#pragma region ShadowMap
+    ID3D11Buffer* PointLightBuffer = BufferManager->GetConstantBuffer(TEXT("FPointLightMatrix"));
+    Graphics->DeviceContext->PSSetConstantBuffers(6, 1, &PointLightBuffer);
+#pragma endregion
+    
     const EResourceType ResourceType = EResourceType::ERT_Scene;
     FViewportResource* ViewportResource = Viewport->GetViewportResource();
     FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
     FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(ResourceType);
     
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
-    
-    PrepareRenderState(Viewport);
 
-    RenderAllStaticMeshes(Viewport);
+    auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
     
+    if (begin(tempDirLightRange) != end(tempDirLightRange))
+    {
+        UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
+        FLightConstants LightData = {};
+        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
+        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
+        LightData.ShadowMapSize = tempDirLight->ShadowMapSize;
+        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
+        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
+    
+        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
+    
+        Graphics->DeviceContext->PSSetSamplers(12, 1, &ShadowSampler);
+    }
+    PrepareRenderState(Viewport);
+    RenderAllStaticMeshes(Viewport);
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);

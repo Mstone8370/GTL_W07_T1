@@ -449,3 +449,17 @@ struct FFogConstants
     float padding1;
     float padding2;
 };
+
+// TODO: Light가 Structured Buffer로 관리되면 제거할 것.
+struct FLightConstants
+{
+    FMatrix LightViewMatrix;
+    FMatrix LightProjMatrix;
+    float ShadowMapSize;
+    FVector Padding;
+};
+struct FPointLightMatrix
+{
+    FMatrix LightViewMat[MAX_POINT_LIGHT * 6];
+    FMatrix LightProjectMat[MAX_POINT_LIGHT];
+};
