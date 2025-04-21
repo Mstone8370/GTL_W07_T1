@@ -387,7 +387,7 @@ void FRenderer::RenderEditorOverlay(const std::shared_ptr<FEditorViewportClient>
         EditorBillboardRenderPass->Render(Viewport);
     }
 
-    //EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요.
+    EditorRenderPass->Render(Viewport); // TODO: 임시로 이전에 작성되었던 와이어 프레임 렌더 패스이므로, 이후 개선 필요.
 
     LineRenderPass->Render(Viewport); // 기존 뎁스를 그대로 사용하지만 뎁스를 클리어하지는 않음
     

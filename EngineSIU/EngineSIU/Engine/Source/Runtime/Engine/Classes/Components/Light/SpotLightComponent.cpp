@@ -262,7 +262,7 @@ FMatrix USpotLightComponent::GetViewMatrix() const
 
 FMatrix USpotLightComponent::GetProjectionMatrix() const
 {
-    float fov = SpotLightInfo.OuterRad * 2.0f; // 원뿔 절반각 × 2 → 전체 시야각
+    float fov = SpotLightInfo.OuterRad * 2.0f;
     float aspectRatio = 1.0f; 
     float nearZ = 1.0f;
     float farZ = SpotLightInfo.Radius;

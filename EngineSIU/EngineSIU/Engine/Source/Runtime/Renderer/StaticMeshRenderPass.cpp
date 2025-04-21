@@ -25,6 +25,7 @@
 #include "UnrealEd/EditorViewportClient.h"
 
 
+
 FStaticMeshRenderPass::FStaticMeshRenderPass()
     : VertexShader(nullptr)
     , PixelShader(nullptr)
@@ -154,6 +155,11 @@ void FStaticMeshRenderPass::PrepareRenderArr()
             StaticMeshComponents.Add(iter);
         }
     }
+
+    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
+    {
+        SpotLights.Add(SpotLight);
+    }
 }
 
 void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) 
@@ -171,7 +177,8 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
         TEXT("FMaterialConstants"),
         TEXT("FLitUnlitConstants"),
         TEXT("FSubMeshConstants"),
-        TEXT("FTextureConstants")
+        TEXT("FTextureConstants"),
+        TEXT("FShadowConstants")
     };
 
     BufferManager->BindConstantBuffers(PSBufferKeys, 0, EShaderStage::Pixel);
@@ -202,6 +209,22 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     {
         Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     }
+
+    for (USpotLightComponent* SpotLight : SpotLights)
+    {
+        auto srv = SpotLight->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(2, 1, &srv);
+    }
+
+    D3D11_SAMPLER_DESC desc = {};
+    desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;      // 3D/Array 텍스쳐에도 안전하게
+    desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    desc.MinLOD = 0;
+    desc.MaxLOD = D3D11_FLOAT32_MAX;
+    Graphics->Device->CreateSamplerState(&desc, &Sampler);
 }
 
 void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
@@ -300,6 +323,16 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
             continue;
         }
 
+        // Spot Light Shadow
+        for (USpotLightComponent* SpotLight : SpotLights)
+        {
+            ShadowConstants shadowConstant;
+            shadowConstant.LightView = SpotLight->GetViewMatrix();
+            shadowConstant.LightProjection = SpotLight->GetProjectionMatrix();
+            BufferManager->UpdateConstantBuffer(TEXT("FShadowConstants"), shadowConstant);
+        }
+        Graphics->DeviceContext->PSSetSamplers(2, 1, &Sampler);
+
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
         FMatrix WorldMatrix = Comp->GetWorldMatrix();
@@ -329,7 +362,6 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     PrepareRenderState(Viewport);
 
     RenderAllStaticMeshes(Viewport);
-    
 
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);

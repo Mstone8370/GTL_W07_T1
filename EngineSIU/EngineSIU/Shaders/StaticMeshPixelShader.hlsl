@@ -3,9 +3,11 @@
 
 SamplerState DiffuseSampler : register(s0);
 SamplerState NormalSampler : register(s1);
+SamplerComparisonState ShadowSampler : register(s2);
 
 Texture2D DiffuseTexture : register(t0);
 Texture2D NormalTexture : register(t1);
+Texture2D ShadowMap : register(t2);
 
 cbuffer MaterialConstants : register(b1)
 {
@@ -30,7 +32,35 @@ cbuffer TextureConstants : register(b4)
     float2 TexturePad0;
 }
 
+cbuffer ShadowConstants : register(b5)
+{
+    row_major matrix LightViewMatrix;
+    row_major matrix LightProjectionMatrix;
+}
+
 #include "Light.hlsl"
+
+float ComputeSpotShadow(
+    float3 worldPos,
+    uint spotlightIdx,
+    float shadowBias = 0.002 // 기본 bias
+)
+{
+    // 1) 월드→라이트 클립 공간
+    float4 lp = mul(float4(worldPos, 1), LightViewMatrix);
+    lp = mul(lp, LightProjectionMatrix);
+
+    // 2) NDC→[0,1] uv, 깊이
+    float2 uv;
+    uv.x = (lp.x / lp.w) * 0.5 + 0.5;
+    uv.y = (lp.y / lp.w) * -0.5 + 0.5;
+    float depth = lp.z / lp.w;
+
+    // 3) ShadowMap 비교 샘플링
+    float s = ShadowMap.SampleCmp(ShadowSampler, uv, depth - shadowBias);
+
+    return s;
+}
 
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 {
@@ -91,6 +121,12 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         //LitColor += lightingAccum;
         // ------------------------------
         
+        for (int i = 0; i < SpotLightsCount; i++)
+        {
+            float shadowFactor = ComputeSpotShadow(Input.WorldPosition, i);
+            LitColor += LitColor.rgb * shadowFactor;
+        }
+            
         FinalColor = float4(LitColor, 1);
 #endif
     }

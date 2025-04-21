@@ -24,11 +24,11 @@ void FShadowRenderPass::PrepareRenderArr()
 
     for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
     {
-        if (SpotLight->IsCastShadows())
-        {
+        //if (SpotLight->IsCastShadows())
+        //{
             SpotLight->CreateShadowMapResources();
             SpotLights.Add(SpotLight);
-        }
+        //}
     }
 }
 
