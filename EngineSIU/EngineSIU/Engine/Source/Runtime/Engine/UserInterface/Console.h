@@ -22,13 +22,15 @@ public:
     bool showFPS = false;
     bool showMemory = false;
     bool showRender = false;
-
+    bool showLight = false;
     void ToggleStat(const std::string& command);
     void Render(ID3D11DeviceContext* context, UINT width, UINT height) const;
 
 private:
     float CalculateFPS() const;
-
+    uint32 CalculateTexture2DSize(ID3D11Texture2D* tex) const;
+    uint32 BitsPerPixel(DXGI_FORMAT fmt) const;
+    void RenderLightInfo() const;
     void DrawTextOverlay(const std::string& text, int x, int y) const;
 };
 
