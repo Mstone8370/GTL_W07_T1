@@ -134,8 +134,8 @@ void UPointLightComponent::SetType(int InType)
 void UPointLightComponent::CreateShadowMapResources()
 {
     D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width              = ShadowMapWidth;
-    texDesc.Height             = ShadowMapHeight;
+    texDesc.Width              = ShadowResolutionScale;
+    texDesc.Height             = ShadowResolutionScale;
     texDesc.MipLevels          = 1;
     texDesc.ArraySize          = 6; // 큐브맵의 6면
     texDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
@@ -207,7 +207,7 @@ void UPointLightComponent::UpdateViewProjMatrix()
     {
         FVector target = GetWorldLocation() + dirs[i];
         FVector up = ups[i];
-        view[i] = JungleMath::CreateViewMatrix(GetWorldLocation(),target, up);
+        PointLightInfo.ViewMatrix[i] = JungleMath::CreateViewMatrix(GetWorldLocation(),target, up);
     }
-    projection = JungleMath::CreateProjectionMatrix(FMath::DegreesToRadians(90.0f), 1.0f, 0.1f, GetRadius());
+    PointLightInfo.ProjectionMatrix = JungleMath::CreateProjectionMatrix(FMath::DegreesToRadians(90.0f), 1.0f, 0.1f, GetRadius());
 }

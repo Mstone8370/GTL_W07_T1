@@ -54,8 +54,8 @@ public:
     float GetOuterDegree() const;
     void SetOuterDegree(float InOuterDegree);
 
-    FMatrix GetViewMatrix() const;
-    FMatrix GetProjectionMatrix() const;
+    FMatrix GetLightViewMatrix();
+    FMatrix GetLightProjectionMatrix() const;
 
     void SetCastShadows(bool bCastShadows);
 

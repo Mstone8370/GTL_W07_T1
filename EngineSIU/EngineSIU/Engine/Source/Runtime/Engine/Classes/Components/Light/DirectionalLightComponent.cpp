@@ -103,22 +103,24 @@ FMatrix UDirectionalLightComponent::GetLightViewMatrix(const FVector& CamPositio
 {
     FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, GetRotationMatrix());
     FVector psuedoUp = FVector::UpVector;
-    // if Forward similar with UpVector or DownVector
     if (abs(Forward.Dot(psuedoUp) - 1.f) < 1e-6f || abs(Forward.Dot(psuedoUp) + 1.f) < 1e-6f)
     {
         psuedoUp = FVector::ForwardVector;
     }
     FVector Position = CamPosition - GetDirection() * farPlane / 2.f;
-    return  JungleMath::CreateViewMatrix(Position, Position + Forward, psuedoUp);
+    DirectionalLightInfo.ViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, psuedoUp);
+    return DirectionalLightInfo.ViewMatrix;
 }
 
 FMatrix UDirectionalLightComponent::GetLightProjMatrix()
 {
-    return JungleMath::CreateOrthoProjectionMatrix(ShadowFrustumWidth, ShadowFrustumHeight, nearPlane, farPlane);
+    return DirectionalLightInfo.ProjectionMatrix =
+        JungleMath::CreateOrthoProjectionMatrix(ShadowFrustumWidth, ShadowFrustumHeight, nearPlane, farPlane);
 }
 
 void UDirectionalLightComponent::InitializeShadowDepthMap()
 {
+    ShadowResolutionScale = 4096;
     
     ID3D11Device* device = FEngineLoop::Renderer.Graphics->Device;
     HRESULT hr;
@@ -131,8 +133,8 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapTextureDesc.SampleDesc.Count = 1;
     shadowMapTextureDesc.SampleDesc.Quality = 0;
     shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-    shadowMapTextureDesc.Width = static_cast<UINT>(ShadowMapSize);
-    shadowMapTextureDesc.Height = static_cast<UINT>(ShadowMapSize);
+    shadowMapTextureDesc.Width = static_cast<UINT>(ShadowResolutionScale);
+    shadowMapTextureDesc.Height = static_cast<UINT>(ShadowResolutionScale);
     hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
     assert(SUCCEEDED(hr));
 
@@ -149,4 +151,5 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapDSVDesc.Texture2D.MipSlice = 0;
     hr = device->CreateDepthStencilView(ShadowDepthMap.Texture2D, &shadowMapDSVDesc, &ShadowDepthMap.DSV);
     assert(SUCCEEDED(hr));
+    
 }

@@ -22,9 +22,12 @@ public:
     void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
     void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
     void CraeteShadowShader();
+    void SetShadowViewports();
 
 private:
     TArray<UDirectionalLightComponent*> DirectionalLightComponents;
     TArray<USpotLightComponent*> SpotLightComponents;
     TArray<UPointLightComponent*> PointLightComponents;
+
+    D3D11_VIEWPORT ShadowViewport;
 };
