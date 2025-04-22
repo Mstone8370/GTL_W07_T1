@@ -1,5 +1,6 @@
 #pragma once
 #include "LightComponentBase.h"
+#include "UnrealClient.h"
 
 class ULightComponent : public ULightComponentBase
 {

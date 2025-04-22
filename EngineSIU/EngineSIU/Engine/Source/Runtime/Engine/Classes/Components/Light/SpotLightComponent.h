@@ -15,9 +15,9 @@ struct FShadowDepthMap
     }
 };
 
-class USpotLightComponent :public ULightComponent
+class USpotLightComponent :public ULightComponentBase
 {
-    DECLARE_CLASS(USpotLightComponent, ULightComponent)
+    DECLARE_CLASS(USpotLightComponent, ULightComponentBase)
 public:
     USpotLightComponent();
     virtual ~USpotLightComponent();
