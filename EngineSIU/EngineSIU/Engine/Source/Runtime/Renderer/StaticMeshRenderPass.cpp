@@ -444,7 +444,7 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
         FLightConstants LightData = {};
         LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
         LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
-        LightData.ShadowMapSize = tempDirLight->ShadowMapSize;
+        LightData.ShadowMapSize = tempDirLight->ShadowResolutionScale;
         BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
         BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
     

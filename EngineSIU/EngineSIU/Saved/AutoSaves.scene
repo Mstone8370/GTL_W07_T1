@@ -1,65 +1,6 @@
 {
     "Actors": [
         {
-            "ActorClass": "ASpotLight",
-            "ActorID": "ASpotLight_99",
-            "ActorLabel": "OBJ_SPOTLIGHT_99",
-            "Components": [
-                {
-                    "ComponentClass": "USpotLightComponent",
-                    "ComponentID": "USpotLightComponent_0",
-                    "Properties": {
-                        "AABB_Max": "X=1.000 Y=1.000 Z=0.100",
-                        "AABB_Min": "X=-1.000 Y=-1.000 Z=-0.100",
-                        "Attenuation": "20.000000",
-                        "ComponentClass": "USpotLightComponent",
-                        "ComponentName": "USpotLightComponent_0",
-                        "ComponentOwner": "ASpotLight_99",
-                        "ComponentOwnerClass": "ASpotLight",
-                        "Direction": "X=1.000 Y=0.000 Z=0.000",
-                        "InnerRad": "0.568977",
-                        "Intensity": "46.799999",
-                        "LightColor": "R=0.712 G=0.246 B=0.246 A=1.000",
-                        "OuterRad": "0.994838",
-                        "Position": "X=0.000 Y=0.000 Z=0.000",
-                        "Radius": "114.400002",
-                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "ShadowBias": "-431602080.000000",
-                        "ShadowResolutionScale": "-431602080.000000",
-                        "ShadowSharpen": "-431602080.000000",
-                        "ShadowSlopeBias": "-431602080.000000",
-                        "Type": "2",
-                        "bAutoActive": "true",
-                        "bIsActive": "true"
-                    }
-                },
-                {
-                    "ComponentClass": "UBillboardComponent",
-                    "ComponentID": "UBillboardComponent_0",
-                    "Properties": {
-                        "AABB_max": "X=0.000 Y=0.000 Z=0.000",
-                        "AABB_min": "X=0.000 Y=0.000 Z=0.000",
-                        "BufferKey": "Assets/Editor/Icon/SpotLight_64x.png",
-                        "ComponentClass": "UBillboardComponent",
-                        "ComponentName": "UBillboardComponent_0",
-                        "ComponentOwner": "ASpotLight_99",
-                        "ComponentOwnerClass": "ASpotLight",
-                        "FinalIndexU": "0.000000",
-                        "FinalIndexV": "0.000000",
-                        "RelativeLocation": "X=-1.748 Y=-13.596 Z=10.259",
-                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
-                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
-                        "bAutoActive": "true",
-                        "bIsActive": "true",
-                        "m_Type": "UBillboardComponent"
-                    }
-                }
-            ],
-            "RootComponentID": "UBillboardComponent_0"
-        },
-        {
             "ActorClass": "ACube",
             "ActorID": "ACube_97",
             "ActorLabel": "OBJ_CUBE_97",
@@ -74,7 +15,7 @@
                         "ComponentName": "StaticMeshComponent_0",
                         "ComponentOwner": "ACube_97",
                         "ComponentOwnerClass": "ACube",
-                        "RelativeLocation": "X=1.795 Y=-13.519 Z=9.219",
+                        "RelativeLocation": "X=1.795 Y=-12.744 Z=9.219",
                         "RelativeRotation": "Pitch=0.000 Yaw=94.720 Roll=-0.000",
                         "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "StaticMeshPath": "Contents/Reference/Reference.obj",
@@ -112,6 +53,175 @@
                 }
             ],
             "RootComponentID": "StaticMeshComponent_0"
+        },
+        {
+            "ActorClass": "ACube",
+            "ActorID": "ACube_139",
+            "ActorLabel": "ACube139",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=1.287 Y=1.199 Z=2.555",
+                        "AABB_min": "X=-1.287 Y=-1.199 Z=-0.000",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "ACube_139",
+                        "ComponentOwnerClass": "ACube",
+                        "RelativeLocation": "X=-6.511 Y=-6.449 Z=9.219",
+                        "RelativeRotation": "Pitch=0.000 Yaw=94.720 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "StaticMeshPath": "Contents/Reference/Reference.obj",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
+        },
+        {
+            "ActorClass": "ACube",
+            "ActorID": "ACube_142",
+            "ActorLabel": "ACube142",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=1.000 Y=-0.000 Z=1.000",
+                        "AABB_min": "X=0.000 Y=-1.000 Z=0.000",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "ACube_142",
+                        "ComponentOwnerClass": "ACube",
+                        "RelativeLocation": "X=-10.860 Y=-3.591 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
+                        "RelativeScale3D": "X=1.000 Y=20.000 Z=30.000",
+                        "StaticMeshPath": "Contents/Cube/cube-tex.obj",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
+        },
+        {
+            "ActorClass": "APointLight",
+            "ActorID": "APointLight_143",
+            "ActorLabel": "OBJ_POINTLIGHT_143",
+            "Components": [
+                {
+                    "ComponentClass": "UPointLightComponent",
+                    "ComponentID": "PointLightComponent_0",
+                    "Properties": {
+                        "AABB_Max": "X=1.000 Y=1.000 Z=0.100",
+                        "AABB_Min": "X=-1.000 Y=-1.000 Z=-0.100",
+                        "Attenuation": "20.000000",
+                        "ComponentClass": "UPointLightComponent",
+                        "ComponentName": "PointLightComponent_0",
+                        "ComponentOwner": "APointLight_143",
+                        "ComponentOwnerClass": "APointLight",
+                        "Intensity": "48.200001",
+                        "LightColor": "R=1.000 G=1.000 B=1.000 A=1.000",
+                        "Position": "X=0.000 Y=0.000 Z=0.000",
+                        "Radius": "30.000000",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "ShadowBias": "3.000000",
+                        "ShadowResolutionScale": "1024.000000",
+                        "ShadowSharpen": "-431602080.000000",
+                        "ShadowSlopeBias": "3.000000",
+                        "Type": "1",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "UBillboardComponent",
+                    "ComponentID": "UBillboardComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=0.000 Y=0.000 Z=0.000",
+                        "AABB_min": "X=0.000 Y=0.000 Z=0.000",
+                        "BufferKey": "Assets/Editor/Icon/PointLight_64x.png",
+                        "ComponentClass": "UBillboardComponent",
+                        "ComponentName": "UBillboardComponent_0",
+                        "ComponentOwner": "APointLight_143",
+                        "ComponentOwnerClass": "APointLight",
+                        "FinalIndexU": "0.000000",
+                        "FinalIndexV": "0.000000",
+                        "RelativeLocation": "X=-2.671 Y=-6.672 Z=9.747",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": "UBillboardComponent"
+                    }
+                }
+            ],
+            "RootComponentID": "UBillboardComponent_0"
+        },
+        {
+            "ActorClass": "ASpotLight",
+            "ActorID": "ASpotLight_140",
+            "ActorLabel": "OBJ_SPOTLIGHT_140",
+            "Components": [
+                {
+                    "ComponentClass": "USpotLightComponent",
+                    "ComponentID": "USpotLightComponent_0",
+                    "Properties": {
+                        "AABB_Max": "X=1.000 Y=1.000 Z=0.100",
+                        "AABB_Min": "X=-1.000 Y=-1.000 Z=-0.100",
+                        "Attenuation": "20.000000",
+                        "ComponentClass": "USpotLightComponent",
+                        "ComponentName": "USpotLightComponent_0",
+                        "ComponentOwner": "ASpotLight_140",
+                        "ComponentOwnerClass": "ASpotLight",
+                        "Direction": "X=1.000 Y=0.000 Z=0.000",
+                        "InnerRad": "0.261800",
+                        "Intensity": "17.400000",
+                        "LightColor": "R=1.000 G=1.000 B=1.000 A=1.000",
+                        "OuterRad": "0.523600",
+                        "Position": "X=0.000 Y=0.000 Z=0.000",
+                        "Radius": "30.000000",
+                        "RelativeLocation": "X=0.000 Y=0.000 Z=0.000",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "ShadowBias": "3.000000",
+                        "ShadowResolutionScale": "2048.000000",
+                        "ShadowSharpen": "-431602080.000000",
+                        "ShadowSlopeBias": "3.000000",
+                        "Type": "2",
+                        "bAutoActive": "true",
+                        "bIsActive": "true"
+                    }
+                },
+                {
+                    "ComponentClass": "UBillboardComponent",
+                    "ComponentID": "UBillboardComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=0.000 Y=0.000 Z=0.000",
+                        "AABB_min": "X=0.000 Y=0.000 Z=0.000",
+                        "BufferKey": "Assets/Editor/Icon/SpotLight_64x.png",
+                        "ComponentClass": "UBillboardComponent",
+                        "ComponentName": "UBillboardComponent_0",
+                        "ComponentOwner": "ASpotLight_140",
+                        "ComponentOwnerClass": "ASpotLight",
+                        "FinalIndexU": "0.000000",
+                        "FinalIndexV": "0.000000",
+                        "RelativeLocation": "X=-2.440 Y=-12.541 Z=10.881",
+                        "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": "UBillboardComponent"
+                    }
+                }
+            ],
+            "RootComponentID": "UBillboardComponent_0"
         }
     ],
     "NextUUID": 0,

@@ -40,6 +40,8 @@ UObject* USpotLightComponent::Duplicate(UObject* InOuter)
 
 void USpotLightComponent::CreateShadowMapResources()
 {
+    ShadowResolutionScale = 2048;
+
     if (ShadowDepthMap.Texture2D || ShadowDepthMap.SRV || ShadowDepthMap.DSV)
         return;
 
@@ -54,8 +56,8 @@ void USpotLightComponent::CreateShadowMapResources()
     shadowMapTextureDesc.SampleDesc.Count = 1;
     shadowMapTextureDesc.SampleDesc.Quality = 0;
     shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-    shadowMapTextureDesc.Width = 2048;
-    shadowMapTextureDesc.Height = 2048;
+    shadowMapTextureDesc.Width = ShadowResolutionScale;
+    shadowMapTextureDesc.Height = ShadowResolutionScale;
     hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
     if (FAILED(hr))
     {

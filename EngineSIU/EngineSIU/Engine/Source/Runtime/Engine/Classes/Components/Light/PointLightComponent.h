@@ -44,8 +44,6 @@ public:
     ID3D11RasterizerState*     PointShadowRasterizerState = NULL;
     ID3D11VertexShader*        PointShadowVertexShader = NULL;
     ID3D11VertexShader*        PointShadowInstanceVertexShader = NULL;
-    int                        ShadowMapWidth = 1024;
-    int                        ShadowMapHeight = 1024;
 #pragma endregion
 #pragma region PointShadow
 public:

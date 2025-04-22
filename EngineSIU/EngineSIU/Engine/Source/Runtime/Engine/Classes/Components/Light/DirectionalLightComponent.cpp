@@ -119,6 +119,7 @@ FMatrix UDirectionalLightComponent::GetLightProjMatrix()
 
 void UDirectionalLightComponent::InitializeShadowDepthMap()
 {
+    ShadowResolutionScale = 4096;
     
     ID3D11Device* device = FEngineLoop::Renderer.Graphics->Device;
     HRESULT hr;
@@ -131,8 +132,8 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapTextureDesc.SampleDesc.Count = 1;
     shadowMapTextureDesc.SampleDesc.Quality = 0;
     shadowMapTextureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL;
-    shadowMapTextureDesc.Width = static_cast<UINT>(ShadowMapSize);
-    shadowMapTextureDesc.Height = static_cast<UINT>(ShadowMapSize);
+    shadowMapTextureDesc.Width = static_cast<UINT>(ShadowResolutionScale);
+    shadowMapTextureDesc.Height = static_cast<UINT>(ShadowResolutionScale);
     hr = device->CreateTexture2D(&shadowMapTextureDesc, nullptr, &ShadowDepthMap.Texture2D);
     assert(SUCCEEDED(hr));
 
@@ -149,4 +150,5 @@ void UDirectionalLightComponent::InitializeShadowDepthMap()
     shadowMapDSVDesc.Texture2D.MipSlice = 0;
     hr = device->CreateDepthStencilView(ShadowDepthMap.Texture2D, &shadowMapDSVDesc, &ShadowDepthMap.DSV);
     assert(SUCCEEDED(hr));
+    
 }
