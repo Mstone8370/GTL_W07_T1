@@ -204,18 +204,6 @@
     <ClInclude Include="Engine\Source\Editor\PropertyEditor\PropertyEditorPanel.h">
       <Filter>Engine\Source\Editor\PropertyEditor</Filter>
     </ClInclude>
-    <ClCompile Include="Engine\Source\Editor\PropertyEditor\ShowFlags.cpp">
-      <Filter>Engine\Source\Editor\PropertyEditor</Filter>
-    </ClCompile>
-    <ClInclude Include="Engine\Source\Editor\PropertyEditor\ShowFlags.h">
-      <Filter>Engine\Source\Editor\PropertyEditor</Filter>
-    </ClInclude>
-    <ClCompile Include="Engine\Source\Editor\PropertyEditor\ViewportTypePanel.cpp">
-      <Filter>Engine\Source\Editor\PropertyEditor</Filter>
-    </ClCompile>
-    <ClInclude Include="Engine\Source\Editor\PropertyEditor\ViewportTypePanel.h">
-      <Filter>Engine\Source\Editor\PropertyEditor</Filter>
-    </ClInclude>
     <ClInclude Include="Engine\Source\Editor\UnrealEd\EditorPanel.h">
       <Filter>Engine\Source\Editor\UnrealEd</Filter>
     </ClInclude>
@@ -799,6 +787,7 @@
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\ShadowVertexShader.hlsl" />
+    <FxCompile Include="Shaders\ShadowPixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Engine\Source\Runtime\Engine\Classes\Actors\FireballActor.h">

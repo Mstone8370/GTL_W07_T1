@@ -48,21 +48,31 @@ void FShadowMapPass::ClearRenderArr()
 void FShadowMapPass::CreateShader()
 {
     HRESULT hr = ShaderManager->AddVertexShader(L"ShadowVertexShader", L"Shaders/ShadowVertexShader.hlsl", "mainVS");
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"ShadowVertexShader Create Failed", L"Error", MB_OK);
+    }
+    hr = ShaderManager->AddPixelShader(L"ShadowPixelShader", L"Shaders/ShadowPixelShader.hlsl", "mainPS");
     if (FAILED(hr))
     {
-        return;
+        MessageBox(NULL, L"ShadowPixelShader Create Failed", L"Error", MB_OK);
+
     }
 }
 
 void FShadowMapPass::PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     ID3D11VertexShader* VertexShader = ShaderManager->GetVertexShaderByKey(L"ShadowVertexShader");
+    ID3D11PixelShader* PixelShader = ShaderManager->GetPixelShaderByKey(L"ShadowVertexShader");
     ID3D11InputLayout* InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
     
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
+
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
+
+    //VSM 을 위한 픽셀 쉐이더
+    Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     // 뎁스만 필요하므로, 픽셀 쉐이더는 지정 안함.
-    Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
+    // Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
     
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 

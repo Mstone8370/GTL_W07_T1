@@ -134,8 +134,8 @@ void UPointLightComponent::SetType(int InType)
 void UPointLightComponent::CreateShadowMapResources()
 {
     D3D11_TEXTURE2D_DESC texDesc = {};
-    texDesc.Width              = ShadowResolutionScale;
-    texDesc.Height             = ShadowResolutionScale;
+    texDesc.Width              =  static_cast<UINT>(ShadowResolutionScale);
+    texDesc.Height             = static_cast<UINT>(ShadowResolutionScale);
     texDesc.MipLevels          = 1;
     texDesc.ArraySize          = 6; // 큐브맵의 6면
     texDesc.Format             = DXGI_FORMAT_R32_TYPELESS;
@@ -208,18 +208,25 @@ void UPointLightComponent::CreateShadowMapResources()
         MessageBox(NULL, L"Failed to create Sampler", L"Error", MB_OK);
     }
     // VSM
+
+
     D3D11_TEXTURE2D_DESC momentTexDesc = {};
-    texDesc.Width            = ShadowResolutionScale;
-    texDesc.Height           = ShadowResolutionScale;
-    texDesc.MipLevels        = 0;                         // mipmap 생성할 거면 0
-    texDesc.ArraySize        = 6;                         // 큐브맵 6면
-    texDesc.Format           = DXGI_FORMAT_R32G32_FLOAT;  // <--- 2채널(1차,2차)
-    texDesc.SampleDesc.Count = 1;
-    texDesc.Usage            = D3D11_USAGE_DEFAULT;
-    texDesc.BindFlags        = D3D11_BIND_RENDER_TARGET   // RTV로도 쓰고
-                            | D3D11_BIND_SHADER_RESOURCE; // SRV로도 씀
-    // (깊이 전용 뷰는 더 이상 안 만듭니다)
-    hr = GEngineLoop.GraphicDevice.Device->CreateTexture2D(&momentTexDesc, nullptr, &PointMomentCubeTex);
+    momentTexDesc.Width         = static_cast<UINT>(ShadowResolutionScale);
+    momentTexDesc.Height        = static_cast<UINT>(ShadowResolutionScale);
+    momentTexDesc.MipLevels     = 0;                         // mipmap 안 쓸 거면 1
+    momentTexDesc.ArraySize     = 6;                         // 큐브맵 6면
+    momentTexDesc.Format        = DXGI_FORMAT_R32G32_FLOAT;  // 2채널(1차,2차)
+    momentTexDesc.SampleDesc    = { 1, 0 };
+    momentTexDesc.Usage         = D3D11_USAGE_DEFAULT;
+    momentTexDesc.BindFlags     = D3D11_BIND_RENDER_TARGET   // RTV로 쓰고
+                                | D3D11_BIND_SHADER_RESOURCE; // SRV로도 씀
+    momentTexDesc.MiscFlags     = D3D11_RESOURCE_MISC_TEXTURECUBE; 
+
+    hr = GEngineLoop.GraphicDevice.Device
+                    ->CreateTexture2D(&momentTexDesc, nullptr, &PointMomentCubeTex);
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to create Moment Texture", L"Error", MB_OK);
+    }
     // 슬라이스별 RTV
     for(int i = 0; i < 6; ++i) {
         D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
@@ -227,17 +234,23 @@ void UPointLightComponent::CreateShadowMapResources()
         rtvDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
         rtvDesc.Texture2DArray.FirstArraySlice = i;
         rtvDesc.Texture2DArray.ArraySize       = 1;
-        GEngineLoop.GraphicDevice.Device->CreateRenderTargetView(
+        hr =GEngineLoop.GraphicDevice.Device->CreateRenderTargetView(
             PointMomentCubeTex, &rtvDesc, &PointMomentRTV[i]);
+        if (FAILED(hr)) {
+            MessageBox(NULL, L"Failed to Moment RTV", L"Error", MB_OK);
+        }
     }
-
+    
     // 큐브맵 SRV (픽셀 셰이더 샘플링용)
     D3D11_SHADER_RESOURCE_VIEW_DESC momentSrvDesc = {};
     srvDesc.Format               = DXGI_FORMAT_R32G32_FLOAT;
     srvDesc.ViewDimension        = D3D11_SRV_DIMENSION_TEXTURECUBE;
     srvDesc.TextureCube.MipLevels = -1;  // 모든 레벨(mipmap) 사용
-    GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
+    hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
         PointMomentCubeTex, &srvDesc, &PointMomentSRV);
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to Moment SRV", L"Error", MB_OK);
+    }
 }
 
 void UPointLightComponent::UpdateViewProjMatrix()
