@@ -5,7 +5,6 @@
 #include "Components/Light/DirectionalLightComponent.h"
 #include "D3D11RHI/DXDShaderManager.h"
 #include "LevelEditor/SLevelEditor.h"
-#include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/Casts.h"
 #include "UObject/UObjectIterator.h"

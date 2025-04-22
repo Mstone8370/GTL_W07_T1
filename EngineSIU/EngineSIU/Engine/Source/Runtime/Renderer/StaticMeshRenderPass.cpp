@@ -23,7 +23,6 @@
 #include "Engine/EditorEngine.h"
 #include "Math/JungleMath.h"
 
-#include "PropertyEditor/ShowFlags.h"
 
 #include "UnrealEd/EditorViewportClient.h"
 
