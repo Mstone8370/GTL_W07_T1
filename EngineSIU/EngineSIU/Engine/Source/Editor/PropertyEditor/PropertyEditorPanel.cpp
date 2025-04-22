@@ -19,6 +19,8 @@
 #include "Components/ProjectileMovementComponent.h"
 #include "GameFramework/Actor.h"
 #include "Engine/AssetManager.h"
+#include "LevelEditor/SLevelEditor.h"
+#include "UnrealEd/EditorViewportClient.h"
 #include "UObject/UObjectIterator.h"
 
 void PropertyEditorPanel::Render()
@@ -168,16 +170,32 @@ void PropertyEditorPanel::Render()
                 if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
                     pointlightObj->SetRadius(Radius);
                 }
+                FString dir[6]= {"X+","X-","Z+","Z-", "Y+","Y-"};
                 for (int face = 0; face < 6; ++face)
                 {
                     ImGui::PushID(face);
 
-                    ImGui::Text("Face %d", face);
+                    ImGui::Text("Face %s", *dir[face]);
                     // UV 좌표를 뒤집어(depth 텍스처 상 Y축 반전) 제대로 보이게
                     ImGui::Image(
                         (ImTextureID)pointlightObj->faceSRVs[face],
                         ImVec2(512,512));   // UV1
                     ImGui::PopID();
+                    char label[64];
+                    sprintf_s(label, "Override face %d camera with light's perspective", face);
+                    
+                        // faceIn
+                    FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
+                    if (ImGui::Button(label))
+                    {
+                        if (face != 0 and face != 1)
+                            ActiveViewport->PerspectiveCamera.SetRotation(pointlightObj->dirs[face] * 89.0f);
+                        else if (face ==0)
+                            ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.0f, 0.0f, 0.0f));
+                        else if (face ==1)
+                            ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.0f, 0.0f, 180.0f));
+                        ActiveViewport->PerspectiveCamera.SetLocation(pointlightObj->GetWorldLocation() +  ActiveViewport->PerspectiveCamera.GetForwardVector()); 
+                    }
                 }
                 ImGui::TreePop();
             }
