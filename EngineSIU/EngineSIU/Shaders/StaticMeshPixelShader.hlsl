@@ -100,7 +100,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002 /* 기본 bias */)
+float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002)
 {
     // 1) 월드→라이트 클립 공간
     float4 lp = mul(float4(worldPos, 1), SpotLightView);
@@ -254,10 +254,9 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 
         for (int i = 0; i < SpotLightsCount; i++)
         {
-            float shadowFactor = ComputeSpotShadow(Input.WorldPosition, i);
-            LitColor += LitColor.rgb * shadowFactor;
+            float shadow = ComputeSpotShadow(Input.WorldPosition, i);
+            LitColor += LitColor.rgb * shadow;
         }
-        
         LitColor += EmissiveColor * 5.f; // 5는 임의의 값
         FinalColor = float4(LitColor, 1);
     }
@@ -265,7 +264,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     {
         FinalColor = float4(DiffuseColor, 1);
     }
-
     
     if (bIsSelected)
     {

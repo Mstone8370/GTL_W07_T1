@@ -31,9 +31,9 @@ void FShadowMapPass::PrepareRenderArr()
     {
         DirectionalLightComponents.Add(iter);
     }
-    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
+    for (const auto iter : TObjectRange<USpotLightComponent>())
     {
-        SpotLightComponents.Add(SpotLight);
+        SpotLightComponents.Add(iter);
     }
     for (const auto iter : TObjectRange<UPointLightComponent>())
     {
@@ -70,6 +70,8 @@ void FShadowMapPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewpo
             __super::RenderAllStaticMeshes(Viewport);
         }
     }
+
+    // SpotLight
     for (auto SpotLight : SpotLightComponents)
     {
 
