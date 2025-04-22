@@ -44,7 +44,7 @@
                         "ComponentOwnerClass": "ACube",
                         "RelativeLocation": "X=4.466 Y=-3.591 Z=1.525",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
-                        "RelativeScale3D": "X=1.000 Y=20.000 Z=30.000",
+                        "RelativeScale3D": "X=1.000 Y=20.000 Z=40.000",
                         "StaticMeshPath": "Contents/Cube/cube-tex.obj",
                         "bAutoActive": "true",
                         "bIsActive": "true",
@@ -153,7 +153,7 @@
                         "ComponentOwnerClass": "APointLight",
                         "FinalIndexU": "0.000000",
                         "FinalIndexV": "0.000000",
-                        "RelativeLocation": "X=-3.161 Y=-16.870 Z=9.320",
+                        "RelativeLocation": "X=-3.161 Y=-18.250 Z=9.320",
                         "RelativeRotation": "Pitch=0.000 Yaw=0.000 Roll=0.000",
                         "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "bAutoActive": "true",
@@ -212,7 +212,7 @@
                         "ComponentOwnerClass": "ASpotLight",
                         "FinalIndexU": "0.000000",
                         "FinalIndexV": "0.000000",
-                        "RelativeLocation": "X=-4.617 Y=-14.252 Z=9.316",
+                        "RelativeLocation": "X=-4.617 Y=-14.554 Z=9.316",
                         "RelativeRotation": "Pitch=-0.000 Yaw=0.000 Roll=10.313",
                         "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
                         "bAutoActive": "true",
@@ -331,6 +331,33 @@
                 }
             ],
             "RootComponentID": "UBillboardComponent_0"
+        },
+        {
+            "ActorClass": "ACube",
+            "ActorID": "ACube_146",
+            "ActorLabel": "ACube146",
+            "Components": [
+                {
+                    "ComponentClass": "UStaticMeshComponent",
+                    "ComponentID": "StaticMeshComponent_0",
+                    "Properties": {
+                        "AABB_max": "X=1.287 Y=1.199 Z=2.555",
+                        "AABB_min": "X=-1.287 Y=-1.199 Z=-0.000",
+                        "ComponentClass": "UStaticMeshComponent",
+                        "ComponentName": "StaticMeshComponent_0",
+                        "ComponentOwner": "ACube_146",
+                        "ComponentOwnerClass": "ACube",
+                        "RelativeLocation": "X=-1.380 Y=-13.635 Z=33.498",
+                        "RelativeRotation": "Pitch=0.000 Yaw=94.720 Roll=-0.000",
+                        "RelativeScale3D": "X=1.000 Y=1.000 Z=1.000",
+                        "StaticMeshPath": "Contents/Reference/Reference.obj",
+                        "bAutoActive": "true",
+                        "bIsActive": "true",
+                        "m_Type": ""
+                    }
+                }
+            ],
+            "RootComponentID": "StaticMeshComponent_0"
         }
     ],
     "NextUUID": 0,

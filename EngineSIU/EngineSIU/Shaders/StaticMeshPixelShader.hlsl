@@ -29,14 +29,6 @@ cbuffer TextureConstants : register(b4)
     float2 UVOffset;
     float2 TexturePad0;
 }
-
-cbuffer FLightConstants: register(b5)
-{
-    row_major matrix mLightView;
-    row_major matrix mLightProj;
-    float fShadowMapSize;
-}
-
 #ifdef LIGHTING_MODEL_PBR
 #include "LightPBR.hlsl"
 #else
@@ -45,21 +37,11 @@ cbuffer FLightConstants: register(b5)
 
 SamplerComparisonState ShadowSampler : register(s12);
 SamplerComparisonState ShadowPCF : register(s13);
+
 Texture2D ShadowTexture : register(t12); // directional
 Texture2D SpotShadowMap : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
 
-cbuffer PointLightConstant : register(b6)
-{
-    row_major matrix viewMatrix[MAX_POINT_LIGHT * 6];
-    row_major matrix projectionMatrix[MAX_POINT_LIGHT];
-}
-
-cbuffer SpotLightConstants: register(b7)
-{
-    row_major matrix SpotLightView;
-    row_major matrix SpotLightProj;
-}
 
 int GetCubeFaceIndex(float3 dir)
 {
@@ -181,7 +163,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         Roughness = MaterialTextures[TEXTURE_SLOT_ROUGHNESS].Sample(MaterialSamplers[TEXTURE_SLOT_ROUGHNESS], Input.UV).r;
     }
 #endif
-    
     // Begin for Tile based light culled result
     // 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
     uint2 PixelCoord = uint2(Input.Position.xy);
@@ -211,8 +192,8 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         // Percentage Closer Filtering
         // float DepthFromLight = ShadowTexture.SampleCmpLevelZero(ShadowSampler, shadowUV, shadowZ).r;
         float DepthFromLight = 0.f;
-        float PCFOffsetX = 1.f / fShadowMapSize;
-        float PCFOffsetY = 1.f / fShadowMapSize;
+        float PCFOffsetX = 1.f / Directional[0].ShadowMapResolution;
+        float PCFOffsetY = 1.f / Directional[0].ShadowMapResolution;
         for (int i = -1; i <= 1; ++i)
         {
             for (int j = -1; j <= 1; ++j)
@@ -265,7 +246,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     {
         FinalColor = float4(DiffuseColor, 1);
     }
-
     
     if (bIsSelected)
     {

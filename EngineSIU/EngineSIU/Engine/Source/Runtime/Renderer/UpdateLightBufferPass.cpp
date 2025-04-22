@@ -151,6 +151,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.Directional[DirectionalLightsCount].Direction = Light->GetDirection();
             LightBufferData.Directional[DirectionalLightsCount].ViewMatrix = Light->GetLightViewMatrix(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation());
             LightBufferData.Directional[DirectionalLightsCount].ProjectionMatrix = Light->GetLightProjMatrix();
+            LightBufferData.Directional[DirectionalLightsCount].ShadowMapResolution = Light->GetShadowResolutionScale();
             DirectionalLightsCount++;
         }
     }

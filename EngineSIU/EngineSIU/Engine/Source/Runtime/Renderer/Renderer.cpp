@@ -148,10 +148,6 @@ void FRenderer::CreateConstantBuffers()
     // TODO: Light가 Structured Buffer로 관리되면 제거할 것.
     UINT LightConstantsBufferSize = sizeof(FLightConstants);
     BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-    UINT PointLigthMatrixBufferSize = sizeof(FPointLightMatrix);
-    BufferManager->CreateBufferGeneric<FPointLightMatrix>("FPointLightMatrix", nullptr, PointLigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-    UINT SpotLightBufferSize = sizeof(FSpotLightConstants);
-    BufferManager->CreateBufferGeneric<FSpotLightConstants>("FSpotLightConstants", nullptr, SpotLightBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
