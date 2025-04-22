@@ -39,8 +39,3 @@ void FDepthPrePass::CleanUpRenderPass(const std::shared_ptr<FEditorViewportClien
     // 렌더 타겟 해제
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 }
-
-void FDepthPrePass::Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport)
-{
-    __super::Render_Internal(Viewport);
-}

@@ -118,6 +118,8 @@ void FStaticMeshRenderPass::PrepareRenderPass(const std::shared_ptr<FEditorViewp
     Graphics->DeviceContext->RSSetViewports(1, &ViewportResource->GetD3DViewport());
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
 
+    PrepareRenderState(Viewport);
+    
     auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
     
     if (begin(tempDirLightRange) != end(tempDirLightRange))
@@ -133,7 +135,6 @@ void FStaticMeshRenderPass::PrepareRenderPass(const std::shared_ptr<FEditorViewp
         ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
         Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
     }
-    PrepareRenderState(Viewport);
 
     UpdateShadowConstant();
 }

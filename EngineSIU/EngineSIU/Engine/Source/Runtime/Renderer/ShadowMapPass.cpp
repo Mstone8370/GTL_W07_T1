@@ -55,7 +55,7 @@ void FShadowMapPass::CreateShader()
 
 void FShadowMapPass::PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
-    ID3D11VertexShader* VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+    ID3D11VertexShader* VertexShader = ShaderManager->GetVertexShaderByKey(L"ShadowVertexShader");
     ID3D11InputLayout* InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
     
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
@@ -127,7 +127,7 @@ void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClien
             Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, PointLight->PointShadowDSV[face]);
             UpdateLightMatrixConstant(PointLight->GetLightViewMatrix()[face], PointLight->GetLightProjectionMatrix(), PointLight->ShadowResolutionScale);
 
-            __super::RenderAllStaticMeshes(Viewport);
+            RenderAllStaticMeshes(Viewport);
         }
     }
 }
@@ -150,7 +150,7 @@ void FShadowMapPass::RenderSpotLight(const std::shared_ptr<FEditorViewportClient
         // Render
         Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DSV);
 
-        __super::RenderAllStaticMeshes(Viewport);
+        RenderAllStaticMeshes(Viewport);
     }
 }
 
@@ -176,6 +176,6 @@ void FShadowMapPass::RenderDirectionalLight(const std::shared_ptr<FEditorViewpor
         // Render
         Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DepthStencilRHI.DSV);
         
-        __super::RenderAllStaticMeshes(Viewport);
+        RenderAllStaticMeshes(Viewport);
     }
 }

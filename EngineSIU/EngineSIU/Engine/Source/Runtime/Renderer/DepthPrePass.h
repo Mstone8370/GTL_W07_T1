@@ -16,7 +16,5 @@ protected:
     virtual void PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 
     virtual void CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
-
-    virtual void Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 };
 
