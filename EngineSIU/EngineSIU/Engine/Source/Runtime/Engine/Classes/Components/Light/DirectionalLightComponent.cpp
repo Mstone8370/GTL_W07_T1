@@ -103,18 +103,19 @@ FMatrix UDirectionalLightComponent::GetLightViewMatrix(const FVector& CamPositio
 {
     FVector Forward = FMatrix::TransformVector(FVector::ForwardVector, GetRotationMatrix());
     FVector psuedoUp = FVector::UpVector;
-    // if Forward similar with UpVector or DownVector
     if (abs(Forward.Dot(psuedoUp) - 1.f) < 1e-6f || abs(Forward.Dot(psuedoUp) + 1.f) < 1e-6f)
     {
         psuedoUp = FVector::ForwardVector;
     }
     FVector Position = CamPosition - GetDirection() * farPlane / 2.f;
-    return  JungleMath::CreateViewMatrix(Position, Position + Forward, psuedoUp);
+    DirectionalLightInfo.ViewMatrix = JungleMath::CreateViewMatrix(Position, Position + Forward, psuedoUp);
+    return DirectionalLightInfo.ViewMatrix;
 }
 
 FMatrix UDirectionalLightComponent::GetLightProjMatrix()
 {
-    return JungleMath::CreateOrthoProjectionMatrix(ShadowFrustumWidth, ShadowFrustumHeight, nearPlane, farPlane);
+    return DirectionalLightInfo.ProjectionMatrix =
+        JungleMath::CreateOrthoProjectionMatrix(ShadowFrustumWidth, ShadowFrustumHeight, nearPlane, farPlane);
 }
 
 void UDirectionalLightComponent::InitializeShadowDepthMap()

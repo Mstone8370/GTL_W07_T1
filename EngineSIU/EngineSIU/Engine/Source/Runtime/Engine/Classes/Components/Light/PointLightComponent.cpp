@@ -207,7 +207,7 @@ void UPointLightComponent::UpdateViewProjMatrix()
     {
         FVector target = GetWorldLocation() + dirs[i];
         FVector up = ups[i];
-        view[i] = JungleMath::CreateViewMatrix(GetWorldLocation(),target, up);
+        PointLightInfo.ViewMatrix[i] = JungleMath::CreateViewMatrix(GetWorldLocation(),target, up);
     }
-    projection = JungleMath::CreateProjectionMatrix(FMath::DegreesToRadians(90.0f), 1.0f, 0.1f, GetRadius());
+    PointLightInfo.ProjectionMatrix = JungleMath::CreateProjectionMatrix(FMath::DegreesToRadians(90.0f), 1.0f, 0.1f, GetRadius());
 }

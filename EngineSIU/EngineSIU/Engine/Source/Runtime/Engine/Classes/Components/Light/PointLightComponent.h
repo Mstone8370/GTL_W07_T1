@@ -31,6 +31,9 @@ public:
     int GetType() const;
     void SetType(int InType);
 
+    FMatrix* GetLightViewMatrix() { return PointLightInfo.ViewMatrix;};
+    FMatrix GetLightProjectionMatrix() { return PointLightInfo.ProjectionMatrix;};
+
 private:
     FPointLightInfo PointLightInfo;
 #pragma region PointLight Shadows
@@ -59,8 +62,6 @@ public:
         {0,0,-1},{0,0,1},
         {0,1,0}, {0,1,0}
     };
-    FMatrix view[6];
-    FMatrix projection;
 #pragma endregion
 };
 

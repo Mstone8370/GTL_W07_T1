@@ -189,9 +189,9 @@ void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLi
         auto* L = PointLights[i];
         for (int face = 0; face < 6; ++face)
         {
-            ObjectData.LightViewMat[i*6 + face] = L->view[face];
+            ObjectData.LightViewMat[i*6 + face] = L->GetLightViewMatrix()[face];
         }
-        ObjectData.LightProjectMat[i] = L->projection;
+        ObjectData.LightProjectMat[i] = L->GetLightProjectionMatrix();
     }
     BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
 }
@@ -387,7 +387,7 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
            auto srv = SpotLight->GetShadowDepthMap().SRV;
            Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
             
-            UpdateSpotLightConstantBuffer(SpotLight->GetViewMatrix(), SpotLight->GetProjectionMatrix());
+            UpdateSpotLightConstantBuffer(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix());
         }
         
         TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;

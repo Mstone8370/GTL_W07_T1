@@ -20,6 +20,7 @@
 #include "UObject/UObjectIterator.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "TileLightCullingPass.h"
+#include "LevelEditor/SLevelEditor.h"
 #include "Math/JungleMath.h"
 
 //------------------------------------------------------------------------------
@@ -123,6 +124,8 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.SpotLights[SpotLightsCount] = Light->GetSpotLightInfo();
             LightBufferData.SpotLights[SpotLightsCount].Position = Light->GetWorldLocation();
             LightBufferData.SpotLights[SpotLightsCount].Direction = Light->GetDirection();
+            LightBufferData.SpotLights[SpotLightsCount].ViewMatrix = Light->GetLightViewMatrix();
+            LightBufferData.SpotLights[SpotLightsCount].ProjectionMatrix = Light->GetLightProjectionMatrix();
             SpotLightsCount++;
 
             // RenderShadowMap(Light);
@@ -145,9 +148,9 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
         {
             LightBufferData.Directional[DirectionalLightsCount] = Light->GetDirectionalLightInfo();
             LightBufferData.Directional[DirectionalLightsCount].Direction = Light->GetDirection();
+            LightBufferData.Directional[DirectionalLightsCount].ViewMatrix = Light->GetLightViewMatrix(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation());
+            LightBufferData.Directional[DirectionalLightsCount].ProjectionMatrix = Light->GetLightProjMatrix();
             DirectionalLightsCount++;
-            
-            // RenderShadowMap(Light);
         }
     }
 

@@ -30,7 +30,4 @@ private:
     TArray<UPointLightComponent*> PointLightComponents;
 
     D3D11_VIEWPORT ShadowViewport;
-    D3D11_VIEWPORT DirShadowViewport;
-    float ShadowMapSize = 1024.0f;
-    float DirShadowMapSize = 4096.0f;
 };

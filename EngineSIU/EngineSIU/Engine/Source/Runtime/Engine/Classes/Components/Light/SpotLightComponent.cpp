@@ -261,16 +261,17 @@ void USpotLightComponent::SetOuterDegree(float InOuterDegree)
     SpotLightInfo.InnerRad = FMath::Clamp(SpotLightInfo.InnerRad, 0.0f, SpotLightInfo.OuterRad);
 }
 
-FMatrix USpotLightComponent::GetViewMatrix() const
+FMatrix USpotLightComponent::GetLightViewMatrix()
 {
     FVector Eye = GetWorldLocation();
     FVector At = Eye + GetOwner()->GetActorForwardVector();
     FVector Up = FVector(0.0f, 0.0f, 1.0f);
 
-    return JungleMath::CreateViewMatrix(Eye, At, Up);
+    SpotLightInfo.ViewMatrix = JungleMath::CreateViewMatrix(Eye, At, Up);
+    return SpotLightInfo.ViewMatrix;
 }
 
-FMatrix USpotLightComponent::GetProjectionMatrix() const
+FMatrix USpotLightComponent::GetLightProjectionMatrix() const
 {
     float fov = SpotLightInfo.OuterRad * 2.0f;
     float aspectRatio = 1.0f; 
