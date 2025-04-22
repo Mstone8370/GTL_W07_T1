@@ -134,6 +134,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
 
     for (auto Light : PointLights)
     {
+        Light->UpdateViewProjMatrix();
         if (PointLightsCount < MAX_POINT_LIGHT)
         {
             LightBufferData.PointLights[PointLightsCount] = Light->GetPointLightInfo();

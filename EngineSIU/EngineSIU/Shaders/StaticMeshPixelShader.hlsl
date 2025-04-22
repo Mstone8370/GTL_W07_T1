@@ -78,8 +78,8 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     int face = GetCubeFaceIndex(dir);
 
     // (C) 그 face 에 맞는 뷰·프로젝션으로 깊이 계산
-    float4 viewPos = mul( float4(worldPos, 1),viewMatrix[lightIndex * 6 + face]);
-    float4 clipPos = mul(viewPos,projectionMatrix[lightIndex]);
+    float4 viewPos = mul( float4(worldPos, 1),PointLights[lightIndex].ViewMatrix[face]);
+    float4 clipPos = mul(viewPos, PointLights[lightIndex].ProjectionMatrix);
     float  depthRef = clipPos.z / clipPos.w;
 
     clipPos.xyz /= clipPos.w;
@@ -103,8 +103,8 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
 float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002 /* 기본 bias */)
 {
     // 1) 월드→라이트 클립 공간
-    float4 lp = mul(float4(worldPos, 1), SpotLightView);
-    lp = mul(lp, SpotLightProj);
+    float4 lp = mul(float4(worldPos, 1), SpotLights[spotlightIdx].ViewMatrix);
+    lp = mul(lp, SpotLights[spotlightIdx].ProjectionMatrix);
 
     // 2) NDC→[0,1] uv, 깊이
     float2 uv;
@@ -198,8 +198,8 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         // Shadow Mapping
         
         float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
-        PositionFromLight = mul(PositionFromLight, mLightView);
-        PositionFromLight = mul(PositionFromLight, mLightProj);
+        PositionFromLight = mul(PositionFromLight, Directional[0].ViewMatrix);
+        PositionFromLight = mul(PositionFromLight, Directional[0].ProjectionMatrix);
         PositionFromLight /= PositionFromLight.w;
         float2 shadowUV = {
             0.5f + PositionFromLight.x * 0.5f,
