@@ -512,7 +512,9 @@
     <Natvis Include="EngineSIU.natvis" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPassBase.cpp" />
     <ClCompile Include="LightGridGenerator.cpp" />
+    <ClInclude Include="Engine\Source\Runtime\Renderer\StaticMeshRenderPassBase.h" />
     <ClInclude Include="LightGridGenerator.h" />
   </ItemGroup>
   <ItemGroup>

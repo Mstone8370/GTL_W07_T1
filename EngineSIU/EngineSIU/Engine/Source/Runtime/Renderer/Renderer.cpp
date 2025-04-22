@@ -197,9 +197,6 @@ void FRenderer::CreateCommonShader()
 
 void FRenderer::PrepareRender(FViewportResource* ViewportResource)
 {
-    // Setup Viewport
-    Graphics->DeviceContext->RSSetViewports(1, &ViewportResource->GetD3DViewport());
-
     ViewportResource->ClearDepthStencils(Graphics->DeviceContext);
     ViewportResource->ClearRenderTargets(Graphics->DeviceContext);
 
@@ -334,7 +331,7 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_Primitives)
     {
         UpdateLightBufferPass->Render(Viewport);
-        // TODO : Shodow Map RenderPass
+        
         ShadowMapPass->Render(Viewport);
         
         StaticMeshRenderPass->Render(Viewport);
@@ -343,7 +340,7 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     // Render World Billboard
     if (ShowFlag & EEngineShowFlags::SF_BillboardText)
     {
-        // WorldBillboardRenderPass->Render(Viewport);
+        WorldBillboardRenderPass->Render(Viewport);
     }
 }
 

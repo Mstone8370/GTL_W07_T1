@@ -241,23 +241,23 @@ void USpotLightComponent::SetOuterRad(float InOuterCos)
 
 float USpotLightComponent::GetInnerDegree() const
 {
-    return SpotLightInfo.InnerRad * (180.0f / PI);
+    return FMath::RadiansToDegrees(SpotLightInfo.InnerRad);
 }
 
 void USpotLightComponent::SetInnerDegree(float InInnerDegree)
 {
-    SpotLightInfo.InnerRad = FMath::Max(InInnerDegree * (PI / 180.0f), 0.f);
+    SpotLightInfo.InnerRad = FMath::DegreesToRadians(FMath::Max(InInnerDegree, 0.f));
     SpotLightInfo.OuterRad = FMath::Clamp(SpotLightInfo.OuterRad, SpotLightInfo.InnerRad, FMath::DegreesToRadians(80.0f));
 }   
 
 float USpotLightComponent::GetOuterDegree() const
 {
-    return SpotLightInfo.OuterRad * (180 / PI);
+    return FMath::RadiansToDegrees(SpotLightInfo.OuterRad);
 }
 
 void USpotLightComponent::SetOuterDegree(float InOuterDegree)
 {
-    SpotLightInfo.OuterRad = FMath::Max(InOuterDegree * (PI / 180.0f), 0.f);
+    SpotLightInfo.OuterRad = FMath::DegreesToRadians(FMath::Max(InOuterDegree, 0.f));
     SpotLightInfo.InnerRad = FMath::Clamp(SpotLightInfo.InnerRad, 0.0f, SpotLightInfo.OuterRad);
 }
 
@@ -273,11 +273,11 @@ FMatrix USpotLightComponent::GetLightViewMatrix()
 
 FMatrix USpotLightComponent::GetLightProjectionMatrix() const
 {
-    float fov = SpotLightInfo.OuterRad * 2.0f;
-    float aspectRatio = 1.0f; 
-    float nearZ = 1.0f;
-    float farZ = SpotLightInfo.Radius;
+    float FOVRad = SpotLightInfo.OuterRad * 2.0f;
+    float AspectRatio = 1.0f; 
+    float NearZ = 0.1f;
+    float FarZ = SpotLightInfo.Radius;
 
-    return JungleMath::CreateProjectionMatrix(fov, aspectRatio, nearZ, farZ);
+    return JungleMath::CreateProjectionMatrix(FOVRad, AspectRatio, NearZ, FarZ);
 }
 

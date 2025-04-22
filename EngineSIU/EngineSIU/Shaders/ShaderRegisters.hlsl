@@ -92,7 +92,7 @@ struct PS_INPUT_StaticMesh
     float3 WorldNormal : TEXCOORD1;
     float4 WorldTangent : TEXCOORD2;
     float3 WorldPosition : TEXCOORD3;
-    nointerpolation int MaterialIndex : MATERIAL_INDEX;
+    nointerpolation uint MaterialIndex : MATERIAL_INDEX;
 };
 
 ////////

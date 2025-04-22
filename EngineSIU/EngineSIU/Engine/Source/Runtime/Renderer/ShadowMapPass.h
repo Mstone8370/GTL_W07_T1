@@ -1,30 +1,40 @@
 ﻿#pragma once
-#include "StaticMeshRenderPass.h"
+#include "StaticMeshRenderPassBase.h"
 
+#include <d3d11.h>
+
+class USpotLightComponent;
 class UPointLightComponent;
-class ULightComponentBase;
 class UDirectionalLightComponent;
 
-class FShadowMapPass : public FStaticMeshRenderPass
+class FShadowMapPass : public FStaticMeshRenderPassBase
 {
 public:
-    friend class FRenderer; // 렌더러에서 접근 가능
-    friend class DepthBufferDebugPass; // DepthBufferDebugPass에서 접근 가능
-public:
     FShadowMapPass();
-    ~FShadowMapPass();
+    virtual ~FShadowMapPass() override;
     
-    virtual void Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManage) override;
     virtual void PrepareRenderArr() override;
-    virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
     virtual void ClearRenderArr() override;
+
+protected:
+    virtual void CreateShader() override;
     
-    void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
+    virtual void PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
+    virtual void CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
+    virtual void Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+    
     void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
-    void CraeteShadowShader();
-    void SetShadowViewports();
+
+    void SetShadowViewports(float Width = 1024.f, float Height = 1024.f);
 
 private:
+    void RenderPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport);
+    void RenderSpotLight(const std::shared_ptr<FEditorViewportClient>& Viewport);
+    void RenderDirectionalLight(const std::shared_ptr<FEditorViewportClient>& Viewport);
+    
     TArray<UDirectionalLightComponent*> DirectionalLightComponents;
     TArray<USpotLightComponent*> SpotLightComponents;
     TArray<UPointLightComponent*> PointLightComponents;
