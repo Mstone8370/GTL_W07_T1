@@ -1,34 +1,36 @@
 #include "LightComponent.h"
 #include "UObject/Casts.h"
 
-ULightComponentBase::ULightComponentBase()
+ULightComponent::ULightComponent()
 {
     AABB.Max = { 1.f,1.f,0.1f };
     AABB.Min = { -1.f,-1.f,-0.1f };
 }
 
-ULightComponentBase::~ULightComponentBase()
+
+ULightComponent::~ULightComponent()
 {
-  
 }
 
-UObject* ULightComponentBase::Duplicate(UObject* InOuter)
+UObject* ULightComponent::Duplicate(UObject* InOuter)
 {
     ThisClass* NewComponent = Cast<ThisClass>(Super::Duplicate(InOuter));
-
-    NewComponent->AABB = AABB;
-
     return NewComponent;
 }
 
-void ULightComponentBase::GetProperties(TMap<FString, FString>& OutProperties) const
+void ULightComponent::GetProperties(TMap<FString, FString>& OutProperties) const
 {
     Super::GetProperties(OutProperties);
     OutProperties.Add(TEXT("AABB_Min"), AABB.Min.ToString());
     OutProperties.Add(TEXT("AABB_Max"), AABB.Max.ToString());
+
+    OutProperties.Add(TEXT("ShadowResolutionScale"), FString::Printf(TEXT("%f"), ShadowResolutionScale));
+    OutProperties.Add(TEXT("ShadowBias"), FString::Printf(TEXT("%f"), ShadowBias));
+    OutProperties.Add(TEXT("ShadowSlopeBias"), FString::Printf(TEXT("%f"), ShadowSlopeBias));
+    OutProperties.Add(TEXT("ShadowSharpen"), FString::Printf(TEXT("%f"), ShadowSharpen));
 }
 
-void ULightComponentBase::SetProperties(const TMap<FString, FString>& InProperties)
+void ULightComponent::SetProperties(const TMap<FString, FString>& InProperties)
 {
     Super::SetProperties(InProperties);
     const FString* TempStr = nullptr;
@@ -42,11 +44,15 @@ void ULightComponentBase::SetProperties(const TMap<FString, FString>& InProperti
     {
         AABB.Max.InitFromString(*TempStr);
     }
-}
 
-void ULightComponentBase::TickComponent(float DeltaTime)
-{
-    Super::TickComponent(DeltaTime);
+    if (const FString* Val = InProperties.Find(TEXT("ShadowResolutionScale")))
+        ShadowResolutionScale = FCString::Atof(**Val);
+    if (const FString* Val = InProperties.Find(TEXT("ShadowBias")))
+        ShadowBias = FCString::Atof(**Val);
+    if (const FString* Val = InProperties.Find(TEXT("ShadowSlopeBias")))
+        ShadowSlopeBias = FCString::Atof(**Val);
+    if (const FString* Val = InProperties.Find(TEXT("ShadowSharpen")))
+        ShadowSharpen = FCString::Atof(**Val);
 }
 
 int ULightComponentBase::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)

@@ -1,15 +1,28 @@
 #pragma once
 #include "LightComponent.h"
 
-class USpotLightComponent :public ULightComponentBase
+struct FShadowDepthMap
 {
+    ID3D11Texture2D* Texture2D = nullptr;                // Shadow depth 텍스처
+    ID3D11ShaderResourceView* SRV = nullptr;             // 셰이더에서 샘플링할 수 있는 뷰
+    ID3D11DepthStencilView* DSV = nullptr;               // 렌더링 타겟에서 사용하는 뷰
 
-    DECLARE_CLASS(USpotLightComponent, ULightComponentBase)
+    void Release()
+    {
+        if (Texture2D) { Texture2D->Release(); Texture2D = nullptr; }
+        if (SRV) { SRV->Release();       SRV = nullptr; }
+        if (DSV) { DSV->Release();       DSV = nullptr; }
+    }
+};
+
+class USpotLightComponent :public ULightComponent
+{
+    DECLARE_CLASS(USpotLightComponent, ULightComponent)
 public:
     USpotLightComponent();
     virtual ~USpotLightComponent();
     virtual UObject* Duplicate(UObject* InOuter) override;
-    
+
     void GetProperties(TMap<FString, FString>& OutProperties) const override;
     void SetProperties(const TMap<FString, FString>& InProperties) override;
     FVector GetDirection();
@@ -41,8 +54,18 @@ public:
     float GetOuterDegree() const;
     void SetOuterDegree(float InOuterDegree);
 
+    FMatrix GetViewMatrix() const;
+    FMatrix GetProjectionMatrix() const;
+
+    void SetCastShadows(bool bCastShadows);
+
+    void CreateShadowMapResources() override;
+    void ReleaseShadowDepthMap() override;
+    
+    const FShadowDepthMap& GetShadowDepthMap() const { return ShadowDepthMap; }
+
 private:
     FSpotLightInfo SpotLightInfo;
-    virtual void InitializeShadowDepthMap() override;
+    FShadowDepthMap ShadowDepthMap;
 };
 

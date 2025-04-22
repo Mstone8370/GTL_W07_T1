@@ -1,33 +1,29 @@
 #pragma once
-#include "LightComponentBase.h"
+#include "Components/SceneComponent.h"
 
-class ULightComponent : public ULightComponentBase
+
+class ULightComponentBase : public USceneComponent
 {
-    DECLARE_CLASS(ULightComponent, ULightComponentBase)
+    DECLARE_CLASS(ULightComponentBase, USceneComponent)
 
 public:
-    ULightComponent();
-    virtual ~ULightComponent() override;
+    ULightComponentBase();
+    virtual ~ULightComponentBase() override;
     virtual UObject* Duplicate(UObject* InOuter) override;
-
+    
     virtual void GetProperties(TMap<FString, FString>& OutProperties) const override;
     virtual void SetProperties(const TMap<FString, FString>& InProperties) override;
 
     virtual void TickComponent(float DeltaTime) override;
     virtual int CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance) override;
-    
+
 protected:
     FBoundingBox AABB;
-    FDepthStencilRHI ShadowDepthMap;
-    virtual void InitializeShadowDepthMap() {}
-    void ReleaseShadowDepthMap();
-    
-public:
-    FBoundingBox GetBoundingBox() const {return AABB;}
-    FDepthStencilRHI GetShadowDepthMap() const {return ShadowDepthMap;}
-    float ShadowResolutionScale;
-    float ShadowBias;
-    float ShadowSlopeBias;
-    float ShadowSharpen;
-};
+    virtual void CreateShadowMapResources() {};
+    virtual void ReleaseShadowDepthMap();
+    bool bCastShadows;
 
+public:
+    bool IsCastShadows() const { return bCastShadows; }
+    FBoundingBox GetBoundingBox() const {return AABB;}
+};

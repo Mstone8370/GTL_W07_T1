@@ -1,9 +1,8 @@
 #pragma once
-#include "StaticMeshRenderPass.h"
+#include "Renderer/StaticMeshRenderPass.h"
 
 class UPointLightComponent;
 class ULightComponentBase;
-class UDirectionalLightComponent;
 
 class FShadowMapPass : public FStaticMeshRenderPass
 {
@@ -13,16 +12,14 @@ public:
 public:
     FShadowMapPass();
     ~FShadowMapPass();
-    
+
     virtual void Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManage) override;
     virtual void PrepareRenderArr() override;
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     virtual void ClearRenderArr() override;
     void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
-    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
+    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LgihtProjection);
     void CraeteShadowShader();
-
-private:
-    TArray<UPointLightComponent*> PointLightComponents;
-    TArray<UDirectionalLightComponent*> DirectionalLightComponents;
+    TArray<UPointLightComponent*> LightComponents;
 };
+

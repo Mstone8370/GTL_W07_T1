@@ -2,6 +2,8 @@
 #include "IRenderPass.h"
 #include "EngineBaseTypes.h"
 #include "Container/Set.h"
+#include "Define.h"
+#include "Components/Light/SpotLightComponent.h"
 
 class UPointLightComponent;
 class FDXDShaderManager;
@@ -40,6 +42,8 @@ public:
     virtual void RenderAllStaticMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport);
     
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
+
+    void UpdateShadowConstant();
   
     void UpdateLitUnlitConstant(int32 isLit) const;
 
@@ -70,4 +74,5 @@ protected:
     FDXDShaderManager* ShaderManager;
 
     ID3D11SamplerState* ShadowSampler;
+    TArray<USpotLightComponent*> SpotLights;
 };

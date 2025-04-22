@@ -1,6 +1,12 @@
 
 #include "ShaderRegisters.hlsl"
 
+SamplerState DiffuseSampler : register(s0);
+SamplerState NormalSampler : register(s1);
+
+Texture2D DiffuseTexture : register(t0);
+Texture2D NormalTexture : register(t1);
+
 cbuffer MaterialConstants : register(b1)
 {
     FMaterial Material;
@@ -39,8 +45,9 @@ cbuffer FLightConstants: register(b5)
 
 SamplerComparisonState ShadowSampler : register(s12);
 SamplerComparisonState ShadowPCF : register(s13);
-Texture2D ShadowTexture : register(t12);
-TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t13);
+Texture2D ShadowTexture : register(t12); // directional
+TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t13); // point
+Texture2D ShadowMap : register(t14);    // spot
 
 cbuffer PointLightConstant : register(b6)
 {
@@ -82,6 +89,28 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     );
     
     return shadow;
+}
+
+float ComputeSpotShadow(
+    float3 worldPos,
+    uint spotlightIdx,
+    float shadowBias = 0.002 // 기본 bias
+)
+{
+    // 1) 월드→라이트 클립 공간
+    float4 lp = mul(float4(worldPos, 1), LightViewMatrix);
+    lp = mul(lp, LightProjectionMatrix);
+
+    // 2) NDC→[0,1] uv, 깊이
+    float2 uv;
+    uv.x = (lp.x / lp.w) * 0.5 + 0.5;
+    uv.y = (lp.y / lp.w) * -0.5 + 0.5;
+    float depth = lp.z / lp.w;
+
+    // 3) ShadowMap 비교 샘플링
+    float s = ShadowMap.SampleCmp(ShadowSampler, uv, depth - shadowBias);
+
+    return s;
 }
 
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
@@ -216,10 +245,19 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
             float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
             LitColor += LitColor.rgb * shadow;
         }
+
         if (DirectionalLightsCount > 0)
             FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
         else
             FinalColor = float4(LitColor, 1);
+
+        for (int i = 0; i < SpotLightsCount; i++)
+        {
+            float shadowFactor = ComputeSpotShadow(Input.WorldPosition, i);
+            LitColor += LitColor.rgb * shadowFactor;
+        }
+            
+        FinalColor = float4(LitColor, 1);
 #endif
         LitColor += EmissiveColor * 5.f; // 5는 임의의 값
         // FinalColor = float4(LitColor, 1);
