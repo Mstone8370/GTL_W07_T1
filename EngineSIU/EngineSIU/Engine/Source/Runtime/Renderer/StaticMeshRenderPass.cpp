@@ -249,12 +249,15 @@ void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 bIsLit) const
 
 void FStaticMeshRenderPass::UpdateShadowConstant()
 {
+    // SpotLight
+    // TODO: SpotLight도 샘플러 설정해줘야 함.
     for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
     {
         auto srv = SpotLight->GetShadowDepthMap().SRV;
         Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
     }
-        
+
+    // PointLight
     TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
     ID3D11SamplerState* PCFSampler = nullptr;
     TArray<UPointLightComponent*> PointLights;
@@ -264,15 +267,7 @@ void FStaticMeshRenderPass::UpdateShadowConstant()
         ShadowCubeSRV.Add(light->PointShadowSRV);
         PCFSampler = light->PointShadowComparisonSampler;
     }
-    Graphics->DeviceContext->PSSetShaderResources(
-        14,
-        ShadowCubeSRV.Num(),         
-        ShadowCubeSRV.GetData()
-    );     
-    Graphics->DeviceContext->PSSetSamplers(
-       13,         
-       1,
-       &PCFSampler
-    );
+    Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());     
+    Graphics->DeviceContext->PSSetSamplers(13, 1, &PCFSampler);
 }
 
