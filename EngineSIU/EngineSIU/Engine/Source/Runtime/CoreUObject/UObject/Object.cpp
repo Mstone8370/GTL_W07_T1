@@ -2,7 +2,6 @@
 
 #include "ObjectFactory.h"
 #include "Class.h"
-#include "Engine/Engine.h"
 
 
 UClass* UObject::StaticClass()

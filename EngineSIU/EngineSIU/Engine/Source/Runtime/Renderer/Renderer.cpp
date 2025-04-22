@@ -155,7 +155,7 @@ void FRenderer::CreateConstantBuffers()
     UINT PointLigthMatrixBufferSize = sizeof(FPointLightMatrix);
     BufferManager->CreateBufferGeneric<FPointLightMatrix>("FPointLightMatrix", nullptr, PointLigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     UINT ShadowConstantsSize = sizeof(ShadowConstants);
-    BufferManager->CreateBufferGeneric< ShadowConstants>("FShadowConstants", nullptr, ShadowConstantsSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+    BufferManager->CreateBufferGeneric<ShadowConstants>("FShadowConstants", nullptr, ShadowConstantsSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));

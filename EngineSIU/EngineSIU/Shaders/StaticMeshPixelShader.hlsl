@@ -51,9 +51,10 @@ TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
 
 cbuffer PointLightConstant : register(b6)
 {
-    row_major matrix viewMatrix[MAX_POINT_LIGHT*6];
+    row_major matrix viewMatrix[MAX_POINT_LIGHT * 6];
     row_major matrix projectionMatrix[MAX_POINT_LIGHT];
 }
+
 int GetCubeFaceIndex(float3 dir)
 {
     float3 a = abs(dir);
@@ -61,7 +62,9 @@ int GetCubeFaceIndex(float3 dir)
     if (a.y >= a.x && a.y >= a.z) return dir.y > 0 ? 2 : 3;  // +Y:2, -Y:3
     return                dir.z > 0 ? 4 : 5;                // +Z:4, -Z:5
 }
+
 static const float SHADOW_BIAS = 0.01;
+
 float ShadowOcclusion(float3 worldPos, uint lightIndex)
 {
     float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
@@ -91,11 +94,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-float ComputeSpotShadow(
-    float3 worldPos,
-    uint spotlightIdx,
-    float shadowBias = 0.002 // 기본 bias
-)
+float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002 /* 기본 bias */)
 {
     // 1) 월드→라이트 클립 공간
     float4 lp = mul(float4(worldPos, 1), mLightView);
@@ -234,33 +233,27 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, Metallic, Roughness);
 #else
         LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, Shininess);
+#endif
         
-        // 디버깅용 ---- PointLight 전역 배열에 대한 라이팅 테스팅
-        //LitColor = float3(0, 0, 0);
-        //LitColor += lightingAccum;
-        // ------------------------------
-        
-        for (int PointlightIndex=0;PointlightIndex< PointLightsCount; ++PointlightIndex)
+        for (int PointlightIndex = 0; PointlightIndex < PointLightsCount; ++PointlightIndex)
         {
             float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
             LitColor += LitColor.rgb * shadow;
         }
 
         if (DirectionalLightsCount > 0)
-            FinalColor = float4(LitColor, 1) * (0.05f + DepthFromLight * 0.95f);
-        else
-            FinalColor = float4(LitColor, 1);
+        {
+            LitColor = LitColor * (0.05f + DepthFromLight * 0.95f);
+        }
 
         for (int i = 0; i < SpotLightsCount; i++)
         {
             float shadowFactor = ComputeSpotShadow(Input.WorldPosition, i);
             LitColor += LitColor.rgb * shadowFactor;
         }
-            
-        FinalColor = float4(LitColor, 1);
-#endif
+        
         LitColor += EmissiveColor * 5.f; // 5는 임의의 값
-        // FinalColor = float4(LitColor, 1);
+        FinalColor = float4(LitColor, 1);
     }
     else
     {

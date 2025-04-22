@@ -32,3 +32,4 @@ illum 2
 map_Kd StoneBricksSplitface001_COL_2K.jpg
 map_Bump -bm 1.000000 StoneBricksSplitface001_NRM_2K.png
 map_Ns StoneBricksSplitface001_GLOSS_2K.jpg
+map_Pr StoneBricksSplitface001_ROUGHNESS_2K.jpg
