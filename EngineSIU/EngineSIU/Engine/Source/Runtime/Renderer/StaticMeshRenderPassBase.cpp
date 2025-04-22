@@ -9,7 +9,6 @@
 #include "Engine/EditorEngine.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/Casts.h"
-#include "PropertyEditor/ShowFlags.h"
 
 FStaticMeshRenderPassBase::FStaticMeshRenderPassBase()
     : BufferManager(nullptr)

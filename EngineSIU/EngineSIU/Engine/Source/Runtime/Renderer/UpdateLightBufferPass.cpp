@@ -91,7 +91,6 @@ void FUpdateLightBufferPass::PrepareRenderArr()
 
 void FUpdateLightBufferPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
-    ViewportClient = Viewport.get();
     UpdateLightBuffer();
 
     // Tile based light culling
@@ -133,6 +132,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
 
     for (const auto& Light : PointLights)
     {
+        Light->UpdateViewProjMatrix();
         if (PointLightsCount < MAX_POINT_LIGHT)
         {
             LightBufferData.PointLights[PointLightsCount] = Light->GetPointLightInfo();
@@ -149,6 +149,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.Directional[DirectionalLightsCount].Direction = Light->GetDirection();
             LightBufferData.Directional[DirectionalLightsCount].ViewMatrix = Light->GetLightViewMatrix(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation());
             LightBufferData.Directional[DirectionalLightsCount].ProjectionMatrix = Light->GetLightProjMatrix();
+            LightBufferData.Directional[DirectionalLightsCount].ShadowMapResolution = Light->GetShadowResolutionScale();
             DirectionalLightsCount++;
         }
     }
@@ -168,6 +169,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
     LightBufferData.SpotLightsCount = SpotLightsCount;
     LightBufferData.AmbientLightsCount = AmbientLightsCount;
 
+    BufferManager->BindConstantBuffer(TEXT("FLightInfoBuffer"), 0, EShaderStage::Pixel);
     BufferManager->UpdateConstantBuffer(TEXT("FLightInfoBuffer"), LightBufferData);
 }
 
@@ -204,8 +206,6 @@ void FUpdateLightBufferPass::SetTileConstantBuffer(ID3D11Buffer* InTileConstantB
 {
     TileConstantBuffer = InTileConstantBuffer;
 }
-
-
 
 void FUpdateLightBufferPass::CreatePointLightBuffer()
 {

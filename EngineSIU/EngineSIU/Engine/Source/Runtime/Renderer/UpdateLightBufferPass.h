@@ -77,8 +77,6 @@ private:
     ID3D11ShaderResourceView* PointLightPerTilesSRV;
 
     ID3D11Buffer* TileConstantBuffer;
-
-    FEditorViewportClient* ViewportClient;
     
     void RenderShadowMap(ULightComponent* InLightComponent);
     void PrepareRenderState(ULightComponent* InLightComponent);

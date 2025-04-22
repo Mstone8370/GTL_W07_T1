@@ -20,15 +20,27 @@ public:
 protected:
     FBoundingBox AABB;
     FDepthStencilRHI ShadowDepthMap;
-    virtual void InitializeShadowDepthMap() {}
-    void ReleaseShadowDepthMap();
-    
-public:
-    FBoundingBox GetBoundingBox() const { return AABB; }
-    FDepthStencilRHI GetShadowDepthMap() const { return ShadowDepthMap; }
     float ShadowResolutionScale = 1024;
     float ShadowBias = 3;
     float ShadowSlopeBias = 3;
     float ShadowSharpen;
+    virtual void InitializeShadowDepthMap() {}
+    void ReleaseShadowDepthMap();
+    
+public:
+    inline float GetShadowResolutionScale() { return ShadowResolutionScale; }
+    inline float GetShadowBias()            { return ShadowBias; }
+    inline float GetShadowSlopeBias()       { return ShadowSlopeBias; }
+    inline float GetShadowSharpen()         { return ShadowSharpen; }
+
+    // Setter
+    inline void  SetShadowResolutionScale(float Value) { ShadowResolutionScale = Value; }
+    inline void  SetShadowBias           (float Value) { ShadowBias            = Value; }
+    inline void  SetShadowSlopeBias      (float Value) { ShadowSlopeBias       = Value; }
+    inline void  SetShadowSharpen        (float Value) { ShadowSharpen         = Value; }
+
+    FBoundingBox GetBoundingBox() const {return AABB;}
+    FDepthStencilRHI GetShadowDepthMap() const {return ShadowDepthMap;}
+ 
 };
 

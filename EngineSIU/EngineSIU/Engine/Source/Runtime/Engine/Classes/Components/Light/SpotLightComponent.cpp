@@ -281,11 +281,3 @@ FMatrix USpotLightComponent::GetLightProjectionMatrix() const
     return JungleMath::CreateProjectionMatrix(FOVRad, AspectRatio, NearZ, FarZ);
 }
 
-void USpotLightComponent::SetCastShadows(bool bEnable)
-{
-    bCastShadows = bEnable;
-    if (bCastShadows)
-        CreateShadowMapResources();
-    else
-        ReleaseShadowDepthMap();
-}

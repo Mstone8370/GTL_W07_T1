@@ -34,16 +34,11 @@ protected:
 
     virtual void CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 
-    virtual void Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport);
-    
     virtual void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
 
     void ChangeViewMode(EViewModeIndex ViewMode);
   
     void UpdateLitUnlitConstant(int32 bIsLit) const;
-
-    void UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights);
-    void UpdateSpotLightConstantBuffer(const FMatrix& View,const FMatrix& Projection);
 
     void UpdateShadowConstant();
     

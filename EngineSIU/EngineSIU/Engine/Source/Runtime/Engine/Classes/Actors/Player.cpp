@@ -10,7 +10,6 @@
 #include "LevelEditor/SLevelEditor.h"
 #include "Math/JungleMath.h"
 #include "Math/MathUtility.h"
-#include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/UObjectIterator.h"
 #include "Engine/EditorEngine.h"
@@ -133,7 +132,7 @@ bool AEditorPlayer::PickGizmo(FVector& pickPosition, FEditorViewportClient* InAc
 
 void AEditorPlayer::PickActor(const FVector& pickPosition)
 {
-    if (!(ShowFlags::GetInstance().currentFlags & EEngineShowFlags::SF_Primitives)) return;
+    if (!(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Primitives)) return;
 
     const UActorComponent* Possible = nullptr;
     int maxIntersect = 0;

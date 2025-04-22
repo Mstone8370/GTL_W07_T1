@@ -2,7 +2,11 @@
 #include <cstdarg>
 #include <cstdio>
 
+#include "Components/Light/DirectionalLightComponent.h"
+#include "Components/Light/PointLightComponent.h"
+#include "Components/Light/SpotLightComponent.h"
 #include "UnrealEd/EditorViewportClient.h"
+#include "UObject/UObjectIterator.h"
 
 
 void StatOverlay::ToggleStat(const std::string& command)
@@ -15,6 +19,11 @@ void StatOverlay::ToggleStat(const std::string& command)
     else if (command == "stat memory")
     {
         showMemory = true;
+        showRender = true;
+    }
+    else if (command == "stat light")
+    {
+        showLight = true;
         showRender = true;
     }
     else if (command == "stat none")
@@ -61,8 +70,6 @@ void StatOverlay::Render(ID3D11DeviceContext* context, UINT width, UINT height) 
         }
         ImGui::Text("FPS: %.2f", fps);
     }
-
-
     if (showMemory)
     {
         ImGui::Text("Allocated Object Count: %llu", FPlatformMemory::GetAllocationCount<EAT_Object>());
@@ -70,9 +77,14 @@ void StatOverlay::Render(ID3D11DeviceContext* context, UINT width, UINT height) 
         ImGui::Text("Allocated Container Count: %llu", FPlatformMemory::GetAllocationCount<EAT_Container>());
         ImGui::Text("Allocated Container memory: %llu B", FPlatformMemory::GetAllocationBytes<EAT_Container>());
     }
+    if (showLight)
+    {
+        RenderLightInfo();   
+    }
     ImGui::PopStyleColor();
     ImGui::End();
 }
+
 
 float StatOverlay::CalculateFPS() const
 {
@@ -92,6 +104,93 @@ float StatOverlay::CalculateFPS() const
         return fps;
     }
     return 0.0f;
+}
+
+uint32 StatOverlay::CalculateTexture2DSize(ID3D11Texture2D* tex) const
+{
+    D3D11_TEXTURE2D_DESC desc;
+    tex->GetDesc(&desc);
+
+    UINT bpp       = BitsPerPixel(desc.Format);
+    size_t total   = 0;
+    UINT width     = desc.Width;
+    UINT height    = desc.Height;
+    UINT arraySize = desc.ArraySize;
+    UINT mipLevels = desc.MipLevels;
+
+    for(UINT level = 0; level < mipLevels; ++level)
+    {
+        UINT w = std::max<UINT>(1, width  >> level);
+        UINT h = std::max<UINT>(1, height >> level);
+
+        // 한 레벨의 한 슬라이스 크기 (바이트)
+        size_t rowBytes   = (size_t)w * bpp / 8;
+        size_t sliceBytes = rowBytes * h;
+
+        // 배열 슬라이스 개수만큼 곱하기
+        total += sliceBytes * arraySize;
+    }
+
+    return total;
+}
+
+uint32 StatOverlay::BitsPerPixel(DXGI_FORMAT fmt) const
+{
+    switch(fmt)
+    {
+    case DXGI_FORMAT_R32G32B32A32_FLOAT: return 128;
+    case DXGI_FORMAT_R16G16B16A16_FLOAT: return 64;
+    case DXGI_FORMAT_R8G8B8A8_UNORM:     return 32;
+    case DXGI_FORMAT_R16G16_FLOAT:       return 32;
+    case DXGI_FORMAT_R32_FLOAT:          return 32;
+    case DXGI_FORMAT_R8_UNORM:           return 8;
+        // BC1, BC2 등 블록 압축 포맷도 필요하다면 추가…
+    default: return 32; // 지원 포맷만 넣고, 그 외는 적당히 처리
+    }
+}
+
+
+void StatOverlay::RenderLightInfo() const
+{
+    uint32 DirCount =0;
+    uint32 DirUsingMemory = 0;
+    uint32 DirTextureMemorySize =0;
+    for (auto DirLight : TObjectRange<UDirectionalLightComponent>())
+    {
+        DirCount++;
+        DirUsingMemory += sizeof(*DirLight);
+        DirTextureMemorySize += CalculateTexture2DSize(DirLight->GetShadowDepthMap().Texture2D);
+    }
+    ImGui::Text("Directional Lights Count: %llu", DirCount);
+    ImGui::Text("Used Memory of Directional Lights : %lld", DirUsingMemory);
+    ImGui::Text("Used Memory of Directional Lights ShadowMap : %lld", DirTextureMemorySize);
+    uint32 PointCount =0;
+    uint32 PointUsingMemory = 0;
+    uint32 PointTextureMemorySize =0;
+    uint32 PointTextureMemorySize2 =0;
+
+    for (auto PointLight : TObjectRange<UPointLightComponent>())
+    {
+        PointCount++;
+        PointUsingMemory += sizeof(*PointLight);
+        PointTextureMemorySize += CalculateTexture2DSize(PointLight->PointDepthCubeTex);
+    }
+    ImGui::Text("Point Lights Count: %llu", PointCount);
+    ImGui::Text("Used Memory of Point Lights : %lld", PointUsingMemory);
+    ImGui::Text("Used Memory of Point Lights ShadowMap : %lld", PointTextureMemorySize);
+
+    uint32 SpotCount =0;
+    uint32 SpotUsingMemory = 0;
+    uint32 SpotTextureMemorySize =0;
+    for (auto SpotLight : TObjectRange<USpotLightComponent>())
+    {
+        SpotCount++;
+        SpotUsingMemory += sizeof(*SpotLight);
+        SpotTextureMemorySize += CalculateTexture2DSize(SpotLight->GetShadowDepthMap().Texture2D);
+    }
+    ImGui::Text("Point Lights Count: %llu", SpotCount);
+    ImGui::Text("Used Memory of Point Lights : %lld", SpotUsingMemory);
+    ImGui::Text("Used Memory of Point Lights ShadowMap : %lld", SpotTextureMemorySize);
 }
 
 void StatOverlay::DrawTextOverlay(const std::string& text, int x, int y) const
