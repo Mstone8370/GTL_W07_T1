@@ -414,7 +414,7 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     
         ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
         Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
-    
+        
         Graphics->DeviceContext->PSSetSamplers(12, 1, &ShadowSampler);
     }
     PrepareRenderState(Viewport);

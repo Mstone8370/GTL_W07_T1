@@ -37,11 +37,9 @@ cbuffer TextureConstants : register(b4)
 
 SamplerComparisonState ShadowSampler : register(s12);
 SamplerComparisonState ShadowPCF : register(s13);
-
 Texture2D ShadowTexture : register(t12); // directional
-Texture2D SpotShadowMap : register(t13);    // spot
+Texture2DArray SpotShadowArray : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
-
 
 int GetCubeFaceIndex(float3 dir)
 {
@@ -82,13 +80,13 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002)
+float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002f)
 {
     // 1) 월드→라이트 클립 공간
     float4 lp = mul(float4(worldPos, 1), SpotLights[spotlightIdx].ViewMatrix);
     lp = mul(lp, SpotLights[spotlightIdx].ProjectionMatrix);
 
-    // 2) NDC→[0,1] uv, 깊이
+    // 2) NDC → [0,1] UV, 깊이
     float2 uv;
     uv.x = (lp.x / lp.w) * 0.5 + 0.5;
     uv.y = (lp.y / lp.w) * -0.5 + 0.5;
@@ -163,6 +161,7 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         Roughness = MaterialTextures[TEXTURE_SLOT_ROUGHNESS].Sample(MaterialSamplers[TEXTURE_SLOT_ROUGHNESS], Input.UV).r;
     }
 #endif
+    
     // Begin for Tile based light culled result
     // 현재 픽셀이 속한 타일 계산 (input.position = 화면 픽셀좌표계)
     uint2 PixelCoord = uint2(Input.Position.xy);

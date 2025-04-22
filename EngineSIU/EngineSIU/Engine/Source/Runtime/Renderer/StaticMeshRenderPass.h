@@ -65,7 +65,7 @@ protected:
     
     ID3D11PixelShader* PixelShader;
     ID3D11PixelShader* DebugDepthShader;
-    ID3D11PixelShader* DebugWorldNormalShader;;
+    ID3D11PixelShader* DebugWorldNormalShader;
 
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
