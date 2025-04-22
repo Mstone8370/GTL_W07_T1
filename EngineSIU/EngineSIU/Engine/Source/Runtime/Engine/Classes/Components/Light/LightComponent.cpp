@@ -55,13 +55,13 @@ void ULightComponent::SetProperties(const TMap<FString, FString>& InProperties)
         ShadowSharpen = FCString::Atof(**Val);
 }
 
-int ULightComponentBase::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
+int ULightComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
 {
     bool res = AABB.Intersect(rayOrigin, rayDirection, pfNearHitDistance);
     return res;
 }
 
-void ULightComponentBase::ReleaseShadowDepthMap()
+void ULightComponent::ReleaseShadowDepthMap()
 {
     ShadowDepthMap.Release();
 }

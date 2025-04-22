@@ -297,7 +297,7 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
     desc.MinLOD = 0;
     desc.MaxLOD = D3D11_FLOAT32_MAX;
-    Graphics->Device->CreateSamplerState(&desc, &Sampler);
+    Graphics->Device->CreateSamplerState(&desc, &ShadowSampler);
 }
 
 void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
@@ -425,7 +425,7 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
             shadowConstant.LightProjection = SpotLight->GetProjectionMatrix();
             BufferManager->UpdateConstantBuffer(TEXT("FShadowConstants"), shadowConstant);
         }
-        Graphics->DeviceContext->PSSetSamplers(2, 1, &Sampler);
+        Graphics->DeviceContext->PSSetSamplers(2, 1, &ShadowSampler);
 
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 

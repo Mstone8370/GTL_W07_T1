@@ -19,6 +19,7 @@
 #include "DepthPrePass.h"
 #include "TileLightCullingPass.h"
 #include "ShadowRenderPass.h"
+#include "ShadowMapPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
 

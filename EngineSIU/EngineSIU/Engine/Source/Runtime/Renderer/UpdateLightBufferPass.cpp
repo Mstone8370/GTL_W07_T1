@@ -298,7 +298,7 @@ void FUpdateLightBufferPass::UpdatePointLightPerTilesBuffer()
         TempBuffer.GetData(), 0, 0);
 }
 
-void FUpdateLightBufferPass::RenderShadowMap(ULightComponentBase* InLightComponent)
+void FUpdateLightBufferPass::RenderShadowMap(ULightComponent* InLightComponent)
 {
     UINT OriginalViewportCount = 1;
     D3D11_VIEWPORT OriginalViewport = {};
@@ -311,7 +311,7 @@ void FUpdateLightBufferPass::RenderShadowMap(ULightComponentBase* InLightCompone
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 }
 
-void FUpdateLightBufferPass::PrepareRenderState(ULightComponentBase* InLightComponent)
+void FUpdateLightBufferPass::PrepareRenderState(ULightComponent* InLightComponent)
 {
     VertexShader = ShaderManager->GetVertexShaderByKey(L"ShadowMapVertexShader");
     InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");

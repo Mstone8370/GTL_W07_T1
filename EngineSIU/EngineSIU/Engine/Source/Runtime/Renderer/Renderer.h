@@ -9,13 +9,14 @@
 
 #include "EngineBaseTypes.h"
 #include "Define.h"
-#include "ShadowMapPass.h"
+// #include "ShadowMapPass.h" // 순환참조!!
 #include "Container/Set.h"
 
 #include "D3D11RHI/GraphicDevice.h"
 #include "D3D11RHI/DXDBufferManager.h"
 
 
+class FShadowMapPass;
 class FLightHeatMapRenderPass;
 class FPostProcessCompositingPass;
 enum class EResourceType : uint8;

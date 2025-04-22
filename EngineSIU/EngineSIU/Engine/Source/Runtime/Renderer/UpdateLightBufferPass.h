@@ -7,7 +7,7 @@
 
 #define MAX_POINTLIGHT_PER_TILE 256
 
-class ULightComponentBase;
+class ULightComponent;
 class FDXDShaderManager;
 class UWorld;
 class FEditorViewportClient;
@@ -80,8 +80,8 @@ private:
 
     FEditorViewportClient* ViewportClient;
     
-    void RenderShadowMap(ULightComponentBase* InLightComponent);
-    void PrepareRenderState(ULightComponentBase* InLightComponent);
+    void RenderShadowMap(ULightComponent* InLightComponent);
+    void PrepareRenderState(ULightComponent* InLightComponent);
     void RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
     void RenderAllStaticMeshes();
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
