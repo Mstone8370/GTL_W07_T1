@@ -588,6 +588,8 @@ uint64 ControlEditorPanel::ConvertSelectionToFlags(const bool selected[]) const
         flags |= static_cast<uint64>(EEngineShowFlags::SF_UUIDText);
     if (selected[4])
         flags |= static_cast<uint64>(EEngineShowFlags::SF_Fog);
+    if (selected[5])
+        flags |= static_cast<uint64>(EEngineShowFlags::SF_Shadow);
     return flags;
 }
 
