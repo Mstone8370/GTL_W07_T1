@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "StaticMeshRenderPass.h"
 
 class UPointLightComponent;
@@ -18,11 +18,13 @@ public:
     virtual void PrepareRenderArr() override;
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     virtual void ClearRenderArr() override;
+    
     void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
     void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
     void CraeteShadowShader();
 
 private:
-    TArray<UPointLightComponent*> PointLightComponents;
     TArray<UDirectionalLightComponent*> DirectionalLightComponents;
+    TArray<USpotLightComponent*> SpotLightComponents;
+    TArray<UPointLightComponent*> PointLightComponents;
 };

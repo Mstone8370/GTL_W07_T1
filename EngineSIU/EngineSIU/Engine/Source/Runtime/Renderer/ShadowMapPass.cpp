@@ -25,15 +25,19 @@ void FShadowMapPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDev
 void FShadowMapPass::PrepareRenderArr()
 {
     __super::PrepareRenderArr();
+    for (const auto iter: TObjectRange<UDirectionalLightComponent>())
+    {
+        DirectionalLightComponents.Add(iter);
+    }
+    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
+    {
+        SpotLightComponents.Add(SpotLight);
+    }
     for (const auto iter : TObjectRange<UPointLightComponent>())
     {
         PointLightComponents.Add(iter);
     }
 
-    for (const auto iter: TObjectRange<UDirectionalLightComponent>())
-    {
-        DirectionalLightComponents.Add(iter);
-    }
 }
 
 void FShadowMapPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -43,48 +47,72 @@ void FShadowMapPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewpo
     UINT numViewports = 1;
     D3D11_VIEWPORT origVP[16];  
     Graphics->DeviceContext->RSGetViewports(&numViewports, origVP);
+    
     PrepareRenderState(Viewport);
 
     // PointLight
-    for (auto iter : PointLightComponents)
+    for (auto PointLight : PointLightComponents)
     {
         for(int i = 0; i < 6; ++i) {
-            Graphics->DeviceContext->ClearDepthStencilView(iter->PointShadowDSV[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
+            Graphics->DeviceContext->ClearDepthStencilView(PointLight->PointShadowDSV[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
         }
         D3D11_VIEWPORT vp = {};
         vp.TopLeftX = 0; vp.TopLeftY = 0;
-        vp.Width    = (FLOAT)iter->ShadowMapWidth;
-        vp.Height   = (FLOAT)iter->ShadowMapHeight;
+        vp.Width    = (FLOAT)PointLight->ShadowMapWidth;
+        vp.Height   = (FLOAT)PointLight->ShadowMapHeight;
         vp.MinDepth = 0.0f; vp.MaxDepth = 1.0f;
-        iter->UpdateViewProjMatrix();
+        PointLight->UpdateViewProjMatrix();
         for (size_t face = 0; face < 6; ++face)
         {
             Graphics->DeviceContext->RSSetViewports(1, &vp);
-            Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, iter->PointShadowDSV[face]);
-            UpdateLightMatrixConstant(iter->view[face], iter->projection, vp.Width);
+            Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, PointLight->PointShadowDSV[face]);
+            UpdateLightMatrixConstant(PointLight->view[face], PointLight->projection, vp.Width);
             __super::RenderAllStaticMeshes(Viewport);
         }
     }
-
-
-    // DirectionalLight
-    for (auto iter : DirectionalLightComponents)
+    for (auto SpotLight : SpotLightComponents)
     {
-        FDepthStencilRHI DepthStencilRHI = iter->GetShadowDepthMap();
+        Graphics->DeviceContext->ClearDepthStencilView(SpotLight->GetShadowDepthMap().DSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+        FShadowDepthMap const& SM = SpotLight->GetShadowDepthMap();
+        D3D11_TEXTURE2D_DESC desc = {};
+        SM.Texture2D->GetDesc(&desc);
+
+        D3D11_VIEWPORT shadowVP = {};
+        shadowVP.TopLeftX = 0;
+        shadowVP.TopLeftY = 0;
+        shadowVP.Width = (FLOAT)desc.Width;
+        shadowVP.Height = (FLOAT)desc.Height;
+        shadowVP.MinDepth = 0.0f;
+        shadowVP.MaxDepth = 1.0f;
+        Graphics->DeviceContext->RSSetViewports(1, &shadowVP);
+        
+        UpdateLightMatrixConstant(SpotLight->GetViewMatrix(), SpotLight->GetProjectionMatrix(), shadowVP.Width);
+        
+        ID3D11DepthStencilView* DSV = SpotLight->GetShadowDepthMap().DSV;
+        Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DSV);
+
+        __super::RenderAllStaticMeshes(Viewport);
+    }
+    
+    // DirectionalLight
+    for (auto DirLight : DirectionalLightComponents)
+    {
+        FDepthStencilRHI DepthStencilRHI = DirLight->GetShadowDepthMap();
         Graphics->DeviceContext->ClearDepthStencilView(DepthStencilRHI.DSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
         Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DepthStencilRHI.DSV);
         
         D3D11_VIEWPORT vp = {};
         vp.TopLeftX = 0; vp.TopLeftY = 0;
-        vp.Width    = static_cast<float>(iter->ShadowMapSize);
-        vp.Height   = static_cast<float>(iter->ShadowMapSize);
+        vp.Width    = static_cast<float>(DirLight->ShadowMapSize);
+        vp.Height   = static_cast<float>(DirLight->ShadowMapSize);
         vp.MinDepth = 0.0f; vp.MaxDepth = 1.0f;
         Graphics->DeviceContext->RSSetViewports(1, &vp);
         
         UpdateLightMatrixConstant(
-            iter->GetLightViewMatrix(Viewport->GetCameraLocation()),
-            iter->GetLightProjMatrix(),
-            iter->ShadowMapSize
+            DirLight->GetLightViewMatrix(Viewport->GetCameraLocation()),
+            DirLight->GetLightProjMatrix(),
+            DirLight->ShadowMapSize
         );
         
         __super::RenderAllStaticMeshes(Viewport);
@@ -98,6 +126,7 @@ void FShadowMapPass::ClearRenderArr()
 {
     __super::ClearRenderArr();
     PointLightComponents.Empty();
+    SpotLightComponents.Empty();
     DirectionalLightComponents.Empty();
 }
 
@@ -111,7 +140,6 @@ void FShadowMapPass::PrepareRenderState(const std::shared_ptr<FEditorViewportCli
 
     // 뎁스만 필요하므로, 픽셀 쉐이더는 지정 안함.
     Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
-
     Graphics->DeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     Graphics->DeviceContext->RSSetState(Graphics->RasterizerShadowMap);

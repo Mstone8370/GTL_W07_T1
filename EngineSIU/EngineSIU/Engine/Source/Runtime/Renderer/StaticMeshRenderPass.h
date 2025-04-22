@@ -61,6 +61,7 @@ public:
 
 
     void UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights);
+    void UpdateSpotLightConstantBuffer(const FMatrix& View,const FMatrix& Projection);
 protected:
     TArray<UStaticMeshComponent*> StaticMeshComponents;
 
@@ -76,5 +77,4 @@ protected:
     FDXDShaderManager* ShaderManager;
 
     ID3D11SamplerState* ShadowSampler;
-    TArray<USpotLightComponent*> SpotLights;
 };

@@ -55,6 +55,12 @@ cbuffer PointLightConstant : register(b6)
     row_major matrix projectionMatrix[MAX_POINT_LIGHT];
 }
 
+cbuffer SpotLightConstants: register(b7)
+{
+    row_major matrix SpotLightView;
+    row_major matrix SpotLightProj;
+}
+
 int GetCubeFaceIndex(float3 dir)
 {
     float3 a = abs(dir);
@@ -97,8 +103,8 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
 float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002 /* 기본 bias */)
 {
     // 1) 월드→라이트 클립 공간
-    float4 lp = mul(float4(worldPos, 1), mLightView);
-    lp = mul(lp, mLightProj);
+    float4 lp = mul(float4(worldPos, 1), SpotLightView);
+    lp = mul(lp, SpotLightProj);
 
     // 2) NDC→[0,1] uv, 깊이
     float2 uv;

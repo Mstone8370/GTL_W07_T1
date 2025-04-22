@@ -463,7 +463,7 @@ struct FPointLightMatrix
     FMatrix LightViewMat[MAX_POINT_LIGHT * 6];
     FMatrix LightProjectMat[MAX_POINT_LIGHT];
 };
-struct ShadowConstants
+struct FSpotLightConstants
 {
     FMatrix LightView;
     FMatrix LightProjection;

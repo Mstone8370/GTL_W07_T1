@@ -98,10 +98,11 @@ public:
     FEditorBillboardRenderPass* EditorBillboardRenderPass = nullptr;
     FGizmoRenderPass* GizmoRenderPass = nullptr;
     FUpdateLightBufferPass* UpdateLightBufferPass = nullptr;
-    FShadowMapPass* ShadowMapPass = nullptr;
     FLineRenderPass* LineRenderPass = nullptr;
     FFogRenderPass* FogRenderPass = nullptr;
     FEditorRenderPass* EditorRenderPass = nullptr;
+    
+    FShadowMapPass* ShadowMapPass = nullptr;
     FShadowRenderPass* ShadowRenderPass = nullptr;
     
     FDepthPrePass* DepthPrePass = nullptr;

@@ -18,7 +18,6 @@
 #include "EditorRenderPass.h"
 #include "DepthPrePass.h"
 #include "TileLightCullingPass.h"
-#include "ShadowRenderPass.h"
 #include "ShadowMapPass.h"
 #include <UObject/UObjectIterator.h>
 #include <UObject/Casts.h>
@@ -55,7 +54,6 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     LineRenderPass = new FLineRenderPass();
     FogRenderPass = new FFogRenderPass();
     EditorRenderPass = new FEditorRenderPass();
-    ShadowRenderPass = new FShadowRenderPass();
     
     DepthPrePass = new FDepthPrePass();
     TileLightCullingPass = new FTileLightCullingPass();
@@ -76,7 +74,6 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     LineRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     FogRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
-    ShadowRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     
     DepthPrePass->Initialize(BufferManager, Graphics, ShaderManager);
     TileLightCullingPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -105,7 +102,6 @@ void FRenderer::Release()
     delete CompositingPass;
     delete PostProcessCompositingPass;
     delete SlateRenderPass;
-    delete ShadowRenderPass;
 }
 
 //------------------------------------------------------------------------------
@@ -154,9 +150,9 @@ void FRenderer::CreateConstantBuffers()
     BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
     UINT PointLigthMatrixBufferSize = sizeof(FPointLightMatrix);
     BufferManager->CreateBufferGeneric<FPointLightMatrix>("FPointLightMatrix", nullptr, PointLigthMatrixBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-    UINT ShadowConstantsSize = sizeof(ShadowConstants);
-    BufferManager->CreateBufferGeneric<ShadowConstants>("FShadowConstants", nullptr, ShadowConstantsSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
-    
+    UINT SpotLightBufferSize = sizeof(FSpotLightConstants);
+    BufferManager->CreateBufferGeneric<FSpotLightConstants>("FSpotLightConstants", nullptr, SpotLightBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
     ID3D11Buffer* CameraConstantBuffer = BufferManager->GetConstantBuffer(TEXT("FCameraConstantBuffer"));
@@ -229,7 +225,6 @@ void FRenderer::PrepareRenderPass()
     EditorRenderPass->PrepareRender();
     TileLightCullingPass->PrepareRenderArr();
     DepthPrePass->PrepareRenderArr();
-    ShadowRenderPass->PrepareRenderArr();
 }
 
 void FRenderer::ClearRenderArr()
@@ -246,7 +241,6 @@ void FRenderer::ClearRenderArr()
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();
     TileLightCullingPass->ClearRenderArr();
-    ShadowRenderPass->ClearRenderArr();
 }
 
 void FRenderer::UpdateCommonBuffer(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -347,7 +341,7 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
         UpdateLightBufferPass->Render(Viewport);
         // TODO : Shodow Map RenderPass
         ShadowMapPass->Render(Viewport);
-        // ShadowRenderPass->Render(Viewport);
+        
         StaticMeshRenderPass->Render(Viewport);
     }
     

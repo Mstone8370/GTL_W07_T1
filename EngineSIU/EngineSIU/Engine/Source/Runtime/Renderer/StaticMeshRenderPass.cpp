@@ -196,27 +196,19 @@ void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLi
     BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
 }
 
+void FStaticMeshRenderPass::UpdateSpotLightConstantBuffer(const FMatrix& View, const FMatrix& Projection)
+{
+    FSpotLightConstants ObjectData = {};
+    ObjectData.LightView = View;
+    ObjectData.LightProjection = Projection;
+    BufferManager->UpdateConstantBuffer(TEXT("FSpotLightConstants"), ObjectData);
+}
+
 void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
     BufferManager = InBufferManager;
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
-
-    D3D11_SAMPLER_DESC ShadowSamplerDesc = {};
-    ShadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-    ShadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-    ShadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-    ShadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-    ShadowSamplerDesc.MipLODBias = 0.0f;
-    ShadowSamplerDesc.MaxAnisotropy = 0;
-    ShadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-    ShadowSamplerDesc.BorderColor[0] = 1.f;
-    ShadowSamplerDesc.BorderColor[1] = 1.f;
-    ShadowSamplerDesc.BorderColor[2] = 1.f;
-    ShadowSamplerDesc.BorderColor[3] = 1.f;
-    ShadowSamplerDesc.MinLOD = 0;
-    ShadowSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX; 
-    Graphics->Device->CreateSamplerState(&ShadowSamplerDesc, &ShadowSampler);
 
     CreateShader();
 }
@@ -230,11 +222,7 @@ void FStaticMeshRenderPass::PrepareRenderArr()
             StaticMeshComponents.Add(iter);
         }
     }
-
-    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
-    {
-        SpotLights.Add(SpotLight);
-    }
+    
 }
 
 void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) 
@@ -252,7 +240,8 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
         TEXT("FSubMeshConstants"),
         TEXT("FTextureConstants"),
         TEXT("FLightConstants"),
-        TEXT("FPointLightMatrix")
+        TEXT("FPointLightMatrix"),
+        TEXT("FSpotLightConstants"),
     };
 
     BufferManager->BindConstantBuffers(PSBufferKeys, 0, EShaderStage::Pixel);
@@ -283,13 +272,8 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     {
         Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     }
-
-    for (USpotLightComponent* SpotLight : SpotLights)
-    {
-        auto srv = SpotLight->GetShadowDepthMap().SRV;
-        Graphics->DeviceContext->PSSetShaderResources(2, 1, &srv);
-    }
-
+    
+#pragma region ShadowMap
     D3D11_SAMPLER_DESC desc = {};
     desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
     desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
@@ -299,6 +283,7 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     desc.MinLOD = 0;
     desc.MaxLOD = D3D11_FLOAT32_MAX;
     Graphics->Device->CreateSamplerState(&desc, &ShadowSampler);
+#pragma endregion
 }
 
 void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
@@ -397,6 +382,14 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
             continue;
         }
 #pragma region ShadowMap
+        for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
+        {
+           auto srv = SpotLight->GetShadowDepthMap().SRV;
+           Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
+            
+            UpdateSpotLightConstantBuffer(SpotLight->GetViewMatrix(), SpotLight->GetProjectionMatrix());
+        }
+        
         TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
         ID3D11SamplerState*       PCFSampler = nullptr;
         TArray<UPointLightComponent*> PointLights;
@@ -408,26 +401,15 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
         }
         UpdatePointLightConstantBuffer(PointLights);
         Graphics->DeviceContext->PSSetShaderResources(
-        13,         
+        14,         
         ShadowCubeSRV.Num(),         
         ShadowCubeSRV.GetData());     
         Graphics->DeviceContext->PSSetSamplers(
            13,         
            1,
            &PCFSampler);
-#pragma endregion
         
-
-        // Spot Light Shadow
-        for (USpotLightComponent* SpotLight : SpotLights)
-        {
-            ShadowConstants shadowConstant;
-            shadowConstant.LightView = SpotLight->GetViewMatrix();
-            shadowConstant.LightProjection = SpotLight->GetProjectionMatrix();
-            BufferManager->UpdateConstantBuffer(TEXT("FShadowConstants"), shadowConstant);
-        }
-        Graphics->DeviceContext->PSSetSamplers(2, 1, &ShadowSampler);
-
+#pragma endregion
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
         FMatrix WorldMatrix = Comp->GetWorldMatrix();

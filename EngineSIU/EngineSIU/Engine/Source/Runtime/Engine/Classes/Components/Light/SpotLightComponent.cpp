@@ -18,7 +18,8 @@ USpotLightComponent::USpotLightComponent()
     SpotLightInfo.Attenuation = 20.0f;
 
     // DepthStencil for Shadow Mapping
-    InitializeShadowDepthMap();
+    CreateShadowMapResources();
+    
 }
 
 USpotLightComponent::~USpotLightComponent()
