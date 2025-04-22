@@ -21,9 +21,10 @@ protected:
     FBoundingBox AABB;
     virtual void CreateShadowMapResources() {};
     virtual void ReleaseShadowDepthMap();
-    bool bCastShadows;
+    bool bCastShadows = true;
 
 public:
     bool IsCastShadows() const { return bCastShadows; }
+    void SetCastShadows(bool Value) { bCastShadows = Value; }
     FBoundingBox GetBoundingBox() const {return AABB;}
 };

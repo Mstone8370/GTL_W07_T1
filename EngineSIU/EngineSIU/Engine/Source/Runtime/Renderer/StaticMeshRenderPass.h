@@ -42,8 +42,6 @@ public:
     virtual void RenderAllStaticMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport);
     
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
-
-    void UpdateShadowConstant();
   
     void UpdateLitUnlitConstant(int32 isLit) const;
 
@@ -59,9 +57,6 @@ public:
 
     void ChangeViewMode(EViewModeIndex ViewModeIndex);
 
-
-    void UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights);
-    void UpdateSpotLightConstantBuffer(const FMatrix& View,const FMatrix& Projection);
 protected:
     TArray<UStaticMeshComponent*> StaticMeshComponents;
 

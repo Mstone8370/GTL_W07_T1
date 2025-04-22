@@ -11,7 +11,6 @@
 
 #include "RendererHelpers.h"
 #include "UnrealClient.h"
-#include "PropertyEditor/ShowFlags.h"
 
 FFogRenderPass::FFogRenderPass()
 {

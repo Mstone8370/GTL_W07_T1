@@ -21,6 +21,9 @@ struct FDirectionalLightInfo
 
     FMatrix ViewMatrix;
     FMatrix ProjectionMatrix;
+
+    float ShadowMapResolution;
+    FVector DirPadding;
 };
 
 struct FPointLightInfo

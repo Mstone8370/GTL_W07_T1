@@ -17,7 +17,6 @@
 #include "Engine/FObjLoader.h"
 #include "Engine/StaticMeshActor.h"
 #include "LevelEditor/SLevelEditor.h"
-#include "PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "tinyfiledialogs/tinyfiledialogs.h"
 
@@ -469,7 +468,7 @@ void ControlEditorPanel::CreateFlagButton() const
         ImGui::OpenPopup("ShowControl");
     }
 
-    const char* items[] = { "AABB", "Primitive", "BillBoard", "UUID", "Fog"};
+    const char* items[] = { "AABB", "Primitive", "BillBoard", "UUID", "Fog", "Shadow"};
     uint64 ActiveViewportFlags = ActiveViewport->GetShowFlag();
 
     if (ImGui::BeginPopup("ShowControl"))
@@ -480,7 +479,8 @@ void ControlEditorPanel::CreateFlagButton() const
             (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_Primitives)) != 0,
             (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_BillboardText)) != 0,
             (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_UUIDText)) != 0,
-            (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_Fog)) !=0
+            (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_Fog)) !=0,
+            (ActiveViewportFlags & static_cast<uint64>(EEngineShowFlags::SF_Shadow)) !=0
         };  // 각 항목의 체크 상태 저장
 
         for (int i = 0; i < IM_ARRAYSIZE(items); i++)
@@ -587,6 +587,8 @@ uint64 ControlEditorPanel::ConvertSelectionToFlags(const bool selected[]) const
         flags |= static_cast<uint64>(EEngineShowFlags::SF_UUIDText);
     if (selected[4])
         flags |= static_cast<uint64>(EEngineShowFlags::SF_Fog);
+    if (selected[5])
+        flags |= static_cast<uint64>(EEngineShowFlags::SF_Shadow);
     return flags;
 }
 

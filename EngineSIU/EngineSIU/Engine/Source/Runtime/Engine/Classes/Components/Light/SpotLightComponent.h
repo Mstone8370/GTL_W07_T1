@@ -57,8 +57,6 @@ public:
     FMatrix GetLightViewMatrix();
     FMatrix GetLightProjectionMatrix() const;
 
-    void SetCastShadows(bool bCastShadows);
-
     void CreateShadowMapResources() override;
     void ReleaseShadowDepthMap() override;
     

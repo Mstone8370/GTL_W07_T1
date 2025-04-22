@@ -4,7 +4,6 @@
 #include "D3D11RHI/GraphicDevice.h"
 #include "Engine/EditorEngine.h"
 #include "LevelEditor/SLevelEditor.h"
-#include "PropertyEditor/ViewportTypePanel.h"
 #include "Slate/Widgets/Layout/SSplitter.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UnrealEd/UnrealEd.h"
@@ -245,5 +244,4 @@ void FEngineLoop::UpdateUI()
     {
         GEngineLoop.GetUnrealEditor()->OnResize(AppWnd);
     }
-    ViewportTypePanel::GetInstance().OnResize(AppWnd);
 }

@@ -1,7 +1,6 @@
 #include "TextComponent.h"
 
 #include "World/World.h"
-#include "Engine/Source/Editor/PropertyEditor/ShowFlags.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UObject/Casts.h"
@@ -103,7 +102,7 @@ void UTextComponent::SetRowColumnCount(int cellsPerRow, int cellsPerColumn)
 
 int UTextComponent::CheckRayIntersection(FVector& rayOrigin, FVector& rayDirection, float& pfNearHitDistance)
 {
-    if (!(ShowFlags::GetInstance().currentFlags & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))) {
+    if (!(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_BillboardText))) {
         return 0;
     }
     //TODO: quadWidth 고정으로 font사이즈 변경시 문제 발생할 수 있음

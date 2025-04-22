@@ -134,6 +134,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
 
     for (auto Light : PointLights)
     {
+        Light->UpdateViewProjMatrix();
         if (PointLightsCount < MAX_POINT_LIGHT)
         {
             LightBufferData.PointLights[PointLightsCount] = Light->GetPointLightInfo();
@@ -150,6 +151,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.Directional[DirectionalLightsCount].Direction = Light->GetDirection();
             LightBufferData.Directional[DirectionalLightsCount].ViewMatrix = Light->GetLightViewMatrix(GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetCameraLocation());
             LightBufferData.Directional[DirectionalLightsCount].ProjectionMatrix = Light->GetLightProjMatrix();
+            LightBufferData.Directional[DirectionalLightsCount].ShadowMapResolution = Light->GetShadowResolutionScale();
             DirectionalLightsCount++;
         }
     }

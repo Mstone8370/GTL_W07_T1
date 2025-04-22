@@ -23,7 +23,6 @@
 #include "Engine/EditorEngine.h"
 #include "Math/JungleMath.h"
 
-#include "PropertyEditor/ShowFlags.h"
 
 #include "UnrealEd/EditorViewportClient.h"
 
@@ -180,30 +179,6 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 }
 
-void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights)
-{
-    FPointLightMatrix ObjectData = {};
-    uint32 count = FMath::Min((int32)PointLights.Num(), MAX_POINT_LIGHT);
-    for (uint32 i = 0; i < count; ++i)
-    {
-        auto* L = PointLights[i];
-        for (int face = 0; face < 6; ++face)
-        {
-            ObjectData.LightViewMat[i*6 + face] = L->GetLightViewMatrix()[face];
-        }
-        ObjectData.LightProjectMat[i] = L->GetLightProjectionMatrix();
-    }
-    BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
-}
-
-void FStaticMeshRenderPass::UpdateSpotLightConstantBuffer(const FMatrix& View, const FMatrix& Projection)
-{
-    FSpotLightConstants ObjectData = {};
-    ObjectData.LightView = View;
-    ObjectData.LightProjection = Projection;
-    BufferManager->UpdateConstantBuffer(TEXT("FSpotLightConstants"), ObjectData);
-}
-
 void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
 {
     BufferManager = InBufferManager;
@@ -240,8 +215,6 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
         TEXT("FSubMeshConstants"),
         TEXT("FTextureConstants"),
         TEXT("FLightConstants"),
-        TEXT("FPointLightMatrix"),
-        TEXT("FSpotLightConstants"),
     };
 
     BufferManager->BindConstantBuffers(PSBufferKeys, 0, EShaderStage::Pixel);
@@ -386,8 +359,6 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
         {
            auto srv = SpotLight->GetShadowDepthMap().SRV;
            Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
-            
-            UpdateSpotLightConstantBuffer(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix());
         }
         
         TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
@@ -399,7 +370,6 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
             ShadowCubeSRV.Add(light->PointShadowSRV);
             PCFSampler = light->PointShadowComparisonSampler;
         }
-        UpdatePointLightConstantBuffer(PointLights);
         Graphics->DeviceContext->PSSetShaderResources(
         14,         
         ShadowCubeSRV.Num(),         
@@ -441,12 +411,6 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     if (begin(tempDirLightRange) != end(tempDirLightRange))
     {
         UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
-        FLightConstants LightData = {};
-        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
-        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
-        LightData.ShadowMapSize = tempDirLight->ShadowResolutionScale;
-        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
-        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
     
         ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
         Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
