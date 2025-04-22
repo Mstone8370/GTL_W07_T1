@@ -345,17 +345,18 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
         {
             continue;
         }
+        
 #pragma region ShadowMap
         for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
         {
-           auto srv = SpotLight->GetShadowDepthMap().SRV;
-           Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
+            auto srv = SpotLight->GetShadowDepthMap().SRV;
+            Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
             
             UpdateSpotLightConstantBuffer(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix());
         }
         
         TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
-        ID3D11SamplerState*       PCFSampler = nullptr;
+        ID3D11SamplerState* PCFSampler = nullptr;
         TArray<UPointLightComponent*> PointLights;
         for (auto light :  TObjectRange<UPointLightComponent>())
         {
@@ -365,15 +366,17 @@ void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorV
         }
         UpdatePointLightConstantBuffer(PointLights);
         Graphics->DeviceContext->PSSetShaderResources(
-        14,         
-        ShadowCubeSRV.Num(),         
-        ShadowCubeSRV.GetData());     
+            14,
+            ShadowCubeSRV.Num(),         
+            ShadowCubeSRV.GetData()
+        );     
         Graphics->DeviceContext->PSSetSamplers(
            13,         
            1,
-           &PCFSampler);
-        
+           &PCFSampler
+        );
 #pragma endregion
+        
         UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
 
         FMatrix WorldMatrix = Comp->GetWorldMatrix();

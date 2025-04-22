@@ -15,8 +15,8 @@ public:
     virtual void PrepareRenderArr() override;
     virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     virtual void ClearRenderArr() override;
+    virtual void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     
-    void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport);
     void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
 
     virtual void CreateShader() override;
