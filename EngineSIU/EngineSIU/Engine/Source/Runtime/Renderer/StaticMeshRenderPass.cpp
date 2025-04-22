@@ -5,7 +5,6 @@
 #include "EngineLoop.h"
 #include "World/World.h"
 
-#include "RendererHelpers.h"
 #include "UnrealClient.h"
 
 #include "UObject/UObjectIterator.h"
@@ -18,30 +17,21 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/Light/PointLightComponent.h"
 
-#include "BaseGizmos/GizmoBaseComponent.h"
 #include "Components/Light/DirectionalLightComponent.h"
 #include "Engine/EditorEngine.h"
-#include "Math/JungleMath.h"
-
-#include "PropertyEditor/ShowFlags.h"
 
 #include "UnrealEd/EditorViewportClient.h"
 
-
-
 FStaticMeshRenderPass::FStaticMeshRenderPass()
-    : VertexShader(nullptr)
-    , PixelShader(nullptr)
+    : FStaticMeshRenderPassBase()
+    , VertexShader(nullptr)
     , InputLayout(nullptr)
-    , BufferManager(nullptr)
-    , Graphics(nullptr)
-    , ShaderManager(nullptr)
+    , PixelShader(nullptr)
 {
 }
 
 FStaticMeshRenderPass::~FStaticMeshRenderPass()
 {
-    ReleaseShader();
 }
 
 void FStaticMeshRenderPass::CreateShader()
@@ -117,9 +107,61 @@ void FStaticMeshRenderPass::CreateShader()
     PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
 }
 
-void FStaticMeshRenderPass::ReleaseShader()
+void FStaticMeshRenderPass::PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    const EResourceType ResourceType = EResourceType::ERT_Scene;
+    FViewportResource* ViewportResource = Viewport->GetViewportResource();
+    FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
+    FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(ResourceType);
     
+    // Setup Viewport and RTV
+    Graphics->DeviceContext->RSSetViewports(1, &ViewportResource->GetD3DViewport());
+    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
+
+    auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
+    
+    if (begin(tempDirLightRange) != end(tempDirLightRange))
+    {
+        UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
+        FLightConstants LightData = {};
+        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
+        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
+        LightData.ShadowMapSize = tempDirLight->ShadowResolutionScale;
+        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
+        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
+    
+        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
+    }
+    PrepareRenderState(Viewport);
+
+    UpdateShadowConstant();
+}
+
+void FStaticMeshRenderPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
+{
+    // 렌더 타겟 해제
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+
+    // 쉐이더 리소스 해제
+    constexpr UINT NumViews = static_cast<UINT>(EMaterialTextureSlots::MTS_MAX);
+    
+    ID3D11ShaderResourceView* NullSRVs[NumViews] = { nullptr };
+    ID3D11SamplerState* NullSamplers[NumViews] = { nullptr};
+    
+    Graphics->DeviceContext->PSSetShaderResources(0, NumViews, NullSRVs);
+    Graphics->DeviceContext->PSSetSamplers(0, NumViews, NullSamplers);
+
+    // for Gouraud shading
+    ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
+    ID3D11SamplerState* NullSampler[1] = { nullptr};
+    Graphics->DeviceContext->VSSetShaderResources(0, 1, NullSRV);
+    Graphics->DeviceContext->VSSetSamplers(0, 1, NullSampler);
+}
+
+void FStaticMeshRenderPass::Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport)
+{
+    __super::Render_Internal(Viewport);
 }
 
 void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewMode)
@@ -180,51 +222,6 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewMode)
     Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
 }
 
-void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights)
-{
-    FPointLightMatrix ObjectData = {};
-    uint32 count = FMath::Min((int32)PointLights.Num(), MAX_POINT_LIGHT);
-    for (uint32 i = 0; i < count; ++i)
-    {
-        auto* L = PointLights[i];
-        for (int face = 0; face < 6; ++face)
-        {
-            ObjectData.LightViewMat[i*6 + face] = L->GetLightViewMatrix()[face];
-        }
-        ObjectData.LightProjectMat[i] = L->GetLightProjectionMatrix();
-    }
-    BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
-}
-
-void FStaticMeshRenderPass::UpdateSpotLightConstantBuffer(const FMatrix& View, const FMatrix& Projection)
-{
-    FSpotLightConstants ObjectData = {};
-    ObjectData.LightView = View;
-    ObjectData.LightProjection = Projection;
-    BufferManager->UpdateConstantBuffer(TEXT("FSpotLightConstants"), ObjectData);
-}
-
-void FStaticMeshRenderPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManager)
-{
-    BufferManager = InBufferManager;
-    Graphics = InGraphics;
-    ShaderManager = InShaderManager;
-
-    CreateShader();
-}
-
-void FStaticMeshRenderPass::PrepareRenderArr()
-{
-    for (const auto iter : TObjectRange<UStaticMeshComponent>())
-    {
-        if (!Cast<UGizmoBaseComponent>(iter) && iter->GetWorld() == GEngine->ActiveWorld)
-        {
-            StaticMeshComponents.Add(iter);
-        }
-    }
-    
-}
-
 void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) 
 {
     const EViewModeIndex ViewMode = Viewport->GetViewMode();
@@ -250,200 +247,66 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     BufferManager->BindConstantBuffer(TEXT("FMaterialConstants"), 1, EShaderStage::Vertex);
 }
 
-void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
-{
-    FObjectConstantBuffer ObjectData = {};
-    ObjectData.WorldMatrix = WorldMatrix;
-    ObjectData.InverseTransposedWorld = FMatrix::Transpose(FMatrix::Inverse(WorldMatrix));
-    ObjectData.UUIDColor = UUIDColor;
-    ObjectData.bIsSelected = bIsSelected;
-    
-    BufferManager->UpdateConstantBuffer(TEXT("FObjectConstantBuffer"), ObjectData);
-}
-
-void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 isLit) const
+void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 bIsLit) const
 {
     FLitUnlitConstants Data;
-    Data.bIsLit = isLit;
+    Data.bIsLit = bIsLit;
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const
+void FStaticMeshRenderPass::UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights)
 {
-    UINT Stride = sizeof(FStaticMeshVertex);
-    UINT Offset = 0;
-
-    FVertexInfo VertexInfo;
-    BufferManager->CreateVertexBuffer(RenderData->ObjectName, RenderData->Vertices, VertexInfo);
-    
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &VertexInfo.VertexBuffer, &Stride, &Offset);
-
-    FIndexInfo IndexInfo;
-    BufferManager->CreateIndexBuffer(RenderData->ObjectName, RenderData->Indices, IndexInfo);
-    if (IndexInfo.IndexBuffer)
+    FPointLightMatrix ObjectData = {};
+    uint32 count = FMath::Min((int32)PointLights.Num(), MAX_POINT_LIGHT);
+    for (uint32 i = 0; i < count; ++i)
     {
-        Graphics->DeviceContext->IASetIndexBuffer(IndexInfo.IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    }
-
-    if (RenderData->MaterialSubsets.Num() == 0)
-    {
-        Graphics->DeviceContext->DrawIndexed(RenderData->Indices.Num(), 0, 0);
-        return;
-    }
-
-    for (int SubMeshIndex = 0; SubMeshIndex < RenderData->MaterialSubsets.Num(); SubMeshIndex++)
-    {
-        uint32 MaterialIndex = RenderData->MaterialSubsets[SubMeshIndex].MaterialIndex;
-
-        FSubMeshConstants SubMeshData = (SubMeshIndex == SelectedSubMeshIndex) ? FSubMeshConstants(true) : FSubMeshConstants(false);
-
-        BufferManager->UpdateConstantBuffer(TEXT("FSubMeshConstants"), SubMeshData);
-
-        if (OverrideMaterials[MaterialIndex] != nullptr)
+        auto* L = PointLights[i];
+        for (int face = 0; face < 6; ++face)
         {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, OverrideMaterials[MaterialIndex]->GetMaterialInfo());
+            ObjectData.LightViewMat[i*6 + face] = L->GetLightViewMatrix()[face];
         }
-        else
-        {
-            MaterialUtils::UpdateMaterial(BufferManager, Graphics, Materials[MaterialIndex]->Material->GetMaterialInfo());
-        }
-
-        uint32 StartIndex = RenderData->MaterialSubsets[SubMeshIndex].IndexStart;
-        uint32 IndexCount = RenderData->MaterialSubsets[SubMeshIndex].IndexCount;
-        Graphics->DeviceContext->DrawIndexed(IndexCount, StartIndex, 0);
+        ObjectData.LightProjectMat[i] = L->GetLightProjectionMatrix();
     }
+    BufferManager->UpdateConstantBuffer(TEXT("FPointLightMatrix"), ObjectData);
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(ID3D11Buffer* pBuffer, UINT numVertices) const
+void FStaticMeshRenderPass::UpdateSpotLightConstantBuffer(const FMatrix& View, const FMatrix& Projection)
 {
-    UINT Stride = sizeof(FStaticMeshVertex);
-    UINT Offset = 0;
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &pBuffer, &Stride, &Offset);
-    Graphics->DeviceContext->Draw(numVertices, 0);
+    FSpotLightConstants ObjectData = {};
+    ObjectData.LightView = View;
+    ObjectData.LightProjection = Projection;
+    BufferManager->UpdateConstantBuffer(TEXT("FSpotLightConstants"), ObjectData);
 }
 
-void FStaticMeshRenderPass::RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices, ID3D11Buffer* pIndexBuffer, UINT numIndices) const
+void FStaticMeshRenderPass::UpdateShadowConstant()
 {
-    UINT Stride = sizeof(FStaticMeshVertex);
-    UINT Offset = 0;
-    Graphics->DeviceContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &Stride, &Offset);
-    Graphics->DeviceContext->IASetIndexBuffer(pIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-    Graphics->DeviceContext->DrawIndexed(numIndices, 0, 0);
-}
-
-void FStaticMeshRenderPass::RenderAllStaticMeshes(const std::shared_ptr<FEditorViewportClient>& Viewport)
-{
-    for (UStaticMeshComponent* Comp : StaticMeshComponents)
+    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
     {
-        if (!Comp || !Comp->GetStaticMesh())
-        {
-            continue;
-        }
-
-        FStaticMeshRenderData* RenderData = Comp->GetStaticMesh()->GetRenderData();
-        if (RenderData == nullptr)
-        {
-            continue;
-        }
-        
-#pragma region ShadowMap
-        for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
-        {
-            auto srv = SpotLight->GetShadowDepthMap().SRV;
-            Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
+        auto srv = SpotLight->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
             
-            UpdateSpotLightConstantBuffer(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix());
-        }
-        
-        TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
-        ID3D11SamplerState* PCFSampler = nullptr;
-        TArray<UPointLightComponent*> PointLights;
-        for (auto light :  TObjectRange<UPointLightComponent>())
-        {
-            PointLights.Add(light);
-            ShadowCubeSRV.Add(light->PointShadowSRV);
-            PCFSampler = light->PointShadowComparisonSampler;
-        }
-        UpdatePointLightConstantBuffer(PointLights);
-        Graphics->DeviceContext->PSSetShaderResources(
-            14,
-            ShadowCubeSRV.Num(),         
-            ShadowCubeSRV.GetData()
-        );     
-        Graphics->DeviceContext->PSSetSamplers(
-           13,         
-           1,
-           &PCFSampler
-        );
-#pragma endregion
-        
-        UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-
-        FMatrix WorldMatrix = Comp->GetWorldMatrix();
-        FVector4 UUIDColor = Comp->EncodeUUID() / 255.0f;
-        const bool bIsSelected = (Engine && Engine->GetSelectedActor() == Comp->GetOwner());
-
-        UpdateObjectConstant(WorldMatrix, UUIDColor, bIsSelected);
-
-        RenderPrimitive(RenderData, Comp->GetStaticMesh()->GetMaterials(), Comp->GetOverrideMaterials(), Comp->GetselectedSubMeshIndex());
-
-        if (Viewport->GetShowFlag() & static_cast<uint64>(EEngineShowFlags::SF_AABB))
-        {
-            FEngineLoop::PrimitiveDrawBatch.AddAABBToBatch(Comp->GetBoundingBox(), Comp->GetWorldLocation(), WorldMatrix);
-        }
+        UpdateSpotLightConstantBuffer(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix());
     }
-}
-
-void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
-{
-    const EResourceType ResourceType = EResourceType::ERT_Scene;
-    FViewportResource* ViewportResource = Viewport->GetViewportResource();
-    FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
-    FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(ResourceType);
-    
-    // Setup Viewport and RTV
-    Graphics->DeviceContext->RSSetViewports(1, &ViewportResource->GetD3DViewport());
-    Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
-
-    auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
-    
-    if (begin(tempDirLightRange) != end(tempDirLightRange))
+        
+    TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
+    ID3D11SamplerState* PCFSampler = nullptr;
+    TArray<UPointLightComponent*> PointLights;
+    for (auto light :  TObjectRange<UPointLightComponent>())
     {
-        UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
-        FLightConstants LightData = {};
-        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
-        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
-        LightData.ShadowMapSize = tempDirLight->ShadowResolutionScale;
-        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
-        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
-    
-        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
-        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
+        PointLights.Add(light);
+        ShadowCubeSRV.Add(light->PointShadowSRV);
+        PCFSampler = light->PointShadowComparisonSampler;
     }
-    PrepareRenderState(Viewport);
-    RenderAllStaticMeshes(Viewport);
-
-    // 렌더 타겟 해제
-    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-
-    // 쉐이더 리소스 해제
-    constexpr UINT NumViews = static_cast<UINT>(EMaterialTextureSlots::MTS_MAX);
-    
-    ID3D11ShaderResourceView* NullSRVs[NumViews] = { nullptr };
-    ID3D11SamplerState* NullSamplers[NumViews] = { nullptr};
-    
-    Graphics->DeviceContext->PSSetShaderResources(0, NumViews, NullSRVs);
-    Graphics->DeviceContext->PSSetSamplers(0, NumViews, NullSamplers);
-
-    // for Gouraud shading
-    ID3D11ShaderResourceView* NullSRV[1] = { nullptr };
-    ID3D11SamplerState* NullSampler[1] = { nullptr};
-    Graphics->DeviceContext->VSSetShaderResources(0, 1, NullSRV);
-    Graphics->DeviceContext->VSSetSamplers(0, 1, NullSampler);
-}
-
-void FStaticMeshRenderPass::ClearRenderArr()
-{
-    StaticMeshComponents.Empty();
+    UpdatePointLightConstantBuffer(PointLights);
+    Graphics->DeviceContext->PSSetShaderResources(
+        14,
+        ShadowCubeSRV.Num(),         
+        ShadowCubeSRV.GetData()
+    );     
+    Graphics->DeviceContext->PSSetSamplers(
+       13,         
+       1,
+       &PCFSampler
+    );
 }
 

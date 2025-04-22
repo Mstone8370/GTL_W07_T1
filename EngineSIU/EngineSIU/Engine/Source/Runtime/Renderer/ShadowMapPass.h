@@ -1,25 +1,33 @@
 ﻿#pragma once
-#include "StaticMeshRenderPass.h"
+#include "StaticMeshRenderPassBase.h"
 
+#include <d3d11.h>
+
+class USpotLightComponent;
 class UPointLightComponent;
-class ULightComponentBase;
 class UDirectionalLightComponent;
 
-class FShadowMapPass : public FStaticMeshRenderPass
+class FShadowMapPass : public FStaticMeshRenderPassBase
 {
 public:
     FShadowMapPass();
-    virtual ~FShadowMapPass();
+    virtual ~FShadowMapPass() override;
     
-    virtual void Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManage) override;
     virtual void PrepareRenderArr() override;
-    virtual void Render(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
     virtual void ClearRenderArr() override;
-    virtual void PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
+protected:
+    virtual void CreateShader() override;
+    
+    virtual void PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
+    virtual void CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
+
+    virtual void Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     
     void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
 
-    virtual void CreateShader() override;
     void SetShadowViewports(float Width = 1024.f, float Height = 1024.f);
 
 private:

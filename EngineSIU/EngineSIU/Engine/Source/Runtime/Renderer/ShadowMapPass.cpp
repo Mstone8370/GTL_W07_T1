@@ -3,24 +3,18 @@
 #include "UnrealClient.h"
 #include "Components/Light/PointLightComponent.h"
 #include "Components/Light/DirectionalLightComponent.h"
+#include "Components/Light/SpotLightComponent.h"
 #include "D3D11RHI/DXDShaderManager.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/Casts.h"
 #include "UObject/UObjectIterator.h"
 
-FShadowMapPass::FShadowMapPass()
+FShadowMapPass::FShadowMapPass() : FStaticMeshRenderPassBase()
 {
 }
 
 FShadowMapPass::~FShadowMapPass()
 {
-}
-
-void FShadowMapPass::Initialize(FDXDBufferManager* InBufferManager, FGraphicsDevice* InGraphics, FDXDShaderManager* InShaderManage)
-{
-    __super::Initialize(InBufferManager, InGraphics, InShaderManage);
-    
-    SetShadowViewports();
 }
 
 void FShadowMapPass::PrepareRenderArr()
@@ -41,18 +35,6 @@ void FShadowMapPass::PrepareRenderArr()
     }
 }
 
-void FShadowMapPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
-{
-    PrepareRenderState(Viewport);
-    
-    RenderPointLight(Viewport);
-    RenderSpotLight(Viewport);
-    RenderDirectionalLight(Viewport);
-
-    // End
-    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-}
-
 void FShadowMapPass::ClearRenderArr()
 {
     __super::ClearRenderArr();
@@ -62,14 +44,22 @@ void FShadowMapPass::ClearRenderArr()
     DirectionalLightComponents.Empty();
 }
 
-void FShadowMapPass::PrepareRenderState(const std::shared_ptr<FEditorViewportClient>& Viewport)
+void FShadowMapPass::CreateShader()
 {
-    VertexShader = ShaderManager->GetVertexShaderByKey(L"ShadowVertexShader");
-    InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
+    HRESULT hr = ShaderManager->AddVertexShader(L"ShadowVertexShader", L"Shaders/ShadowVertexShader.hlsl", "mainVS");
+    if (FAILED(hr))
+    {
+        return;
+    }
+}
+
+void FShadowMapPass::PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
+{
+    ID3D11VertexShader* VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
+    ID3D11InputLayout* InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
     
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
     Graphics->DeviceContext->IASetInputLayout(InputLayout);
-
     // 뎁스만 필요하므로, 픽셀 쉐이더는 지정 안함.
     Graphics->DeviceContext->PSSetShader(nullptr, nullptr, 0);
     
@@ -78,6 +68,19 @@ void FShadowMapPass::PrepareRenderState(const std::shared_ptr<FEditorViewportCli
     Graphics->DeviceContext->RSSetState(Graphics->RasterizerShadowMap);
 
     Graphics->DeviceContext->OMSetBlendState(nullptr, nullptr, 0xFFFFFFFF);
+}
+
+void FShadowMapPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
+{
+    // End
+    Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+}
+
+void FShadowMapPass::Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport)
+{
+    RenderPointLight(Viewport);
+    RenderSpotLight(Viewport);
+    RenderDirectionalLight(Viewport);
 }
 
 void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize)
@@ -89,15 +92,6 @@ void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const F
     
     BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 0, EShaderStage::Vertex);
     BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), ObjectData);
-}
-
-void FShadowMapPass::CreateShader()
-{
-    HRESULT hr = ShaderManager->AddVertexShader(L"ShadowVertexShader", L"Shaders/ShadowVertexShader.hlsl", "mainVS");
-    if (FAILED(hr))
-    {
-        return;
-    }
 }
 
 void FShadowMapPass::SetShadowViewports(float Width, float Height)
