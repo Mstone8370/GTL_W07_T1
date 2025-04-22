@@ -93,13 +93,11 @@ struct LightPerTiles
 StructuredBuffer<FPointLightInfo> gPointLights : register(t10);
 StructuredBuffer<LightPerTiles> gLightPerTiles : register(t20);
 
-
-SamplerComparisonState ShadowSampler : register(s12);
+// Begin Shadow
 SamplerComparisonState ShadowPCF : register(s13);
 Texture2D ShadowTexture : register(t12); // directional
 Texture2D SpotShadowMap : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
-
 
 cbuffer FLightConstants: register(b5)
 {
@@ -130,7 +128,7 @@ int GetCubeFaceIndex(float3 dir)
 
 static const float SHADOW_BIAS = 0.01;
 
-float ShadowOcclusion(float3 worldPos, uint lightIndex)
+float GetPointLightShadow(float3 worldPos, uint lightIndex)
 {
     float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
 
@@ -159,8 +157,7 @@ float ShadowOcclusion(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-
-float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002 /* 기본 bias */)
+float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.001 /* 기본 bias */)
 {
     // 1) 월드→라이트 클립 공간
     float4 lp = mul(float4(worldPos, 1), SpotLightView);
@@ -178,6 +175,47 @@ float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0
     return s;
 }
 
+float GetDirectionalLightShadow(float3 WorldPosition)
+{
+    // Shadow Mapping
+    float4 PositionFromLight = float4(WorldPosition, 1.0f);
+    PositionFromLight = mul(PositionFromLight, mLightView);
+    PositionFromLight = mul(PositionFromLight, mLightProj);
+    PositionFromLight /= PositionFromLight.w;
+    float2 shadowUV = {
+        0.5f + PositionFromLight.x * 0.5f,
+        0.5f - PositionFromLight.y * 0.5f
+    };
+    float shadowZ = PositionFromLight.z;
+    shadowZ -= 0.0005f; // bias
+
+    // Percentage Closer Filtering
+    float DepthFromLight = 0.f;
+    float PCFOffsetX = 1.f / fShadowMapSize;
+    float PCFOffsetY = 1.f / fShadowMapSize;
+    for (int i = -1; i <= 1; ++i)
+    {
+        for (int j = -1; j <= 1; ++j)
+        {
+            float2 SampleCoord = {
+                shadowUV.x + PCFOffsetX * i,
+                shadowUV.y + PCFOffsetY * j
+            };
+            if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
+            {
+                DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowPCF, SampleCoord, shadowZ).r;
+            }
+            else
+            {
+                DepthFromLight += 1.f;
+            }
+        }
+    }
+    DepthFromLight /= 9;
+
+    return (0.05f + DepthFromLight * 0.95f);
+}
+// End Shadow
 
 float GetDistanceAttenuation(float Distance, float Radius)
 {
@@ -330,22 +368,22 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     for (int i = 0; i < PointLightsCount; i++)
     {
         float3 Lit = PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
-        float shadow = 1.0;
+        float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        shadow = ShadowOcclusion(WorldPosition, i);
+        ShadowFactor = GetPointLightShadow(WorldPosition, i);
 #endif
-        FinalColor += Lit * shadow;
+        FinalColor += Lit * ShadowFactor;
     }
     
     [unroll(MAX_SPOT_LIGHT)]
     for (int j = 0; j < SpotLightsCount; j++)
     {
         float3 Lit = SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
-        float shadowFactor = 1.0;
+        float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        shadowFactor = ComputeSpotShadow(WorldPosition, j);
+        ShadowFactor = GetSpotLightShadow(WorldPosition, j);
 #endif
-        FinalColor += Lit * shadowFactor;
+        FinalColor += Lit * ShadowFactor;
     }
     
     [unroll(MAX_DIRECTIONAL_LIGHT)]
@@ -355,43 +393,7 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
 #ifndef LIGHTING_MODEL_GOURAUD
         if (k == 0)
         {
-            // Shadow Mapping
-            float4 PositionFromLight = float4(WorldPosition, 1.0f);
-            PositionFromLight = mul(PositionFromLight, mLightView);
-            PositionFromLight = mul(PositionFromLight, mLightProj);
-            PositionFromLight /= PositionFromLight.w;
-            float2 shadowUV = {
-                0.5f + PositionFromLight.x * 0.5f,
-                0.5f - PositionFromLight.y * 0.5f
-            };
-            float shadowZ = PositionFromLight.z;
-            shadowZ -= 0.0005f; // bias
-
-            // Percentage Closer Filtering
-            float DepthFromLight = 0.f;
-            float PCFOffsetX = 1.f / fShadowMapSize;
-            float PCFOffsetY = 1.f / fShadowMapSize;
-            for (int i = -1; i <= 1; ++i)
-            {
-                for (int j = -1; j <= 1; ++j)
-                {
-                    float2 SampleCoord = {
-                        shadowUV.x + PCFOffsetX * i,
-                        shadowUV.y + PCFOffsetY * j
-                    };
-                    if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
-                    {
-                        DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowPCF, SampleCoord, shadowZ).r;
-                    }
-                    else
-                    {
-                        DepthFromLight += 1.f;
-                    }
-                }
-            }
-            DepthFromLight /= 9;
-
-            Lit *= (0.05f + DepthFromLight * 0.95f);
+            Lit *= GetDirectionalLightShadow(WorldPosition);
         }
 #endif
         FinalColor += Lit;

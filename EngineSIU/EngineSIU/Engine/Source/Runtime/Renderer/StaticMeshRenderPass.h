@@ -75,6 +75,4 @@ protected:
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;
     FDXDShaderManager* ShaderManager;
-
-    ID3D11SamplerState* ShadowSampler;
 };

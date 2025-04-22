@@ -272,18 +272,6 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
     {
         Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
     }
-    
-#pragma region ShadowMap
-    D3D11_SAMPLER_DESC desc = {};
-    desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-    desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;      // 3D/Array 텍스쳐에도 안전하게
-    desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-    desc.MinLOD = 0;
-    desc.MaxLOD = D3D11_FLOAT32_MAX;
-    Graphics->Device->CreateSamplerState(&desc, &ShadowSampler);
-#pragma endregion
 }
 
 void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
@@ -450,8 +438,6 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     
         ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
         Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
-    
-        Graphics->DeviceContext->PSSetSamplers(12, 1, &ShadowSampler);
     }
     PrepareRenderState(Viewport);
     RenderAllStaticMeshes(Viewport);
