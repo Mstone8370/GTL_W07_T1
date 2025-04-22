@@ -1,4 +1,4 @@
-﻿#include "ShadowMapPass.h"
+#include "ShadowMapPass.h"
 
 #include "UnrealClient.h"
 #include "Components/Light/PointLightComponent.h"
@@ -130,7 +130,7 @@ void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClien
         // Render
         for (size_t face = 0; face < 6; ++face)
         {
-            Graphics->DeviceContext->OMSetRenderTargets(1, nullptr, PointLight->PointShadowDSV[face]);
+            Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, PointLight->PointShadowDSV[face]);
             UpdateLightMatrixConstant(PointLight->GetLightViewMatrix()[face], PointLight->GetLightProjectionMatrix(), PointLight->ShadowResolutionScale);
 
             __super::RenderAllStaticMeshes(Viewport);
@@ -154,7 +154,7 @@ void FShadowMapPass::RenderSpotLight(const std::shared_ptr<FEditorViewportClient
         UpdateLightMatrixConstant(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix(), SpotLight->ShadowResolutionScale);
 
         // Render
-        Graphics->DeviceContext->OMSetRenderTargets(1, nullptr, DSV);
+        Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DSV);
 
         __super::RenderAllStaticMeshes(Viewport);
     }
