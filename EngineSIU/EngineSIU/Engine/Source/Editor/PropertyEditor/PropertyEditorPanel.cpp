@@ -204,39 +204,39 @@ void PropertyEditorPanel::Render()
         }
 
     if(PickedActor)
-        if (USpotLightComponent* spotlightObj = PickedActor->GetComponentByClass<USpotLightComponent>())
+        if (USpotLightComponent* SpotLightObj = PickedActor->GetComponentByClass<USpotLightComponent>())
         {
             ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
 
             if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
             {
                 DrawColorProperty("Light Color",
-                    [&]() { return spotlightObj->GetLightColor(); },
-                    [&](FLinearColor c) { spotlightObj->SetLightColor(c); });
+                    [&]() { return SpotLightObj->GetLightColor(); },
+                    [&](FLinearColor c) { SpotLightObj->SetLightColor(c); });
 
-                float Intensity = spotlightObj->GetIntensity();
+                float Intensity = SpotLightObj->GetIntensity();
                 if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 160.0f, "%.1f"))
-                    spotlightObj->SetIntensity(Intensity);
+                    SpotLightObj->SetIntensity(Intensity);
 
-                float Radius = spotlightObj->GetRadius();
+                float Radius = SpotLightObj->GetRadius();
                 if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
-                    spotlightObj->SetRadius(Radius);
+                    SpotLightObj->SetRadius(Radius);
                 }
 
-                LightDirection = spotlightObj->GetDirection();
+                LightDirection = SpotLightObj->GetDirection();
                 FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
                 
-                float InnerDegree = spotlightObj->GetInnerDegree();
+                float InnerDegree = SpotLightObj->GetInnerDegree();
                 if (ImGui::SliderFloat("InnerDegree", &InnerDegree, 0.01f, 80.f, "%.1f")) {
-                    spotlightObj->SetInnerDegree(InnerDegree);
+                    SpotLightObj->SetInnerDegree(InnerDegree);
                 }
 
-                float OuterDegree = spotlightObj->GetOuterDegree();
+                float OuterDegree = SpotLightObj->GetOuterDegree();
                 if (ImGui::SliderFloat("OuterDegree", &OuterDegree, 0.01f, 80.f, "%.1f")) {
-                    spotlightObj->SetOuterDegree(OuterDegree);
+                    SpotLightObj->SetOuterDegree(OuterDegree);
                 }
 
-                const auto& SM = spotlightObj->GetShadowDepthMap();
+                const auto& SM = SpotLightObj->GetShadowDepthMap();
                 ID3D11ShaderResourceView* depthSRV = SM.SRV;
                 ID3D11Texture2D* tex = SM.Texture2D;
                 if (depthSRV && tex)
@@ -255,7 +255,13 @@ void PropertyEditorPanel::Render()
                         ImVec2(1, 0)
                     );
                 }
-
+                // faceIn
+                FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
+                if (ImGui::Button("Override camera with light's perspective"))
+                {
+                    ActiveViewport->PerspectiveCamera.SetRotation(SpotLightObj->GetWorldRotation());
+                    ActiveViewport->PerspectiveCamera.SetLocation(SpotLightObj->GetWorldLocation() +  ActiveViewport->PerspectiveCamera.GetForwardVector()*1.5f); 
+                }
                 ImGui::TreePop();
             }
 
