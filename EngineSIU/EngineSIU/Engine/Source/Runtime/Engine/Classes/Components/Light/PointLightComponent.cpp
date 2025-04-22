@@ -144,8 +144,11 @@ void UPointLightComponent::CreateShadowMapResources()
     texDesc.Usage              = D3D11_USAGE_DEFAULT;
     texDesc.BindFlags          = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
     texDesc.MiscFlags          = D3D11_RESOURCE_MISC_TEXTURECUBE; // <-- 반드시!
-    GEngineLoop.GraphicDevice.Device->CreateTexture2D(&texDesc, nullptr, &PointDepthCubeTex);
-
+    HRESULT hr = GEngineLoop.GraphicDevice.Device->CreateTexture2D(&texDesc, nullptr, &PointDepthCubeTex);
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to create PointShadowTex", L"Error", MB_OK);
+    }
+    
     for(int i = 0; i < 6; ++i) {
         D3D11_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
         dsvDesc.Format               = DXGI_FORMAT_D32_FLOAT;
@@ -160,7 +163,7 @@ void UPointLightComponent::CreateShadowMapResources()
     srvDesc.ViewDimension  = D3D11_SRV_DIMENSION_TEXTURECUBE;  // 큐브맵 SRV
     srvDesc.TextureCube.MostDetailedMip = 0;  // 가장 상위 MIP 레벨
     srvDesc.TextureCube.MipLevels       = 1;  // 생성할 때 MipLevels = 1 이므로 1
-    HRESULT hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
+    hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
         PointDepthCubeTex, 
         &srvDesc, 
         &PointShadowSRV
@@ -178,8 +181,11 @@ void UPointLightComponent::CreateShadowMapResources()
         srvDesc.Texture2DArray.MipLevels       = 1;
         srvDesc.Texture2DArray.FirstArraySlice = face;                           // 각 페이스
         srvDesc.Texture2DArray.ArraySize       = 1;
-        GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
+        hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
         PointDepthCubeTex, &srvDesc, &faceSRVs[face]);
+        if (FAILED(hr)) {
+            MessageBox(NULL, L"Failed to create SRV", L"Error", MB_OK);
+        }
     }
     
     D3D11_SAMPLER_DESC comparisonSamplerDesc;
@@ -198,7 +204,40 @@ void UPointLightComponent::CreateShadowMapResources()
     comparisonSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
     comparisonSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
     hr = GEngineLoop.GraphicDevice.Device->CreateSamplerState(&comparisonSamplerDesc, &PointShadowComparisonSampler);
-    
+    if (FAILED(hr)) {
+        MessageBox(NULL, L"Failed to create Sampler", L"Error", MB_OK);
+    }
+    // VSM
+    D3D11_TEXTURE2D_DESC momentTexDesc = {};
+    texDesc.Width            = ShadowResolutionScale;
+    texDesc.Height           = ShadowResolutionScale;
+    texDesc.MipLevels        = 0;                         // mipmap 생성할 거면 0
+    texDesc.ArraySize        = 6;                         // 큐브맵 6면
+    texDesc.Format           = DXGI_FORMAT_R32G32_FLOAT;  // <--- 2채널(1차,2차)
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage            = D3D11_USAGE_DEFAULT;
+    texDesc.BindFlags        = D3D11_BIND_RENDER_TARGET   // RTV로도 쓰고
+                            | D3D11_BIND_SHADER_RESOURCE; // SRV로도 씀
+    // (깊이 전용 뷰는 더 이상 안 만듭니다)
+    hr = GEngineLoop.GraphicDevice.Device->CreateTexture2D(&momentTexDesc, nullptr, &PointMomentCubeTex);
+    // 슬라이스별 RTV
+    for(int i = 0; i < 6; ++i) {
+        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+        rtvDesc.Format             = DXGI_FORMAT_R32G32_FLOAT;
+        rtvDesc.ViewDimension      = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+        rtvDesc.Texture2DArray.FirstArraySlice = i;
+        rtvDesc.Texture2DArray.ArraySize       = 1;
+        GEngineLoop.GraphicDevice.Device->CreateRenderTargetView(
+            PointMomentCubeTex, &rtvDesc, &PointMomentRTV[i]);
+    }
+
+    // 큐브맵 SRV (픽셀 셰이더 샘플링용)
+    D3D11_SHADER_RESOURCE_VIEW_DESC momentSrvDesc = {};
+    srvDesc.Format               = DXGI_FORMAT_R32G32_FLOAT;
+    srvDesc.ViewDimension        = D3D11_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.TextureCube.MipLevels = -1;  // 모든 레벨(mipmap) 사용
+    GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
+        PointMomentCubeTex, &srvDesc, &PointMomentSRV);
 }
 
 void UPointLightComponent::UpdateViewProjMatrix()
