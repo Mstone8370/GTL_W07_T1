@@ -30,93 +30,11 @@ cbuffer TextureConstants : register(b4)
     float2 TexturePad0;
 }
 
-cbuffer FLightConstants: register(b5)
-{
-    row_major matrix mLightView;
-    row_major matrix mLightProj;
-    float fShadowMapSize;
-}
-
 #ifdef LIGHTING_MODEL_PBR
 #include "LightPBR.hlsl"
 #else
 #include "Light.hlsl"
 #endif
-
-SamplerComparisonState ShadowSampler : register(s12);
-SamplerComparisonState ShadowPCF : register(s13);
-Texture2D ShadowTexture : register(t12); // directional
-Texture2D SpotShadowMap : register(t13);    // spot
-TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
-
-cbuffer PointLightConstant : register(b6)
-{
-    row_major matrix viewMatrix[MAX_POINT_LIGHT * 6];
-    row_major matrix projectionMatrix[MAX_POINT_LIGHT];
-}
-
-cbuffer SpotLightConstants: register(b7)
-{
-    row_major matrix SpotLightView;
-    row_major matrix SpotLightProj;
-}
-
-int GetCubeFaceIndex(float3 dir)
-{
-    float3 a = abs(dir);
-    if (a.x >= a.y && a.x >= a.z) return dir.x > 0 ? 0 : 1;  // +X:0, -X:1
-    if (a.y >= a.x && a.y >= a.z) return dir.y > 0 ? 2 : 3;  // +Y:2, -Y:3
-    return                dir.z > 0 ? 4 : 5;                // +Z:4, -Z:5
-}
-
-static const float SHADOW_BIAS = 0.01;
-
-float ShadowOcclusion(float3 worldPos, uint lightIndex)
-{
-    float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
-
-    int face = GetCubeFaceIndex(dir);
-
-    // (C) 그 face 에 맞는 뷰·프로젝션으로 깊이 계산
-    float4 viewPos = mul( float4(worldPos, 1),viewMatrix[lightIndex * 6 + face]);
-    float4 clipPos = mul(viewPos,projectionMatrix[lightIndex]);
-    float  depthRef = clipPos.z / clipPos.w;
-
-    clipPos.xyz /= clipPos.w;
-
-    float2 uv = clipPos.xy * 0.5 + 0.5;
-
-    if (uv.x < 0.0 || uv.x > 1.0 ||
-        uv.y < 0.0 || uv.y > 1.0)
-    {
-        return 1.0;
-    }
-    float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
-        ShadowPCF,
-        dir,
-        clipPos.z
-    );
-    
-    return shadow;
-}
-
-float ComputeSpotShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.002 /* 기본 bias */)
-{
-    // 1) 월드→라이트 클립 공간
-    float4 lp = mul(float4(worldPos, 1), SpotLightView);
-    lp = mul(lp, SpotLightProj);
-
-    // 2) NDC→[0,1] uv, 깊이
-    float2 uv;
-    uv.x = (lp.x / lp.w) * 0.5 + 0.5;
-    uv.y = (lp.y / lp.w) * -0.5 + 0.5;
-    float depth = lp.z / lp.w;
-
-    // 3) ShadowMap 비교 샘플링
-    float s = SpotShadowMap.SampleCmp(ShadowSampler, uv, depth - shadowBias);
-
-    return s;
-}
 
 float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 {
@@ -195,44 +113,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
     if (IsLit)
     {
         float3 LitColor = float3(0, 0, 0);
-        // Shadow Mapping
-        
-        float4 PositionFromLight = float4(Input.WorldPosition, 1.0f);
-        PositionFromLight = mul(PositionFromLight, mLightView);
-        PositionFromLight = mul(PositionFromLight, mLightProj);
-        PositionFromLight /= PositionFromLight.w;
-        float2 shadowUV = {
-            0.5f + PositionFromLight.x * 0.5f,
-            0.5f - PositionFromLight.y * 0.5f
-        };
-        float shadowZ = PositionFromLight.z;
-        shadowZ -= 0.0005f; // bias
-
-        // Percentage Closer Filtering
-        // float DepthFromLight = ShadowTexture.SampleCmpLevelZero(ShadowSampler, shadowUV, shadowZ).r;
-        float DepthFromLight = 0.f;
-        float PCFOffsetX = 1.f / fShadowMapSize;
-        float PCFOffsetY = 1.f / fShadowMapSize;
-        for (int i = -1; i <= 1; ++i)
-        {
-            for (int j = -1; j <= 1; ++j)
-            {
-                float2 SampleCoord = {
-                    shadowUV.x + PCFOffsetX * i,
-                    shadowUV.y + PCFOffsetY * j
-                };
-                if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
-                {
-                    DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowSampler, SampleCoord, shadowZ).r;
-                }
-                else
-                {
-                    DepthFromLight += 1.f;
-                }
-            }
-        }
-        DepthFromLight /= 9;
-
 #ifdef LIGHTING_MODEL_GOURAUD
         LitColor = Input.Color.rgb;
 #elif defined(LIGHTING_MODEL_PBR)
@@ -240,24 +120,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
 #else
         LitColor = Lighting(Input.WorldPosition, WorldNormal, ViewWorldLocation, DiffuseColor, SpecularColor, Shininess);
 #endif
-        
-        for (int PointlightIndex = 0; PointlightIndex < PointLightsCount; ++PointlightIndex)
-        {
-            float shadow = ShadowOcclusion(Input.WorldPosition, PointlightIndex);
-            LitColor += LitColor.rgb * shadow;
-        }
-
-        if (DirectionalLightsCount > 0)
-        {
-            LitColor = LitColor * (0.05f + DepthFromLight * 0.95f);
-        }
-
-        for (int i = 0; i < SpotLightsCount; i++)
-        {
-            float shadowFactor = ComputeSpotShadow(Input.WorldPosition, i);
-            LitColor += LitColor.rgb * shadowFactor;
-        }
-        
         LitColor += EmissiveColor * 5.f; // 5는 임의의 값
         FinalColor = float4(LitColor, 1);
     }
@@ -266,7 +128,6 @@ float4 mainPS(PS_INPUT_StaticMesh Input) : SV_Target
         FinalColor = float4(DiffuseColor, 1);
     }
 
-    
     if (bIsSelected)
     {
         FinalColor += float4(0.01, 0.01, 0.0, 1);
