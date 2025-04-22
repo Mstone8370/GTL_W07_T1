@@ -46,8 +46,8 @@ cbuffer FLightConstants: register(b5)
 SamplerComparisonState ShadowSampler : register(s12);
 SamplerComparisonState ShadowPCF : register(s13);
 Texture2D ShadowTexture : register(t12); // directional
-TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t13); // point
-Texture2D ShadowMap : register(t14);    // spot
+Texture2D SpotShadowMap : register(t13);    // spot
+TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
 
 cbuffer PointLightConstant : register(b6)
 {
@@ -98,8 +98,8 @@ float ComputeSpotShadow(
 )
 {
     // 1) 월드→라이트 클립 공간
-    float4 lp = mul(float4(worldPos, 1), LightViewMatrix);
-    lp = mul(lp, LightProjectionMatrix);
+    float4 lp = mul(float4(worldPos, 1), mLightView);
+    lp = mul(lp, mLightProj);
 
     // 2) NDC→[0,1] uv, 깊이
     float2 uv;
@@ -108,7 +108,7 @@ float ComputeSpotShadow(
     float depth = lp.z / lp.w;
 
     // 3) ShadowMap 비교 샘플링
-    float s = ShadowMap.SampleCmp(ShadowSampler, uv, depth - shadowBias);
+    float s = SpotShadowMap.SampleCmp(ShadowSampler, uv, depth - shadowBias);
 
     return s;
 }
