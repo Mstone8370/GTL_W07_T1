@@ -77,7 +77,7 @@ cbuffer Lighting : register(b0)
     int AmbientLightsCount;
 };
 
-cbuffer TileLightCullSettings : register(b8)
+cbuffer TileLightCullSettings : register(b10)
 {
     uint2 ScreenSize; // 화면 해상도
     uint2 TileSize; // 한 타일의 크기 (예: 16x16)
@@ -99,8 +99,8 @@ struct LightPerTiles
     uint Indices[MAX_LIGHT_PER_TILE];
     uint Padding[3];
 };
-StructuredBuffer<FPointLightInfo> gPointLights : register(t10);
-StructuredBuffer<LightPerTiles> gLightPerTiles : register(t20);
+StructuredBuffer<FPointLightInfo> gPointLights : register(t50);
+StructuredBuffer<LightPerTiles> gLightPerTiles : register(t60);
 
 // Begin Shadow
 SamplerComparisonState ShadowPCF : register(s13);
@@ -108,7 +108,7 @@ Texture2D ShadowTexture : register(t12); // directional
 Texture2D SpotShadowMap : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
 
-cbuffer FLightConstants: register(b5)
+cbuffer DirectionalLightConstants: register(b5)
 {
     row_major matrix mLightView;
     row_major matrix mLightProj;

@@ -54,10 +54,10 @@ public:
     void RenderPrimitive(ID3D11Buffer* pVertexBuffer, UINT numVertices, ID3D11Buffer* pIndexBuffer, UINT numIndices) const;
 
     // Shader 관련 함수 (생성/해제 등)
-    void CreateShader();
+    virtual void CreateShader();
     void ReleaseShader();
 
-    void ChangeViewMode(EViewModeIndex ViewModeIndex);
+    void ChangeViewMode(EViewModeIndex ViewMode);
 
 
     void UpdatePointLightConstantBuffer(const TArray<UPointLightComponent*>& PointLights);
@@ -69,8 +69,6 @@ protected:
     ID3D11InputLayout* InputLayout;
     
     ID3D11PixelShader* PixelShader;
-    ID3D11PixelShader* DebugDepthShader;
-    ID3D11PixelShader* DebugWorldNormalShader;;
 
     FDXDBufferManager* BufferManager;
     FGraphicsDevice* Graphics;

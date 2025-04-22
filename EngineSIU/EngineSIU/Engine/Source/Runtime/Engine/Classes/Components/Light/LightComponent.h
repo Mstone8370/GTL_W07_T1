@@ -24,8 +24,8 @@ protected:
     void ReleaseShadowDepthMap();
     
 public:
-    FBoundingBox GetBoundingBox() const {return AABB;}
-    FDepthStencilRHI GetShadowDepthMap() const {return ShadowDepthMap;}
+    FBoundingBox GetBoundingBox() const { return AABB; }
+    FDepthStencilRHI GetShadowDepthMap() const { return ShadowDepthMap; }
     float ShadowResolutionScale = 1024;
     float ShadowBias = 3;
     float ShadowSlopeBias = 3;

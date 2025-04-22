@@ -122,9 +122,9 @@ void FStaticMeshRenderPass::ReleaseShader()
     
 }
 
-void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
+void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewMode)
 {
-    switch (ViewModeIndex)
+    switch (ViewMode)
     {
     case EViewModeIndex::VMI_Lit_Gouraud:
         PixelShader = ShaderManager->GetPixelShaderByKey(L"GOURAUD_StaticMeshPixelShader");
@@ -150,7 +150,7 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     }
 
     // Constant buffer
-    if (ViewModeIndex < EViewModeIndex::VMI_Unlit || ViewModeIndex == EViewModeIndex::VMI_LightHeatMap)
+    if (ViewMode < EViewModeIndex::VMI_Unlit || ViewMode == EViewModeIndex::VMI_LightHeatMap)
     {
         UpdateLitUnlitConstant(1);
     }
@@ -160,7 +160,7 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     }
 
     // Vertex Shader and Input Layout
-    if (ViewModeIndex == EViewModeIndex::VMI_Lit_Gouraud)
+    if (ViewMode == EViewModeIndex::VMI_Lit_Gouraud)
     {
         VertexShader = ShaderManager->GetVertexShaderByKey(L"GOURAUD_StaticMeshVertexShader");
         InputLayout = ShaderManager->GetInputLayoutByKey(L"GOURAUD_StaticMeshVertexShader");
@@ -172,7 +172,7 @@ void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewModeIndex)
     }
     
     // Rasterizer
-    Graphics->ChangeRasterizer(ViewModeIndex);
+    Graphics->ChangeRasterizer(ViewMode);
 
     // Setup
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
@@ -248,30 +248,6 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
 
     BufferManager->BindConstantBuffer(TEXT("FLightInfoBuffer"), 0, EShaderStage::Vertex);
     BufferManager->BindConstantBuffer(TEXT("FMaterialConstants"), 1, EShaderStage::Vertex);
-
-    // Rasterizer
-    if (ViewMode == EViewModeIndex::VMI_Wireframe)
-    {
-        Graphics->DeviceContext->RSSetState(Graphics->RasterizerWireframeBack);
-    }
-    else
-    {
-        Graphics->DeviceContext->RSSetState(Graphics->RasterizerSolidBack);
-    }
-
-    // Pixel Shader
-    if (ViewMode == EViewModeIndex::VMI_SceneDepth)
-    {
-        Graphics->DeviceContext->PSSetShader(DebugDepthShader, nullptr, 0);
-    }
-    else if (ViewMode == EViewModeIndex::VMI_WorldNormal)
-    {
-        Graphics->DeviceContext->PSSetShader(DebugWorldNormalShader, nullptr, 0);
-    }
-    else
-    {
-        Graphics->DeviceContext->PSSetShader(PixelShader, nullptr, 0);
-    }
 }
 
 void FStaticMeshRenderPass::UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const
@@ -422,6 +398,8 @@ void FStaticMeshRenderPass::Render(const std::shared_ptr<FEditorViewportClient>&
     FRenderTargetRHI* RenderTargetRHI = ViewportResource->GetRenderTarget(ResourceType);
     FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(ResourceType);
     
+    // Setup Viewport and RTV
+    Graphics->DeviceContext->RSSetViewports(1, &ViewportResource->GetD3DViewport());
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
 
     auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
