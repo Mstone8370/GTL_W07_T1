@@ -174,6 +174,11 @@ void FStaticMeshRenderPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewp
     ID3D11SamplerState* NullSampler[1] = { nullptr};
     Graphics->DeviceContext->VSSetShaderResources(0, 1, NullSRV);
     Graphics->DeviceContext->VSSetSamplers(0, 1, NullSampler);
+
+    // for Shadow Map
+    Graphics->DeviceContext->PSSetShaderResources(12, 1, NullSRV);
+    Graphics->DeviceContext->PSSetShaderResources(13, 1, NullSRV);
+    Graphics->DeviceContext->PSSetShaderResources(14, 1, NullSRV);
 }
 
 void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewMode)

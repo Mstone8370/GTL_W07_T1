@@ -1,12 +1,6 @@
 
 #include "ShaderRegisters.hlsl"
 
-SamplerState DiffuseSampler : register(s0);
-SamplerState NormalSampler : register(s1);
-
-Texture2D DiffuseTexture : register(t0);
-Texture2D NormalTexture : register(t1);
-
 cbuffer MaterialConstants : register(b1)
 {
     FMaterial Material;

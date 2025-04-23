@@ -122,7 +122,7 @@ void FLineRenderPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewp
     FDepthStencilRHI* DepthStencilRHI = ViewportResource->GetDepthStencil(EResourceType::ERT_Scene);
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
 
-    ProcessLineRendering(Viewport);
+    ProcessLineRendering(Viewport); // TODO: 예상된 Stride는 52바이트인데 48이어서 경고 나옴. 
 
     Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, nullptr);
 }

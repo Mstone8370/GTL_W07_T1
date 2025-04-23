@@ -210,7 +210,7 @@ PS_INPUT coneVS(VS_INPUT_POS_ONLY input, uint instanceID : SV_InstanceID)
         output.color = float4(0.4157, 0.5765, 0.7765, 1.0); // 짙은 하늘색
     }
     float3 scale = float3(radius.xx, DataCone[instanceID % 2].Height);
-    float3x3 rot = CreateRotationMatrixFromZ(DataCone[instanceID%2].Direction);
+    float3x3 rot = CreateRotationMatrixFromZ(DataCone[instanceID % 2].Direction);
     
     float3 localPos3 = input.position.xyz;
     localPos3 = localPos3 * scale;

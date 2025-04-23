@@ -244,7 +244,7 @@ void PropertyEditorPanel::RenderDetailPanel()
             {
                 FRotator ViewRotator = SpotLightComp->GetWorldRotation();
                 FVector ForwardVector = ViewRotator.ToVector();
-                ActiveViewport->PerspectiveCamera.SetRotation(FVector(ViewRotator.Roll, ViewRotator.Pitch * -1.f, ViewRotator.Yaw));
+                ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.f, ViewRotator.Pitch * -1.f, ViewRotator.Yaw));
                 ActiveViewport->PerspectiveCamera.SetLocation(SpotLightComp->GetWorldLocation() + ForwardVector * 1.5f); 
             }
             ImGui::TreePop();
