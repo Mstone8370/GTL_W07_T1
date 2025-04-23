@@ -408,6 +408,12 @@ struct FViewportSize
     FVector2D Padding;
 };
 
+struct FShowFlagBuffer
+{
+    uint64 ShowFlag;
+    FVector2D Padding;
+};
+
 struct FVertexInfo
 {
     uint32_t NumVertices;

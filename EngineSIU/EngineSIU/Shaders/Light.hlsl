@@ -80,6 +80,29 @@ cbuffer LightInfo : register(b0)
     int AmbientLightsCount;
 };
 
+cbuffer ShowFlagBuffer : register(b5)
+{
+    uint2 ShowFlag; // ShowFlag가 64비트여서 uint2 사용. ShowFlag를 검사하는 CheckShowFlag함수 사용해야 함.
+
+    float2 ShowFlagPadding;
+}
+
+bool CheckShowFlag(uint BitPosition)
+{
+    if (BitPosition < 32)
+    {
+        return (ShowFlag.x & (1 << BitPosition)) != 0;
+    }
+    return (ShowFlag.y & (1 << (BitPosition - 32))) != 0;
+}
+
+#define SF_AABB          (0)
+#define SF_PRIMITIVES    (1)
+#define SF_BillboardText (2)
+#define SF_UUIDText      (3)
+#define SF_Fog           (4)
+#define SF_Shadow        (5)
+
 cbuffer TileLightCullSettings : register(b10)
 {
     uint2 ScreenSize; // 화면 해상도
@@ -376,7 +399,10 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        ShadowFactor = GetPointLightShadow(WorldPosition, i);
+        if (CheckShowFlag(SF_Shadow))
+        {
+            ShadowFactor = GetPointLightShadow(WorldPosition, i);
+        }
 #endif
         FinalColor += Lit * ShadowFactor;
     }
@@ -387,7 +413,10 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        ShadowFactor = GetSpotLightShadow(WorldPosition, j);
+        if (CheckShowFlag(SF_Shadow))
+        {
+            ShadowFactor = GetSpotLightShadow(WorldPosition, j);
+        }
 #endif
         FinalColor += Lit * ShadowFactor;
     }
@@ -397,7 +426,7 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     {
         float3 Lit = DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
 #ifndef LIGHTING_MODEL_GOURAUD
-        if (k == 0)
+        if (k == 0 && CheckShowFlag(SF_Shadow))
         {
             Lit *= GetDirectionalLightShadow(WorldPosition);
         }

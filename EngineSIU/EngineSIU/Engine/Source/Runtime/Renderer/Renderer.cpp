@@ -148,6 +148,9 @@ void FRenderer::CreateConstantBuffers()
     UINT LightConstantsBufferSize = sizeof(FLightConstants);
     BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    UINT ShowFlagBufferSize = sizeof(FShowFlagBuffer);
+    BufferManager->CreateBufferGeneric<FShowFlagBuffer>("FShowFlagBuffer", nullptr, ShowFlagBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+    
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
     ID3D11Buffer* CameraConstantBuffer = BufferManager->GetConstantBuffer(TEXT("FCameraConstantBuffer"));
@@ -332,8 +335,11 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_Primitives)
     {
         UpdateLightBufferPass->Render(Viewport);
-        
-        ShadowMapPass->Render(Viewport);
+
+        if (ShowFlag & EEngineShowFlags::SF_Shadow)
+        {
+            ShadowMapPass->Render(Viewport);
+        }
         
         StaticMeshRenderPass->Render(Viewport);
     }

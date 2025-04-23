@@ -153,6 +153,11 @@ void FStaticMeshRenderPass::PrepareRenderPass(const std::shared_ptr<FEditorViewp
     PrepareRenderState(Viewport);
 
     UpdateShadowConstant(Viewport);
+
+    // Update Show Flag Buffer
+    FShowFlagBuffer ShowFlagBuffer;
+    ShowFlagBuffer.ShowFlag = Viewport->GetShowFlag();
+    BufferManager->UpdateConstantBuffer(TEXT("FShowFlagBuffer"), ShowFlagBuffer);
 }
 
 void FStaticMeshRenderPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -257,6 +262,7 @@ void FStaticMeshRenderPass::PrepareRenderState(const std::shared_ptr<FEditorView
         TEXT("FLitUnlitConstants"),
         TEXT("FSubMeshConstants"),
         TEXT("FTextureConstants"),
+        TEXT("FShowFlagBuffer"),
     };
 
     BufferManager->BindConstantBuffers(PSBufferKeys, 0, EShaderStage::Pixel);
