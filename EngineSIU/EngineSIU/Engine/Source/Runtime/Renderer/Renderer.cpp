@@ -47,9 +47,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     EditorBillboardRenderPass = new FEditorBillboardRenderPass();
     GizmoRenderPass = new FGizmoRenderPass();
     UpdateLightBufferPass = new FUpdateLightBufferPass();
-#pragma region ShadowMap
     ShadowMapPass = new FShadowMapPass();
-#pragma endregion
     LineRenderPass = new FLineRenderPass();
     FogRenderPass = new FFogRenderPass();
     EditorRenderPass = new FEditorRenderPass();
@@ -67,9 +65,7 @@ void FRenderer::Initialize(FGraphicsDevice* InGraphics, FDXDBufferManager* InBuf
     EditorBillboardRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     GizmoRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     UpdateLightBufferPass->Initialize(BufferManager, Graphics, ShaderManager);
-#pragma region ShadowMap
     ShadowMapPass->Initialize(BufferManager, Graphics, ShaderManager);
-#pragma endregion
     LineRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     FogRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
     EditorRenderPass->Initialize(BufferManager, Graphics, ShaderManager);
@@ -93,9 +89,7 @@ void FRenderer::Release()
     delete EditorBillboardRenderPass;
     delete GizmoRenderPass;
     delete UpdateLightBufferPass;
-#pragma region ShadowMap
     delete ShadowMapPass;
-#pragma endregion
     delete LineRenderPass;
     delete FogRenderPass;
     delete CompositingPass;
@@ -213,9 +207,7 @@ void FRenderer::PrepareRenderPass()
     WorldBillboardRenderPass->PrepareRenderArr();
     EditorBillboardRenderPass->PrepareRenderArr();
     UpdateLightBufferPass->PrepareRenderArr();
-#pragma region ShadowMap
     ShadowMapPass->PrepareRenderArr();
-#pragma endregion
     FogRenderPass->PrepareRenderArr();
     EditorRenderPass->PrepareRender();
     TileLightCullingPass->PrepareRenderArr();
@@ -229,9 +221,7 @@ void FRenderer::ClearRenderArr()
     EditorBillboardRenderPass->ClearRenderArr();
     GizmoRenderPass->ClearRenderArr();
     UpdateLightBufferPass->ClearRenderArr();
-#pragma region ShadowMap
     ShadowMapPass->ClearRenderArr();
-#pragma endregion
     FogRenderPass->ClearRenderArr();
     EditorRenderPass->ClearRenderArr();
     DepthPrePass->ClearRenderArr();

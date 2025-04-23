@@ -39,13 +39,19 @@ private:
 #pragma region PointLight Shadows
 public:
     ID3D11Texture2D* PointDepthCubeTex = nullptr;
-    ID3D11ShaderResourceView*  PointShadowSRV = nullptr;
+    ID3D11Texture2D* PointMomentCubeTex = nullptr;
+
+    ID3D11ShaderResourceView*  PointShadowSRV = NULL;
     ID3D11ShaderResourceView*  faceSRVs[6] = {};
+    ID3D11ShaderResourceView*  faceMomentSRVs[6] = {};
+    ID3D11ShaderResourceView*  PointMomentSRV = NULL;
+    ID3D11RenderTargetView*    PointMomentRTV[6];
     ID3D11DepthStencilView*    PointShadowDSV[6];
     ID3D11Buffer*              PointCBLightBuffer = nullptr;
     ID3D11RasterizerState*     PointShadowRasterizerState = nullptr;
     ID3D11VertexShader*        PointShadowVertexShader = nullptr;
     ID3D11VertexShader*        PointShadowInstanceVertexShader = nullptr;
+    ID3D11SamplerState*        PointShadowVSMSampler = NULL;
 #pragma endregion
 #pragma region PointShadow
 public:

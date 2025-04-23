@@ -3,6 +3,8 @@
 
 #include <d3d11.h>
 
+#include "Math/Vector.h"
+
 class USpotLightComponent;
 class UPointLightComponent;
 class UDirectionalLightComponent;
@@ -26,7 +28,7 @@ protected:
 
     virtual void Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
     
-    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize);
+    void UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const FVector LightPos,const float ShadowMapSize, const float LightRange);
 
     void SetShadowViewports(float Width = 1024.f, float Height = 1024.f);
 

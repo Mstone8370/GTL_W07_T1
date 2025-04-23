@@ -143,7 +143,7 @@ void PropertyEditorPanel::RenderDetailPanel()
                 PointLightComp->SetCastShadows(bCastShadow);
             }
             
-            FString Dir[6]= {"X+","X-","Z+","Z-", "Y+","Y-"};
+            FString Dir[6]= {"X+","X-","Y+","Y-", "Z+","Z-"};
             for (int Face = 0; Face < 6; ++Face)
             {
                 ImGui::PushID(Face);
@@ -154,9 +154,12 @@ void PropertyEditorPanel::RenderDetailPanel()
                     reinterpret_cast<ImTextureID>(PointLightComp->faceSRVs[Face]),
                     ImVec2(512,512)
                 );   // UV1
-                ImGui::PopID();
-                char label[64];
-                sprintf_s(label, "Override face %d camera with light's perspective", Face);
+                ImGui::Image(
+                        (ImTextureID)PointLightComp->faceMomentSRVs[Face],
+                        ImVec2(512,512));   // UV1
+                    ImGui::PopID();
+                    char label[64];
+                    sprintf_s(label, "Override face %d camera with light's perspective", Face);
                 
                 // faceIn
                 FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();

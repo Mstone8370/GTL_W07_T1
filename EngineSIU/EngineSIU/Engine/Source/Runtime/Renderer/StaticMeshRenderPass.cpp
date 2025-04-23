@@ -293,14 +293,19 @@ void FStaticMeshRenderPass::UpdateShadowConstant(const std::shared_ptr<FEditorVi
     // PointLight
     Graphics->DeviceContext->PSSetSamplers(14, 1, &PointShadowComparisonSampler);
     TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
+    TArray<ID3D11ShaderResourceView*> MomentCubeSRV;
+    ID3D11SamplerState* VSMSampler = nullptr;
+
     TArray<UPointLightComponent*> PointLights;
     for (auto light :  TObjectRange<UPointLightComponent>())
     {
         PointLights.Add(light);
         ShadowCubeSRV.Add(light->PointShadowSRV);
+        MomentCubeSRV.Add(light->PointMomentSRV);
+        VSMSampler = light->PointShadowVSMSampler;
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());
-
+    Graphics->DeviceContext->PSSetSamplers(15, 1, &VSMSampler);
     UpdateSpotLightSRV();
 }
 

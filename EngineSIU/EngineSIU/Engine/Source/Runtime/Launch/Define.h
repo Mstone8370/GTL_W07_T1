@@ -462,6 +462,9 @@ struct FLightConstants
     FMatrix LightViewMatrix;
     FMatrix LightProjMatrix;
     
+    FVector LightPosition;
     float ShadowMapSize;
+
+    float LightRange;
     FVector Padding;
 };
