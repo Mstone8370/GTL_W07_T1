@@ -111,7 +111,7 @@ SamplerComparisonState ShadowPCF : register(s13);
 Texture2D ShadowTexture : register(t12); // directional
 Texture2D SpotShadowMap : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
-
+TextureCube<float> Momentum[MAX_POINT_LIGHT] : register(t20); // PointMoment
 int GetCubeFaceIndex(float3 dir)
 {
     float3 a = abs(dir);

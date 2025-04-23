@@ -243,11 +243,11 @@ void UPointLightComponent::CreateShadowMapResources()
     
     // 큐브맵 SRV (픽셀 셰이더 샘플링용)
     D3D11_SHADER_RESOURCE_VIEW_DESC momentSrvDesc = {};
-    srvDesc.Format               = DXGI_FORMAT_R32G32_FLOAT;
-    srvDesc.ViewDimension        = D3D11_SRV_DIMENSION_TEXTURECUBE;
-    srvDesc.TextureCube.MipLevels = -1;  // 모든 레벨(mipmap) 사용
+    momentSrvDesc.Format               = DXGI_FORMAT_R32G32_FLOAT;
+    momentSrvDesc.ViewDimension        = D3D11_SRV_DIMENSION_TEXTURECUBE;
+    momentSrvDesc.TextureCube.MipLevels = -1;  // 모든 레벨(mipmap) 사용
     hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
-        PointMomentCubeTex, &srvDesc, &PointMomentSRV);
+        PointMomentCubeTex, &momentSrvDesc, &PointMomentSRV);
     if (FAILED(hr)) {
         MessageBox(NULL, L"Failed to Moment SRV", L"Error", MB_OK);
     }

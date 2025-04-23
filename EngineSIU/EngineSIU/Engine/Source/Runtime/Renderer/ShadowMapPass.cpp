@@ -62,7 +62,7 @@ void FShadowMapPass::CreateShader()
 void FShadowMapPass::PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     ID3D11VertexShader* VertexShader = ShaderManager->GetVertexShaderByKey(L"ShadowVertexShader");
-    ID3D11PixelShader* PixelShader = ShaderManager->GetPixelShaderByKey(L"ShadowVertexShader");
+    ID3D11PixelShader* PixelShader = ShaderManager->GetPixelShaderByKey(L"ShadowPixelShader");
     ID3D11InputLayout* InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
     
     Graphics->DeviceContext->VSSetShader(VertexShader, nullptr, 0);
@@ -89,11 +89,12 @@ void FShadowMapPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewportClie
 
 void FShadowMapPass::Render_Internal(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
-    bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
-    if (!bShadowOn)
-    {
-        return;
-    }
+    // 이렇게 하면 뎁스스텐실뷰를 지워주지 않아 그림자가 고정된채로 남아있습니다.
+    // bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
+    // if (!bShadowOn)
+    // {
+    //     return;
+    // }
     
     RenderPointLight(Viewport);
     RenderSpotLight(Viewport);
@@ -123,6 +124,7 @@ void FShadowMapPass::SetShadowViewports(float Width, float Height)
 
 void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
     for (auto PointLight : PointLightComponents)
     {
         // Clear DSV
@@ -132,7 +134,7 @@ void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClien
         }
 
         // Check
-        if (!PointLight->IsCastShadows())
+        if (!(PointLight->IsCastShadows() && bShadowOn))
         {
             continue;
         }
@@ -147,16 +149,18 @@ void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClien
         // Render
         for (size_t face = 0; face < 6; ++face)
         {
-            Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, PointLight->PointShadowDSV[face]);
+            Graphics->DeviceContext->OMSetRenderTargets(1, &PointLight->PointMomentRTV[face], PointLight->PointShadowDSV[face]);
             UpdateLightMatrixConstant(PointLight->GetLightViewMatrix()[face], PointLight->GetLightProjectionMatrix(), PointLight->GetShadowResolutionScale());
 
             RenderAllStaticMeshes(Viewport);
         }
+        Graphics->DeviceContext->GenerateMips(PointLight->PointMomentSRV);
     }
 }
 
 void FShadowMapPass::RenderSpotLight(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
     for (auto SpotLight : SpotLightComponents)
     {
         // Clear DSV
@@ -164,7 +168,7 @@ void FShadowMapPass::RenderSpotLight(const std::shared_ptr<FEditorViewportClient
         Graphics->DeviceContext->ClearDepthStencilView(DSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
         // Check
-        if (!SpotLight->IsCastShadows())
+        if (!(SpotLight->IsCastShadows()&& bShadowOn))
         {
             continue;
         }
@@ -185,6 +189,7 @@ void FShadowMapPass::RenderSpotLight(const std::shared_ptr<FEditorViewportClient
 
 void FShadowMapPass::RenderDirectionalLight(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
     for (auto DirLight : DirectionalLightComponents)
     {
         // Clear DSV
@@ -192,7 +197,7 @@ void FShadowMapPass::RenderDirectionalLight(const std::shared_ptr<FEditorViewpor
         Graphics->DeviceContext->ClearDepthStencilView(DepthStencilRHI.DSV, D3D11_CLEAR_DEPTH, 1.0f, 0);
 
         // Check
-        if (!DirLight->IsCastShadows())
+        if (!(DirLight->IsCastShadows() &&  bShadowOn))
         {
             continue;
         }
