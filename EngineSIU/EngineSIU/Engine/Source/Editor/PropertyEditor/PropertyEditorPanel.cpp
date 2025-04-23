@@ -50,464 +50,429 @@ void PropertyEditorPanel::Render()
     /* Render Start */
     ImGui::Begin("Detail", nullptr, PanelFlags);
 
+    RenderDetailPanel();
+    
+    ImGui::End();
+}
 
-
+void PropertyEditorPanel::RenderDetailPanel()
+{
     UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
     if (!Engine)
-        return;
-    AEditorPlayer* player = Engine->GetEditorPlayer();
-    AActor* PickedActor = Engine->GetSelectedActor();
-    if (PickedActor)
     {
-        ImGui::SetItemDefaultFocus();
-        // TreeNode 배경색을 변경 (기본 상태)
-        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-        if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+        return;
+    }
+    
+    AEditorPlayer* Player = Engine->GetEditorPlayer();
+    AActor* PickedActor = Engine->GetSelectedActor();
+    if (!PickedActor)
+    {
+        return;
+    }
+    
+    ImGui::SetItemDefaultFocus();
+    // TreeNode 배경색을 변경 (기본 상태)
+    ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+    if (ImGui::TreeNodeEx("Transform", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+    {
+        Location = PickedActor->GetActorLocation();
+        Rotation = PickedActor->GetActorRotation();
+        Scale = PickedActor->GetActorScale();
+
+        FImGuiWidget::DrawVec3Control("Location", Location, 0, 85);
+        ImGui::Spacing();
+
+        FImGuiWidget::DrawRot3Control("Rotation", Rotation, 0, 85);
+        ImGui::Spacing();
+
+        FImGuiWidget::DrawVec3Control("Scale", Scale, 0, 85);
+        ImGui::Spacing();
+
+        PickedActor->SetActorLocation(Location);
+        PickedActor->SetActorRotation(Rotation);
+        PickedActor->SetActorScale(Scale);
+
+        std::string coordiButtonLabel;
+        if (Player->GetCoordMode() == ECoordMode::CDM_WORLD)
+            coordiButtonLabel = "World";
+        else if (Player->GetCoordMode() == ECoordMode::CDM_LOCAL)
+            coordiButtonLabel = "Local";
+
+        if (ImGui::Button(coordiButtonLabel.c_str(), ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
         {
-            Location = PickedActor->GetActorLocation();
-            Rotation = PickedActor->GetActorRotation();
-            Scale = PickedActor->GetActorScale();
+            Player->AddCoordiMode();
+        }
+        ImGui::TreePop(); // 트리 닫기
+    }
+    ImGui::PopStyleColor();
 
-            FImGuiWidget::DrawVec3Control("Location", Location, 0, 85);
-            ImGui::Spacing();
+    if (ImGui::Button("Duplicate"))
+    {
+        AActor* NewActor = Engine->ActiveWorld->DuplicateActor(Engine->GetSelectedActor());
+        Engine->SelectActor(NewActor);
+    }
 
-            FImGuiWidget::DrawRot3Control("Rotation", Rotation, 0, 85);
-            ImGui::Spacing();
+    //// TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
+    if (UPointLightComponent* PointLightComp = PickedActor->GetComponentByClass<UPointLightComponent>())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
 
-            FImGuiWidget::DrawVec3Control("Scale", Scale, 0, 85);
-            ImGui::Spacing();
+        if (ImGui::TreeNodeEx("PointLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            DrawColorProperty(
+                "Light Color",
+                [&]() { return PointLightComp->GetLightColor(); },
+                [&](FLinearColor c) { PointLightComp->SetLightColor(c); }
+            );
 
-            PickedActor->SetActorLocation(Location);
-            PickedActor->SetActorRotation(Rotation);
-            PickedActor->SetActorScale(Scale);
-
-            std::string coordiButtonLabel;
-            if (player->GetCoordMode() == ECoordMode::CDM_WORLD)
-                coordiButtonLabel = "World";
-            else if (player->GetCoordMode() == ECoordMode::CDM_LOCAL)
-                coordiButtonLabel = "Local";
-
-            if (ImGui::Button(coordiButtonLabel.c_str(), ImVec2(ImGui::GetWindowContentRegionMax().x * 0.9f, 32)))
+            float Intensity = PointLightComp->GetIntensity();
+            if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 160.0f, "%.1f"))
             {
-                player->AddCoordiMode();
+                PointLightComp->SetIntensity(Intensity);
             }
-            ImGui::TreePop(); // 트리 닫기
+
+            float Radius = PointLightComp->GetRadius();
+            if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f"))
+            {
+                PointLightComp->SetRadius(Radius);
+            }
+
+            bool bCastShadow = PointLightComp->IsCastShadows();
+            if (ImGui::Checkbox("Cast Shadow", &bCastShadow))
+            {
+                PointLightComp->SetCastShadows(bCastShadow);
+            }
+            
+            FString Dir[6]= {"X+","X-","Z+","Z-", "Y+","Y-"};
+            for (int Face = 0; Face < 6; ++Face)
+            {
+                ImGui::PushID(Face);
+
+                ImGui::Text("Face %s", *Dir[Face]);
+                // UV 좌표를 뒤집어(depth 텍스처 상 Y축 반전) 제대로 보이게
+                ImGui::Image(
+                    reinterpret_cast<ImTextureID>(PointLightComp->faceSRVs[Face]),
+                    ImVec2(512,512)
+                );   // UV1
+                ImGui::PopID();
+                char label[64];
+                sprintf_s(label, "Override face %d camera with light's perspective", Face);
+                
+                // faceIn
+                FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
+                if (ImGui::Button(label))
+                {
+                    if (Face != 0 and Face != 1)
+                    {
+                        ActiveViewport->PerspectiveCamera.SetRotation(PointLightComp->dirs[Face] * 89.0f);
+                    }
+                    else if (Face == 0)
+                    {
+                        ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.0f, 0.0f, 0.0f));
+                    }
+                    else if (Face == 1)
+                    {
+                        ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.0f, 0.0f, 180.0f));
+                    }
+                    
+                    ActiveViewport->PerspectiveCamera.SetLocation(PointLightComp->GetWorldLocation() +  ActiveViewport->PerspectiveCamera.GetForwardVector()); 
+                }
+            }
+            ImGui::TreePop();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
+    if (USpotLightComponent* SpotLightComp = PickedActor->GetComponentByClass<USpotLightComponent>())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+
+        if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            DrawColorProperty("Light Color",
+                [&]() { return SpotLightComp->GetLightColor(); },
+                [&](FLinearColor c) { SpotLightComp->SetLightColor(c); });
+
+            float Intensity = SpotLightComp->GetIntensity();
+            if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 160.0f, "%.1f"))
+                SpotLightComp->SetIntensity(Intensity);
+
+            float Radius = SpotLightComp->GetRadius();
+            if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
+                SpotLightComp->SetRadius(Radius);
+            }
+
+            LightDirection = SpotLightComp->GetDirection();
+            FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
+            
+            float InnerDegree = SpotLightComp->GetInnerDegree();
+            if (ImGui::SliderFloat("InnerDegree", &InnerDegree, 0.01f, 80.f, "%.1f")) {
+                SpotLightComp->SetInnerDegree(InnerDegree);
+            }
+
+            float OuterDegree = SpotLightComp->GetOuterDegree();
+            if (ImGui::SliderFloat("OuterDegree", &OuterDegree, 0.01f, 80.f, "%.1f")) {
+                SpotLightComp->SetOuterDegree(OuterDegree);
+            }
+            bool bCastShadow = SpotLightComp->IsCastShadows();
+            
+            if (ImGui::Checkbox("Cast Shadow", &bCastShadow)) {
+                SpotLightComp->SetCastShadows(bCastShadow);
+            }
+            
+            const auto& SM = SpotLightComp->GetShadowDepthMap();
+            ID3D11ShaderResourceView* depthSRV = SM.SRV;
+            ID3D11Texture2D* tex = SM.Texture2D;
+            if (depthSRV && tex)
+            {
+                D3D11_TEXTURE2D_DESC desc = {};
+                tex->GetDesc(&desc);
+                float w = (float)desc.Width;
+                float h = (float)desc.Height;
+
+                ImGui::Separator();
+                ImGui::Text("Shadow Depth Map:");
+                ImGui::Image(
+                    (ImTextureID)depthSRV,
+                    ImVec2(200, 200),
+                    ImVec2(0, 1),
+                    ImVec2(1, 0)
+                );
+            }
+            // faceIn
+            FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
+            if (ImGui::Button("Override camera with light's perspective"))
+            {
+                FRotator ViewRotator = SpotLightComp->GetWorldRotation();
+                FVector ForwardVector = ViewRotator.ToVector();
+                ActiveViewport->PerspectiveCamera.SetRotation(FVector(ViewRotator.Roll, ViewRotator.Pitch * -1.f, ViewRotator.Yaw));
+                ActiveViewport->PerspectiveCamera.SetLocation(SpotLightComp->GetWorldLocation() + ForwardVector * 1.5f); 
+            }
+            ImGui::TreePop();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
+    if (UDirectionalLightComponent* DirectionalLightComp = PickedActor->GetComponentByClass<UDirectionalLightComponent>())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+
+        if (ImGui::TreeNodeEx("DirectionalLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            DrawColorProperty("Light Color",
+                [&]() { return DirectionalLightComp->GetLightColor(); },
+                [&](FLinearColor c) { DirectionalLightComp->SetLightColor(c); });
+
+            float Intensity = DirectionalLightComp->GetIntensity();
+            if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 150.0f, "%.1f"))
+                DirectionalLightComp->SetIntensity(Intensity);
+
+            LightDirection = DirectionalLightComp->GetDirection();
+            FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
+
+            bool bCastShadow = DirectionalLightComp->IsCastShadows();
+            
+            if (ImGui::Checkbox("Cast Shadow", &bCastShadow)) {
+                DirectionalLightComp->SetCastShadows(bCastShadow);
+            }
+            
+            ImGui::Image((ImTextureID)DirectionalLightComp->GetShadowDepthMap().SRV, ImVec2(256, 256));
+            ImGui::TreePop();
+        }
+
+        ImGui::PopStyleColor();
+    }
+
+    if (UAmbientLightComponent* AmbientLightComp = PickedActor->GetComponentByClass<UAmbientLightComponent>())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+
+        if (ImGui::TreeNodeEx("AmbientLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            DrawColorProperty("Light Color",
+                [&]() { return AmbientLightComp->GetLightColor(); },
+                [&](FLinearColor c) { AmbientLightComp->SetLightColor(c); });
+            ImGui::TreePop();
+        }
+
+        ImGui::PopStyleColor();
+    }
+    
+    if (UProjectileMovementComponent* ProjectileComp = PickedActor->GetComponentByClass<UProjectileMovementComponent>())
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+
+        if (ImGui::TreeNodeEx("Projectile Movement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+        {
+            float InitialSpeed = ProjectileComp->GetInitialSpeed();
+            if (ImGui::InputFloat("InitialSpeed", &InitialSpeed, 0.f, 10000.0f, "%.1f"))
+                ProjectileComp->SetInitialSpeed(InitialSpeed);
+
+            float MaxSpeed = ProjectileComp->GetMaxSpeed();
+            if (ImGui::InputFloat("MaxSpeed", &MaxSpeed, 0.f, 10000.0f, "%.1f"))
+                ProjectileComp->SetMaxSpeed(MaxSpeed);
+
+            float Gravity = ProjectileComp->GetGravity();
+            if (ImGui::InputFloat("Gravity", &Gravity, 0.f, 10000.f, "%.1f"))
+                ProjectileComp->SetGravity(Gravity); 
+            
+            float ProjectileLifetime = ProjectileComp->GetLifetime();
+            if (ImGui::InputFloat("Lifetime", &ProjectileLifetime, 0.f, 10000.f, "%.1f"))
+                ProjectileComp->SetLifetime(ProjectileLifetime);
+
+            FVector currentVelocity = ProjectileComp->GetVelocity();
+
+            float velocity[3] = { currentVelocity.X, currentVelocity.Y, currentVelocity.Z };
+
+            if (ImGui::InputFloat3("Velocity", velocity, "%.1f")) {
+                ProjectileComp->SetVelocity(FVector(velocity[0], velocity[1], velocity[2]));
+            }
+            
+            ImGui::TreePop();
+        }
+
+        ImGui::PopStyleColor();
+    }
+    
+    if (UTextComponent* TextComp = Cast<UTextComponent>(PickedActor->GetRootComponent()))
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        if (ImGui::TreeNodeEx("Text Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
+        {
+            if (TextComp) {
+                TextComp->SetTexture(L"Assets/Texture/font.png");
+                TextComp->SetRowColumnCount(106, 106);
+                FWString wText = TextComp->GetText();
+                int len = WideCharToMultiByte(CP_UTF8, 0, wText.c_str(), -1, nullptr, 0, nullptr, nullptr);
+                std::string u8Text(len, '\0');
+                WideCharToMultiByte(CP_UTF8, 0, wText.c_str(), -1, u8Text.data(), len, nullptr, nullptr);
+
+                static char buf[256];
+                strcpy_s(buf, u8Text.c_str());
+
+                ImGui::Text("Text: ", buf);
+                ImGui::SameLine();
+                ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
+                if (ImGui::InputText("##Text", buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
+                {
+                    TextComp->ClearText();
+                    int wlen = MultiByteToWideChar(CP_UTF8, 0, buf, -1, nullptr, 0);
+                    FWString newWText(wlen, L'\0');
+                    MultiByteToWideChar(CP_UTF8, 0, buf, -1, newWText.data(), wlen);
+                    TextComp->SetText(newWText.c_str());
+                }
+                ImGui::PopItemFlag();
+            }
+            ImGui::TreePop();
         }
         ImGui::PopStyleColor();
     }
 
-    if (PickedActor)
+    if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PickedActor->GetRootComponent()))
     {
-        if (ImGui::Button("Duplicate"))
-        {
-            UEditorEngine* Engine = Cast<UEditorEngine>(GEngine);
-            AActor* NewActor = Engine->ActiveWorld->DuplicateActor(Engine->GetSelectedActor());
-            Engine->SelectActor(NewActor);
-        }
+        RenderForStaticMesh(StaticMeshComponent);
+        RenderForMaterial(StaticMeshComponent);
     }
 
-    //// TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
-    //if (PickedActor)
-    //    if (ULightComponent* lightObj = PickedActor->GetComponentByClass<ULightComponent>())
-    //    {
-    //        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-
-    //        if (ImGui::TreeNodeEx("Light Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
-    //        {
-    //            /*  DrawColorProperty("Ambient Color",
-    //                  [&]() { return lightObj->GetAmbientColor(); },
-    //                  [&](FVector4 c) { lightObj->SetAmbientColor(c); });
-    //              */
-    //            DrawColorProperty("Base Color",
-    //                [&]() { return lightObj->GetDiffuseColor(); },
-    //                [&](FLinearColor c) { lightObj->SetDiffuseColor(c); });
-
-    //            float Intensity = lightObj->GetIntensity();
-    //            if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 100.0f, "%1.f"))
-    //                lightObj->SetIntensity(Intensity);
-
-    //             /*  
-    //            float falloff = lightObj->GetFalloff();
-    //            if (ImGui::SliderFloat("Falloff", &falloff, 0.1f, 10.0f, "%.2f")) {
-    //                lightObj->SetFalloff(falloff);
-    //            }
-
-    //            TODO : For SpotLight
-    //            */
-
-    //            float attenuation = lightObj->GetAttenuation();
-    //            if (ImGui::SliderFloat("Attenuation", &attenuation, 0.01f, 10000.f, "%.1f")) {
-    //                lightObj->SetAttenuation(attenuation);
-    //            }
-
-    //            float AttenuationRadius = lightObj->GetAttenuationRadius();
-    //            if (ImGui::SliderFloat("Attenuation Radius", &AttenuationRadius, 0.01f, 10000.f, "%.1f")) {
-    //                lightObj->SetAttenuationRadius(AttenuationRadius);
-    //            }
-
-    //            ImGui::TreePop();
-    //        }
-
-    //        ImGui::PopStyleColor();
-    //    }
-
-    if(PickedActor)
-        if (UPointLightComponent* PointLightComp = PickedActor->GetComponentByClass<UPointLightComponent>())
+    if (UHeightFogComponent* FogComponent = Cast<UHeightFogComponent>(PickedActor->GetRootComponent()))
+    {
+        ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+        if (ImGui::TreeNodeEx("Exponential Height Fog", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
         {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+            FLinearColor currColor = FogComponent->GetFogColor();
 
-            if (ImGui::TreeNodeEx("PointLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+            float r = currColor.R;
+            float g = currColor.G;
+            float b = currColor.B;
+            float a = currColor.A;
+            float h, s, v;
+            float lightColor[4] = { r, g, b, a };
+
+            // Fog Color
+            if (ImGui::ColorPicker4("##Fog Color", lightColor,
+                ImGuiColorEditFlags_DisplayRGB |
+                ImGuiColorEditFlags_NoSidePreview |
+                ImGuiColorEditFlags_NoInputs |
+                ImGuiColorEditFlags_Float))
             {
-                DrawColorProperty("Light Color",
-                    [&]() { return PointLightComp->GetLightColor(); },
-                    [&](FLinearColor c) { PointLightComp->SetLightColor(c); });
-
-                float Intensity = PointLightComp->GetIntensity();
-                if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 160.0f, "%.1f"))
-                    PointLightComp->SetIntensity(Intensity);
-
-                float Radius = PointLightComp->GetRadius();
-                if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
-                    PointLightComp->SetRadius(Radius);
-                }
-
-                bool bCastShadow = PointLightComp->IsCastShadows();
-                
-                if (ImGui::Checkbox("Cast Shadow", &bCastShadow)) {
-                    PointLightComp->SetCastShadows(bCastShadow);
-                }
-                
-                FString dir[6]= {"X+","X-","Z+","Z-", "Y+","Y-"};
-                for (int face = 0; face < 6; ++face)
-                {
-                    ImGui::PushID(face);
-
-                    ImGui::Text("Face %s", *dir[face]);
-                    // UV 좌표를 뒤집어(depth 텍스처 상 Y축 반전) 제대로 보이게
-                    ImGui::Image(
-                        (ImTextureID)PointLightComp->faceSRVs[face],
-                        ImVec2(512,512));   // UV1
-                    ImGui::PopID();
-                    char label[64];
-                    sprintf_s(label, "Override face %d camera with light's perspective", face);
-                    
-                        // faceIn
-                    FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
-                    if (ImGui::Button(label))
-                    {
-                        if (face != 0 and face != 1)
-                            ActiveViewport->PerspectiveCamera.SetRotation(PointLightComp->dirs[face] * 89.0f);
-                        else if (face ==0)
-                            ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.0f, 0.0f, 0.0f));
-                        else if (face ==1)
-                            ActiveViewport->PerspectiveCamera.SetRotation(FVector(0.0f, 0.0f, 180.0f));
-                        ActiveViewport->PerspectiveCamera.SetLocation(PointLightComp->GetWorldLocation() +  ActiveViewport->PerspectiveCamera.GetForwardVector()); 
-                    }
-                }
-                ImGui::TreePop();
+                r = lightColor[0];
+                g = lightColor[1];
+                b = lightColor[2];
+                a = lightColor[3];
+                FogComponent->SetFogColor(FLinearColor(r, g, b, a));
             }
+            RGBToHSV(r, g, b, h, s, v);
+            // RGB/HSV
+            bool changedRGB = false;
+            bool changedHSV = false;
 
-            ImGui::PopStyleColor();
-        }
+            // RGB
+            ImGui::PushItemWidth(50.0f);
+            if (ImGui::DragFloat("R##R", &r, 0.001f, 0.f, 1.f)) changedRGB = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("G##G", &g, 0.001f, 0.f, 1.f)) changedRGB = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("B##B", &b, 0.001f, 0.f, 1.f)) changedRGB = true;
+            ImGui::Spacing();
 
-    if(PickedActor)
-        if (USpotLightComponent* SpotLightComp = PickedActor->GetComponentByClass<USpotLightComponent>())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
+            // HSV
+            if (ImGui::DragFloat("H##H", &h, 0.1f, 0.f, 360)) changedHSV = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("S##S", &s, 0.001f, 0.f, 1)) changedHSV = true;
+            ImGui::SameLine();
+            if (ImGui::DragFloat("V##V", &v, 0.001f, 0.f, 1)) changedHSV = true;
+            ImGui::PopItemWidth();
+            ImGui::Spacing();
 
-            if (ImGui::TreeNodeEx("SpotLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
+            if (changedRGB && !changedHSV)
             {
-                DrawColorProperty("Light Color",
-                    [&]() { return SpotLightComp->GetLightColor(); },
-                    [&](FLinearColor c) { SpotLightComp->SetLightColor(c); });
-
-                float Intensity = SpotLightComp->GetIntensity();
-                if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 160.0f, "%.1f"))
-                    SpotLightComp->SetIntensity(Intensity);
-
-                float Radius = SpotLightComp->GetRadius();
-                if (ImGui::SliderFloat("Radius", &Radius, 0.01f, 200.f, "%.1f")) {
-                    SpotLightComp->SetRadius(Radius);
-                }
-
-                LightDirection = SpotLightComp->GetDirection();
-                FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
-                
-                float InnerDegree = SpotLightComp->GetInnerDegree();
-                if (ImGui::SliderFloat("InnerDegree", &InnerDegree, 0.01f, 80.f, "%.1f")) {
-                    SpotLightComp->SetInnerDegree(InnerDegree);
-                }
-
-                float OuterDegree = SpotLightComp->GetOuterDegree();
-                if (ImGui::SliderFloat("OuterDegree", &OuterDegree, 0.01f, 80.f, "%.1f")) {
-                    SpotLightComp->SetOuterDegree(OuterDegree);
-                }
-                bool bCastShadow = SpotLightComp->IsCastShadows();
-                
-                if (ImGui::Checkbox("Cast Shadow", &bCastShadow)) {
-                    SpotLightComp->SetCastShadows(bCastShadow);
-                }
-                
-                const auto& SM = SpotLightComp->GetShadowDepthMap();
-                ID3D11ShaderResourceView* depthSRV = SM.SRV;
-                ID3D11Texture2D* tex = SM.Texture2D;
-                if (depthSRV && tex)
-                {
-                    D3D11_TEXTURE2D_DESC desc = {};
-                    tex->GetDesc(&desc);
-                    float w = (float)desc.Width;
-                    float h = (float)desc.Height;
-
-                    ImGui::Separator();
-                    ImGui::Text("Shadow Depth Map:");
-                    ImGui::Image(
-                        (ImTextureID)depthSRV,
-                        ImVec2(200, 200),
-                        ImVec2(0, 1),
-                        ImVec2(1, 0)
-                    );
-                }
-                // faceIn
-                FEditorViewportClient* ActiveViewport = GEngineLoop.GetLevelEditor()->GetActiveViewportClient().get();
-                if (ImGui::Button("Override camera with light's perspective"))
-                {
-                    ActiveViewport->PerspectiveCamera.SetRotation(SpotLightComp->GetWorldRotation());
-                    ActiveViewport->PerspectiveCamera.SetLocation(SpotLightComp->GetWorldLocation() +  ActiveViewport->PerspectiveCamera.GetForwardVector()*1.5f); 
-                }
-                ImGui::TreePop();
-            }
-
-            ImGui::PopStyleColor();
-        }
-
-    if (PickedActor)
-        if (UDirectionalLightComponent* DirectionalLightComp = PickedActor->GetComponentByClass<UDirectionalLightComponent>())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-
-            if (ImGui::TreeNodeEx("DirectionalLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                DrawColorProperty("Light Color",
-                    [&]() { return DirectionalLightComp->GetLightColor(); },
-                    [&](FLinearColor c) { DirectionalLightComp->SetLightColor(c); });
-
-                float Intensity = DirectionalLightComp->GetIntensity();
-                if (ImGui::SliderFloat("Intensity", &Intensity, 0.0f, 150.0f, "%.1f"))
-                    DirectionalLightComp->SetIntensity(Intensity);
-
-                LightDirection = DirectionalLightComp->GetDirection();
-                FImGuiWidget::DrawVec3Control("Direction", LightDirection, 0, 85);
-
-                bool bCastShadow = DirectionalLightComp->IsCastShadows();
-                
-                if (ImGui::Checkbox("Cast Shadow", &bCastShadow)) {
-                    DirectionalLightComp->SetCastShadows(bCastShadow);
-                }
-                
-                ImGui::Image((ImTextureID)DirectionalLightComp->GetShadowDepthMap().SRV, ImVec2(256, 256));
-                ImGui::TreePop();
-            }
-
-            ImGui::PopStyleColor();
-        }
-
-    if(PickedActor)
-        if (UAmbientLightComponent* AmbientLightComp = PickedActor->GetComponentByClass<UAmbientLightComponent>())
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-
-            if (ImGui::TreeNodeEx("AmbientLight Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                DrawColorProperty("Light Color",
-                    [&]() { return AmbientLightComp->GetLightColor(); },
-                    [&](FLinearColor c) { AmbientLightComp->SetLightColor(c); });
-                ImGui::TreePop();
-            }
-
-            ImGui::PopStyleColor();
-        }
-
-    if (PickedActor)
-        if (UProjectileMovementComponent* ProjectileComp = (PickedActor->GetComponentByClass<UProjectileMovementComponent>()))
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-
-            if (ImGui::TreeNodeEx("Projectile Movement Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen))
-            {
-                float InitialSpeed = ProjectileComp->GetInitialSpeed();
-                if (ImGui::InputFloat("InitialSpeed", &InitialSpeed, 0.f, 10000.0f, "%.1f"))
-                    ProjectileComp->SetInitialSpeed(InitialSpeed);
-
-                float MaxSpeed = ProjectileComp->GetMaxSpeed();
-                if (ImGui::InputFloat("MaxSpeed", &MaxSpeed, 0.f, 10000.0f, "%.1f"))
-                    ProjectileComp->SetMaxSpeed(MaxSpeed);
-
-                float Gravity = ProjectileComp->GetGravity();
-                if (ImGui::InputFloat("Gravity", &Gravity, 0.f, 10000.f, "%.1f"))
-                    ProjectileComp->SetGravity(Gravity); 
-                
-                float ProjectileLifetime = ProjectileComp->GetLifetime();
-                if (ImGui::InputFloat("Lifetime", &ProjectileLifetime, 0.f, 10000.f, "%.1f"))
-                    ProjectileComp->SetLifetime(ProjectileLifetime);
-
-                FVector currentVelocity = ProjectileComp->GetVelocity();
-
-                float velocity[3] = { currentVelocity.X, currentVelocity.Y, currentVelocity.Z };
-
-                if (ImGui::InputFloat3("Velocity", velocity, "%.1f")) {
-                    ProjectileComp->SetVelocity(FVector(velocity[0], velocity[1], velocity[2]));
-                }
-                
-                ImGui::TreePop();
-            }
-
-            ImGui::PopStyleColor();
-        }
-    // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
-    if (PickedActor)
-        if (UTextComponent* TextComp = Cast<UTextComponent>(PickedActor->GetRootComponent()))
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-            if (ImGui::TreeNodeEx("Text Component", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
-            {
-                if (TextComp) {
-                    TextComp->SetTexture(L"Assets/Texture/font.png");
-                    TextComp->SetRowColumnCount(106, 106);
-                    FWString wText = TextComp->GetText();
-                    int len = WideCharToMultiByte(CP_UTF8, 0, wText.c_str(), -1, nullptr, 0, nullptr, nullptr);
-                    std::string u8Text(len, '\0');
-                    WideCharToMultiByte(CP_UTF8, 0, wText.c_str(), -1, u8Text.data(), len, nullptr, nullptr);
-
-                    static char buf[256];
-                    strcpy_s(buf, u8Text.c_str());
-
-                    ImGui::Text("Text: ", buf);
-                    ImGui::SameLine();
-                    ImGui::PushItemFlag(ImGuiItemFlags_NoNavDefaultFocus, true);
-                    if (ImGui::InputText("##Text", buf, 256, ImGuiInputTextFlags_EnterReturnsTrue))
-                    {
-                        TextComp->ClearText();
-                        int wlen = MultiByteToWideChar(CP_UTF8, 0, buf, -1, nullptr, 0);
-                        FWString newWText(wlen, L'\0');
-                        MultiByteToWideChar(CP_UTF8, 0, buf, -1, newWText.data(), wlen);
-                        TextComp->SetText(newWText.c_str());
-                    }
-                    ImGui::PopItemFlag();
-                }
-                ImGui::TreePop();
-            }
-            ImGui::PopStyleColor();
-        }
-
-    // TODO: 추후에 RTTI를 이용해서 프로퍼티 출력하기
-    if (PickedActor)
-        if (UStaticMeshComponent* StaticMeshComponent = Cast<UStaticMeshComponent>(PickedActor->GetRootComponent()))
-        {
-            RenderForStaticMesh(StaticMeshComponent);
-            RenderForMaterial(StaticMeshComponent);
-        }
-
-    if (PickedActor)
-        if (UHeightFogComponent* FogComponent = Cast<UHeightFogComponent>(PickedActor->GetRootComponent()))
-        {
-            ImGui::PushStyleColor(ImGuiCol_Header, ImVec4(0.1f, 0.1f, 0.1f, 1.0f));
-            if (ImGui::TreeNodeEx("Exponential Height Fog", ImGuiTreeNodeFlags_Framed | ImGuiTreeNodeFlags_DefaultOpen)) // 트리 노드 생성
-            {
-                FLinearColor currColor = FogComponent->GetFogColor();
-
-                float r = currColor.R;
-                float g = currColor.G;
-                float b = currColor.B;
-                float a = currColor.A;
-                float h, s, v;
-                float lightColor[4] = { r, g, b, a };
-
-                // Fog Color
-                if (ImGui::ColorPicker4("##Fog Color", lightColor,
-                    ImGuiColorEditFlags_DisplayRGB |
-                    ImGuiColorEditFlags_NoSidePreview |
-                    ImGuiColorEditFlags_NoInputs |
-                    ImGuiColorEditFlags_Float))
-
-                {
-
-                    r = lightColor[0];
-                    g = lightColor[1];
-                    b = lightColor[2];
-                    a = lightColor[3];
-                    FogComponent->SetFogColor(FLinearColor(r, g, b, a));
-                }
+                // RGB -> HSV
                 RGBToHSV(r, g, b, h, s, v);
-                // RGB/HSV
-                bool changedRGB = false;
-                bool changedHSV = false;
-
-                // RGB
-                ImGui::PushItemWidth(50.0f);
-                if (ImGui::DragFloat("R##R", &r, 0.001f, 0.f, 1.f)) changedRGB = true;
-                ImGui::SameLine();
-                if (ImGui::DragFloat("G##G", &g, 0.001f, 0.f, 1.f)) changedRGB = true;
-                ImGui::SameLine();
-                if (ImGui::DragFloat("B##B", &b, 0.001f, 0.f, 1.f)) changedRGB = true;
-                ImGui::Spacing();
-
-                // HSV
-                if (ImGui::DragFloat("H##H", &h, 0.1f, 0.f, 360)) changedHSV = true;
-                ImGui::SameLine();
-                if (ImGui::DragFloat("S##S", &s, 0.001f, 0.f, 1)) changedHSV = true;
-                ImGui::SameLine();
-                if (ImGui::DragFloat("V##V", &v, 0.001f, 0.f, 1)) changedHSV = true;
-                ImGui::PopItemWidth();
-                ImGui::Spacing();
-
-                if (changedRGB && !changedHSV)
-                {
-                    // RGB -> HSV
-                    RGBToHSV(r, g, b, h, s, v);
-                    FogComponent->SetFogColor(FLinearColor(r, g, b, a));
-                }
-                else if (changedHSV && !changedRGB)
-                {
-                    // HSV -> RGB
-                    HSVToRGB(h, s, v, r, g, b);
-                    FogComponent->SetFogColor(FLinearColor(r, g, b, a));
-                }
-
-                float FogDensity = FogComponent->GetFogDensity();
-                if (ImGui::SliderFloat("Density", &FogDensity, 0.00f, 3.0f))
-                {
-                    FogComponent->SetFogDensity(FogDensity);
-                }
-
-                float FogDistanceWeight = FogComponent->GetFogDistanceWeight();
-                if (ImGui::SliderFloat("Distance Weight", &FogDistanceWeight, 0.00f, 3.0f))
-                {
-                    FogComponent->SetFogDistanceWeight(FogDistanceWeight);
-                }
-
-                float FogHeightFallOff = FogComponent->GetFogHeightFalloff();
-                if (ImGui::SliderFloat("Height Fall Off", &FogHeightFallOff, 0.001f, 0.15f))
-                {
-                    FogComponent->SetFogHeightFalloff(FogHeightFallOff);
-                }
-
-                float FogStartDistance = FogComponent->GetStartDistance();
-                if (ImGui::SliderFloat("Start Distance", &FogStartDistance, 0.00f, 50.0f))
-                {
-                    FogComponent->SetStartDistance(FogStartDistance);
-                }
-
-                float FogEndtDistance = FogComponent->GetEndDistance();
-                if (ImGui::SliderFloat("End Distance", &FogEndtDistance, 0.00f, 50.0f))
-                {
-                    FogComponent->SetEndDistance(FogEndtDistance);
-                }
-
-                ImGui::TreePop();
+                FogComponent->SetFogColor(FLinearColor(r, g, b, a));
             }
-            ImGui::PopStyleColor();
+            else if (changedHSV && !changedRGB)
+            {
+                // HSV -> RGB
+                HSVToRGB(h, s, v, r, g, b);
+                FogComponent->SetFogColor(FLinearColor(r, g, b, a));
+            }
+
+            float FogDensity = FogComponent->GetFogDensity();
+            if (ImGui::SliderFloat("Density", &FogDensity, 0.00f, 3.0f))
+            {
+                FogComponent->SetFogDensity(FogDensity);
+            }
+
+            float FogDistanceWeight = FogComponent->GetFogDistanceWeight();
+            if (ImGui::SliderFloat("Distance Weight", &FogDistanceWeight, 0.00f, 3.0f))
+            {
+                FogComponent->SetFogDistanceWeight(FogDistanceWeight);
+            }
+
+            float FogHeightFallOff = FogComponent->GetFogHeightFalloff();
+            if (ImGui::SliderFloat("Height Fall Off", &FogHeightFallOff, 0.001f, 0.15f))
+            {
+                FogComponent->SetFogHeightFalloff(FogHeightFallOff);
+            }
+
+            float FogStartDistance = FogComponent->GetStartDistance();
+            if (ImGui::SliderFloat("Start Distance", &FogStartDistance, 0.00f, 50.0f))
+            {
+                FogComponent->SetStartDistance(FogStartDistance);
+            }
+
+            float FogEndtDistance = FogComponent->GetEndDistance();
+            if (ImGui::SliderFloat("End Distance", &FogEndtDistance, 0.00f, 50.0f))
+            {
+                FogComponent->SetEndDistance(FogEndtDistance);
+            }
+
+            ImGui::TreePop();
         }
-    ImGui::End();
+        ImGui::PopStyleColor();
+    }
 }
 
 void PropertyEditorPanel::RGBToHSV(float r, float g, float b, float& h, float& s, float& v) const
@@ -657,8 +622,9 @@ void PropertyEditorPanel::RenderForMaterial(UStaticMeshComponent* StaticMeshComp
             }
         }
 
-        if (ImGui::Button("    +    ")) {
-            IsCreateMaterial = true;
+        if (ImGui::Button("    +    "))
+        {
+            bIsCreateMaterial = true;
         }
 
         ImGui::TreePop();
@@ -695,7 +661,8 @@ void PropertyEditorPanel::RenderForMaterial(UStaticMeshComponent* StaticMeshComp
     {
         RenderMaterialView(SelectedStaticMeshComp->GetMaterial(SelectedMaterialIndex));
     }
-    if (IsCreateMaterial) {
+    if (bIsCreateMaterial)
+    {
         RenderCreateMaterialView();
     }
 }
@@ -744,8 +711,7 @@ void PropertyEditorPanel::RenderMaterialView(UMaterial* Material)
         FVector NewColor = { SpecularColorPick[0], SpecularColorPick[1], SpecularColorPick[2] };
         Material->SetSpecular(NewColor);
     }
-
-
+    
     float ar = MatAmbientColor.X;
     float ag = MatAmbientColor.Y;
     float ab = MatAmbientColor.Z;
@@ -759,7 +725,6 @@ void PropertyEditorPanel::RenderMaterialView(UMaterial* Material)
         FVector NewColor = { AmbientColorPick[0], AmbientColorPick[1], AmbientColorPick[2] };
         Material->SetAmbient(NewColor);
     }
-
 
     float er = MatEmissiveColor.X;
     float eg = MatEmissiveColor.Y;
@@ -790,7 +755,8 @@ void PropertyEditorPanel::RenderMaterialView(UMaterial* Material)
     ImGui::SetNextItemWidth(160);
     // 메테리얼 이름 목록을 const char* 배열로 변환
     std::vector<const char*> materialChars;
-    for (const auto& material : FObjManager::GetMaterials()) {
+    for (const auto& material : FObjManager::GetMaterials())
+    {
         materialChars.push_back(*material.Value->GetMaterialInfo().MaterialName);
     }
 
@@ -798,7 +764,8 @@ void PropertyEditorPanel::RenderMaterialView(UMaterial* Material)
     //if (currentMaterialIndex >= FManagerOBJ::GetMaterialNum())
     //    currentMaterialIndex = 0;
 
-    if (ImGui::Combo("##MaterialDropdown", &CurMaterialIndex, materialChars.data(), FObjManager::GetMaterialNum())) {
+    if (ImGui::Combo("##MaterialDropdown", &CurMaterialIndex, materialChars.data(), FObjManager::GetMaterialNum()))
+    {
         UMaterial* material = FObjManager::GetMaterial(materialChars[CurMaterialIndex]);
         SelectedStaticMeshComp->SetMaterial(SelectedMaterialIndex, material);
     }
@@ -824,14 +791,15 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     static char materialName[256] = "New Material";
     // 기본 텍스트 입력 필드
     ImGui::SetNextItemWidth(128);
-    if (ImGui::InputText("##NewName", materialName, IM_ARRAYSIZE(materialName))) {
-        tempMaterialInfo.MaterialName = materialName;
+    if (ImGui::InputText("##NewName", materialName, IM_ARRAYSIZE(materialName)))
+    {
+        TempMaterialInfo.MaterialName = materialName;
     }
 
-    FVector MatDiffuseColor = tempMaterialInfo.DiffuseColor;
-    FVector MatSpecularColor = tempMaterialInfo.SpecularColor;
-    FVector MatAmbientColor = tempMaterialInfo.AmbientColor;
-    FVector MatEmissiveColor = tempMaterialInfo.EmissiveColor;
+    FVector MatDiffuseColor = TempMaterialInfo.DiffuseColor;
+    FVector MatSpecularColor = TempMaterialInfo.SpecularColor;
+    FVector MatAmbientColor = TempMaterialInfo.AmbientColor;
+    FVector MatEmissiveColor = TempMaterialInfo.EmissiveColor;
 
     float dr = MatDiffuseColor.X;
     float dg = MatDiffuseColor.Y;
@@ -847,7 +815,7 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Diffuse##Color", (float*)&DiffuseColorPick, BaseFlag))
     {
         FVector NewColor = { DiffuseColorPick[0], DiffuseColorPick[1], DiffuseColorPick[2] };
-        tempMaterialInfo.DiffuseColor = NewColor;
+        TempMaterialInfo.DiffuseColor = NewColor;
     }
 
     float sr = MatSpecularColor.X;
@@ -861,9 +829,8 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Specular##Color", (float*)&SpecularColorPick, BaseFlag))
     {
         FVector NewColor = { SpecularColorPick[0], SpecularColorPick[1], SpecularColorPick[2] };
-        tempMaterialInfo.SpecularColor = NewColor;
+        TempMaterialInfo.SpecularColor = NewColor;
     }
-
 
     float ar = MatAmbientColor.X;
     float ag = MatAmbientColor.Y;
@@ -876,9 +843,8 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Ambient##Color", (float*)&AmbientColorPick, BaseFlag))
     {
         FVector NewColor = { AmbientColorPick[0], AmbientColorPick[1], AmbientColorPick[2] };
-        tempMaterialInfo.AmbientColor = NewColor;
+        TempMaterialInfo.AmbientColor = NewColor;
     }
-
 
     float er = MatEmissiveColor.X;
     float eg = MatEmissiveColor.Y;
@@ -891,19 +857,20 @@ void PropertyEditorPanel::RenderCreateMaterialView()
     if (ImGui::ColorEdit4("Emissive##Color", (float*)&EmissiveColorPick, BaseFlag))
     {
         FVector NewColor = { EmissiveColorPick[0], EmissiveColorPick[1], EmissiveColorPick[2] };
-        tempMaterialInfo.EmissiveColor = NewColor;
+        TempMaterialInfo.EmissiveColor = NewColor;
     }
     ImGui::Unindent();
 
     ImGui::NewLine();
-    if (ImGui::Button("Create Material")) {
-        FObjManager::CreateMaterial(tempMaterialInfo);
+    if (ImGui::Button("Create Material"))
+    {
+        FObjManager::CreateMaterial(TempMaterialInfo);
     }
 
     ImGui::NewLine();
     if (ImGui::Button("Close"))
     {
-        IsCreateMaterial = false;
+        bIsCreateMaterial = false;
     }
 
     ImGui::End();
@@ -911,8 +878,8 @@ void PropertyEditorPanel::RenderCreateMaterialView()
 
 void PropertyEditorPanel::OnResize(HWND hWnd)
 {
-    RECT clientRect;
-    GetClientRect(hWnd, &clientRect);
-    Width = clientRect.right - clientRect.left;
-    Height = clientRect.bottom - clientRect.top;
+    RECT ClientRect;
+    GetClientRect(hWnd, &ClientRect);
+    Width = ClientRect.right - ClientRect.left;
+    Height = ClientRect.bottom - ClientRect.top;
 }

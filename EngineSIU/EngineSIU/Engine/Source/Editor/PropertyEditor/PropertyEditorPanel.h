@@ -32,11 +32,12 @@ public:
     virtual void Render() override;
     virtual void OnResize(HWND hWnd) override;
 
-
 private:
     void RGBToHSV(float r, float g, float b, float& h, float& s, float& v) const;
     void HSVToRGB(float h, float s, float v, float& r, float& g, float& b) const;
 
+    void RenderDetailPanel();
+    
     /* Static Mesh Settings */
     void RenderForStaticMesh(UStaticMeshComponent* StaticMeshComp) const;
     
@@ -44,6 +45,7 @@ private:
     void RenderForMaterial(UStaticMeshComponent* StaticMeshComp);
     void RenderMaterialView(UMaterial* Material);
     void RenderCreateMaterialView();
+    
 private:
     float Width = 0, Height = 0;
     FVector Location = FVector(0, 0, 0);
@@ -54,6 +56,6 @@ private:
     int SelectedMaterialIndex = -1;
     int CurMaterialIndex = -1;
     UStaticMeshComponent* SelectedStaticMeshComp = nullptr;
-    FObjMaterialInfo tempMaterialInfo;
-    bool IsCreateMaterial;
+    FObjMaterialInfo TempMaterialInfo = {};
+    bool bIsCreateMaterial = false;
 };
