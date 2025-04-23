@@ -131,11 +131,11 @@ void FGraphicsDevice::CreateRasterizerState()
     
     RasterizerDesc.FillMode = D3D11_FILL_SOLID;
     RasterizerDesc.CullMode = D3D11_CULL_NONE;
-    // RasterizerDesc.DepthBias = 3;
-    // RasterizerDesc.SlopeScaledDepthBias = 3;
-    RasterizerDesc.DepthBias            = 100;            // 상수 바이어스
-    RasterizerDesc.SlopeScaledDepthBias = 1.5f;           // 경사 바이어스
-    RasterizerDesc.DepthBiasClamp       = 0.0f;
+    RasterizerDesc.DepthBias = 3;
+    RasterizerDesc.SlopeScaledDepthBias = 3;
+    // RasterizerDesc.DepthBias            = 100;            // 상수 바이어스
+    // RasterizerDesc.SlopeScaledDepthBias = 1.5f;           // 경사 바이어스
+    // RasterizerDesc.DepthBiasClamp       = 0.0f;
     Device->CreateRasterizerState(&RasterizerDesc, &RasterizerShadowMap);
 }
 

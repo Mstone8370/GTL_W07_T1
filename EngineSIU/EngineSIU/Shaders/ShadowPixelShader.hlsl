@@ -17,17 +17,15 @@ cbuffer LightConstants : register(b0)
 
 float4 mainPS(VS_OUTPUT Input) : SV_TARGET
 {
-    float depth = Input.Position.z / Input.Position.w;
-    
-    return float4(depth, depth * depth,0.0f,0.0f);
-    // (A) world-space 거리 (0 ~ LightRange 사이)
-    // float dist     = distance(Input.WorldPosition, LightPosition);
-    // // float d01     = saturate(dist / 25);  
-    //
-    // // (B) 1차/2차 모멘트
-    // float moment1  = dist;
-    // float moment2  = dist * dist;
-    //
-    // // (C) 4채널 리턴, .xy 에만 기록
-    // return float4(moment1, moment2, 0.0f, 0.0f);
+    // 1) 월드 좌표
+    float3 worldPos = Input.WorldPosition.xyz;
+
+    // 2) 라이트까지 거리
+    float  dist  = distance(worldPos, LightPosition);
+
+    // 3) 0~1 정규화
+    float  d01   = saturate(dist / LightRange);
+
+    // 4) 모멘트 저장 (R=mean, G=mean²)
+    return float4(d01, d01*d01, 0.0f, 0.0f);
 }

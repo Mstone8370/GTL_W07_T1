@@ -271,6 +271,7 @@ void FStaticMeshRenderPass::UpdateShadowConstant()
         MomentCubeSRV.Add(light->PointMomentSRV);
         PCFSampler = light->PointShadowComparisonSampler;
         VSMSampler = light->PointShadowVSMSampler;
+        Graphics->DeviceContext->GenerateMips(light->PointMomentSRV);
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());     
     Graphics->DeviceContext->PSSetShaderResources(20, MomentCubeSRV.Num(), MomentCubeSRV.GetData());     
