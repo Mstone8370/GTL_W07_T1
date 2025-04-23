@@ -157,6 +157,7 @@ void UPointLightComponent::CreateShadowMapResources()
         dsvDesc.Texture2DArray.ArraySize       = 1;
         GEngineLoop.GraphicDevice.Device->CreateDepthStencilView(PointDepthCubeTex, &dsvDesc, &PointShadowDSV[i]);
     }
+
     // Texture Cube SRV
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format         = DXGI_FORMAT_R32_FLOAT;            // 원본은 R32_TYPELESS → 쉐이더에서 float 로 읽음
@@ -213,17 +214,16 @@ void UPointLightComponent::CreateShadowMapResources()
     D3D11_TEXTURE2D_DESC momentTexDesc = {};
     momentTexDesc.Width         = static_cast<UINT>(ShadowResolutionScale);
     momentTexDesc.Height        = static_cast<UINT>(ShadowResolutionScale);
-    momentTexDesc.MipLevels     = 0;                         // mipmap 안 쓸 거면 1
-    momentTexDesc.ArraySize     = 6;                         // 큐브맵 6면
-    momentTexDesc.Format        = DXGI_FORMAT_R32G32_FLOAT;  // 2채널(1차,2차)
+    momentTexDesc.MipLevels     = 1;                          // ← 0 → 1
+    momentTexDesc.ArraySize     = 6;
+    momentTexDesc.Format        = DXGI_FORMAT_R32G32_FLOAT;
     momentTexDesc.SampleDesc    = { 1, 0 };
     momentTexDesc.Usage         = D3D11_USAGE_DEFAULT;
-    momentTexDesc.BindFlags     = D3D11_BIND_RENDER_TARGET   // RTV로 쓰고
-                                | D3D11_BIND_SHADER_RESOURCE; // SRV로도 씀
-    momentTexDesc.MiscFlags     = D3D11_RESOURCE_MISC_TEXTURECUBE; 
+    momentTexDesc.BindFlags     = D3D11_BIND_RENDER_TARGET
+                                | D3D11_BIND_SHADER_RESOURCE;
+    momentTexDesc.MiscFlags     = D3D11_RESOURCE_MISC_TEXTURECUBE;
 
-    hr = GEngineLoop.GraphicDevice.Device
-                    ->CreateTexture2D(&momentTexDesc, nullptr, &PointMomentCubeTex);
+    hr = GEngineLoop.GraphicDevice.Device->CreateTexture2D(&momentTexDesc, nullptr, &PointMomentCubeTex);
     if (FAILED(hr)) {
         MessageBox(NULL, L"Failed to create Moment Texture", L"Error", MB_OK);
     }
@@ -240,16 +240,50 @@ void UPointLightComponent::CreateShadowMapResources()
             MessageBox(NULL, L"Failed to Moment RTV", L"Error", MB_OK);
         }
     }
-    
+
     // 큐브맵 SRV (픽셀 셰이더 샘플링용)
     D3D11_SHADER_RESOURCE_VIEW_DESC momentSrvDesc = {};
-    momentSrvDesc.Format               = DXGI_FORMAT_R32G32_FLOAT;
-    momentSrvDesc.ViewDimension        = D3D11_SRV_DIMENSION_TEXTURECUBE;
-    momentSrvDesc.TextureCube.MipLevels = -1;  // 모든 레벨(mipmap) 사용
-    hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
-        PointMomentCubeTex, &momentSrvDesc, &PointMomentSRV);
+    momentSrvDesc.Format              = DXGI_FORMAT_R32G32_FLOAT;
+    momentSrvDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURECUBE;
+    momentSrvDesc.TextureCube.MostDetailedMip = 0;
+    momentSrvDesc.TextureCube.MipLevels       = 1;          // ← -1 → 1
+
+    hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(PointMomentCubeTex, &momentSrvDesc, &PointMomentSRV);
+
     if (FAILED(hr)) {
         MessageBox(NULL, L"Failed to Moment SRV", L"Error", MB_OK);
+    }
+
+    D3D11_SAMPLER_DESC sd = {};
+    sd.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+
+    sd.AddressU       = D3D11_TEXTURE_ADDRESS_BORDER;
+    sd.AddressV       = D3D11_TEXTURE_ADDRESS_BORDER;
+    sd.AddressW       = D3D11_TEXTURE_ADDRESS_BORDER;
+    sd.BorderColor[0] = 1.0f;
+    sd.BorderColor[1] = 1.0f;
+    sd.BorderColor[2] = 1.0f;
+    sd.BorderColor[3] = 1.0f;
+    sd.MinLOD         = 0;
+    sd.MaxLOD         = 0;               // ← MaxLOD도 0으로!
+    sd.MipLODBias     = 0;
+    sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+    GEngineLoop.GraphicDevice.Device->CreateSamplerState(&sd, &PointShadowVSMSampler);
+
+    // 3) 픽셀 셰이더에 바인딩 (예: t5, s5 사용 시)
+    for(int face = 0; face < 6; ++face) {
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.Format                    = DXGI_FORMAT_R32G32_FLOAT;  
+        srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+        srvDesc.Texture2DArray.MostDetailedMip = 0;
+        srvDesc.Texture2DArray.MipLevels       = 1;                // ← 1 레벨만
+        srvDesc.Texture2DArray.FirstArraySlice = face;
+        srvDesc.Texture2DArray.ArraySize       = 1;
+        GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(PointMomentCubeTex, &srvDesc, &faceMomentSRVs[face]);
+        if (FAILED(hr)) {
+            MessageBox(NULL, L"Failed to create SRV", L"Error", MB_OK);
+        }
     }
 }
 

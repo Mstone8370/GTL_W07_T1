@@ -261,6 +261,8 @@ void FStaticMeshRenderPass::UpdateShadowConstant()
     TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
     TArray<ID3D11ShaderResourceView*> MomentCubeSRV;
     ID3D11SamplerState* PCFSampler = nullptr;
+    ID3D11SamplerState* VSMSampler = nullptr;
+
     TArray<UPointLightComponent*> PointLights;
     for (auto light :  TObjectRange<UPointLightComponent>())
     {
@@ -268,9 +270,12 @@ void FStaticMeshRenderPass::UpdateShadowConstant()
         ShadowCubeSRV.Add(light->PointShadowSRV);
         MomentCubeSRV.Add(light->PointMomentSRV);
         PCFSampler = light->PointShadowComparisonSampler;
+        VSMSampler = light->PointShadowVSMSampler;
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());     
     Graphics->DeviceContext->PSSetShaderResources(20, MomentCubeSRV.Num(), MomentCubeSRV.GetData());     
     Graphics->DeviceContext->PSSetSamplers(13, 1, &PCFSampler);
+    Graphics->DeviceContext->PSSetSamplers(14, 1, &VSMSampler);
+
 }
 

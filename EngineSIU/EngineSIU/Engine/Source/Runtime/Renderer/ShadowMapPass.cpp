@@ -101,14 +101,17 @@ void FShadowMapPass::Render_Internal(const std::shared_ptr<FEditorViewportClient
     RenderDirectionalLight(Viewport);
 }
 
-void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const float ShadowMapSize)
+void FShadowMapPass::UpdateLightMatrixConstant(const FMatrix& LightView, const FMatrix& LightProjection, const FVector LightPos, const float ShadowMapSize, const float LightRange)
 {
     FLightConstants ObjectData = {};
     ObjectData.LightViewMatrix = LightView;
     ObjectData.LightProjMatrix = LightProjection;
+    ObjectData.LightPosition = LightPos;
     ObjectData.ShadowMapSize = ShadowMapSize;
+    ObjectData.LightRange = LightRange;
     
     BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 0, EShaderStage::Vertex);
+    BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 0, EShaderStage::Pixel);
     BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), ObjectData);
 }
 
@@ -125,12 +128,14 @@ void FShadowMapPass::SetShadowViewports(float Width, float Height)
 void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
+    FLOAT ClearColor[4] = { -1.0f, 1.0f, 0.0f, 0.0f }; 
     for (auto PointLight : PointLightComponents)
     {
         // Clear DSV
         for (int i = 0; i < 6; ++i)
         {
             Graphics->DeviceContext->ClearDepthStencilView(PointLight->PointShadowDSV[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
+            Graphics->DeviceContext->ClearRenderTargetView(PointLight->PointMomentRTV[i], ClearColor);
         }
 
         // Check
@@ -150,11 +155,10 @@ void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClien
         for (size_t face = 0; face < 6; ++face)
         {
             Graphics->DeviceContext->OMSetRenderTargets(1, &PointLight->PointMomentRTV[face], PointLight->PointShadowDSV[face]);
-            UpdateLightMatrixConstant(PointLight->GetLightViewMatrix()[face], PointLight->GetLightProjectionMatrix(), PointLight->GetShadowResolutionScale());
+            UpdateLightMatrixConstant(PointLight->GetLightViewMatrix()[face], PointLight->GetLightProjectionMatrix(),PointLight->GetWorldLocation(), PointLight->GetShadowResolutionScale(),PointLight->GetRadius());
 
             RenderAllStaticMeshes(Viewport);
         }
-        Graphics->DeviceContext->GenerateMips(PointLight->PointMomentSRV);
     }
 }
 
@@ -178,7 +182,7 @@ void FShadowMapPass::RenderSpotLight(const std::shared_ptr<FEditorViewportClient
         Graphics->DeviceContext->RSSetViewports(1, &ShadowViewport);
         
         // Update
-        UpdateLightMatrixConstant(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix(), SpotLight->GetShadowResolutionScale());
+        UpdateLightMatrixConstant(SpotLight->GetLightViewMatrix(), SpotLight->GetLightProjectionMatrix(),SpotLight->GetWorldLocation(), SpotLight->GetShadowResolutionScale(),1.0f);
 
         // Render
         Graphics->DeviceContext->OMSetRenderTargets(0, nullptr, DSV);
@@ -210,7 +214,8 @@ void FShadowMapPass::RenderDirectionalLight(const std::shared_ptr<FEditorViewpor
         UpdateLightMatrixConstant(
             DirLight->GetLightViewMatrix(Viewport->GetCameraLocation()),
             DirLight->GetLightProjMatrix(),
-            DirLight->GetShadowResolutionScale()
+            DirLight->GetWorldLocation(),
+            DirLight->GetShadowResolutionScale(),1.0f
         );
 
         // Render

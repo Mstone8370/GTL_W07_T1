@@ -177,7 +177,7 @@ void PropertyEditorPanel::Render()
                     PointLightComp->SetCastShadows(bCastShadow);
                 }
                 
-                FString dir[6]= {"X+","X-","Z+","Z-", "Y+","Y-"};
+                FString dir[6]= {"X+","X-","Y+","Y-", "Z+","Z-"};
                 for (int face = 0; face < 6; ++face)
                 {
                     ImGui::PushID(face);
@@ -186,6 +186,9 @@ void PropertyEditorPanel::Render()
                     // UV 좌표를 뒤집어(depth 텍스처 상 Y축 반전) 제대로 보이게
                     ImGui::Image(
                         (ImTextureID)PointLightComp->faceSRVs[face],
+                        ImVec2(512,512));   // UV1
+                    ImGui::Image(
+                        (ImTextureID)PointLightComp->faceMomentSRVs[face],
                         ImVec2(512,512));   // UV1
                     ImGui::PopID();
                     char label[64];

@@ -43,11 +43,15 @@ public:
 
     ID3D11ShaderResourceView*  PointShadowSRV = NULL;
     ID3D11ShaderResourceView*  faceSRVs[6] = {};
+    ID3D11ShaderResourceView*  faceMomentSRVs[6] = {};
     ID3D11ShaderResourceView*  PointMomentSRV = NULL;
     ID3D11DepthStencilView*    PointShadowDSV[6];
+    
     ID3D11RenderTargetView*    PointMomentRTV[6];
     
     ID3D11SamplerState*        PointShadowComparisonSampler = NULL;
+    ID3D11SamplerState*        PointShadowVSMSampler = NULL;
+
     ID3D11Buffer*              PointCBLightBuffer = NULL;
     ID3D11RasterizerState*     PointShadowRasterizerState = NULL;
     ID3D11VertexShader*        PointShadowVertexShader = NULL;

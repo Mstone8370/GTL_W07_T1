@@ -107,6 +107,8 @@ StructuredBuffer<LightPerTiles> gLightPerTiles : register(t60);
 
 // Begin Shadow
 SamplerComparisonState ShadowPCF : register(s13);
+SamplerState VsmSampler : register(s14);
+
 
 Texture2D ShadowTexture : register(t12); // directional
 Texture2D SpotShadowMap : register(t13);    // spot
@@ -121,7 +123,43 @@ int GetCubeFaceIndex(float3 dir)
 }
 
 static const float SHADOW_BIAS = 0.01;
+float VSM_Shadow(float2 moments, float depthRef)
+{
+    float E  = moments.x; // E[X]
+    float E2 = moments.y; // E[X^2]
+    float var = max(E2 - E * E, 0.0); // 분산 
+    
+    float d = depthRef - E; // 깊이에 대한 편차
+    
+    float p = var / (var + d * d + 1e-6 ); // 쉐비쳬브 부등식
+    float bias = 10;           
+    float raw = (depthRef + bias  <= E)
+              ? 1.0                    // 완전 밝기
+              : 1.0 - saturate(var/(var + d*d));
+    return 1 - saturate(var/(var + d*d));
+}
+float ShadowOcclusionVSM(float3 worldPos, uint lightIndex)
+{
+    // (A) 라이트 → 픽셀 방향 및 거리
+    float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
+    
+    int face = GetCubeFaceIndex(dir);
+    float4 viewPos = mul( float4(worldPos, 1), PointLights[lightIndex].ViewMatrix[face]);
+    float4 clipPos = mul(viewPos, PointLights[lightIndex].ProjectionMatrix);
+    float2 uv = clipPos.xy * 0.5f + 0.5f;          // NDC→UV 변환
+    // (B) 모멘트(1차, 2차) 샘플링
+    float2 moments = Momentum[lightIndex].Sample(VsmSampler, dir,0);
+    float  depthRef = clipPos.z / clipPos.w;
+    
+    return VSM_Shadow(moments, depthRef);
 
+    // 선형화 
+    // float3 dir  = normalize(worldPos - PointLights[lightIndex].Position);
+    // float  dist     = distance(worldPos, PointLights[lightIndex].Position);
+    // // UV로 샘플링
+    // float2 moments = Momentum[lightIndex].Sample(VsmSampler, dir, 0);
+    // return VSM_Shadow(moments, dist);
+}
 float GetPointLightShadow(float3 worldPos, uint lightIndex)
 {
     float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
@@ -131,7 +169,6 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
     // (C) 그 face 에 맞는 뷰·프로젝션으로 깊이 계산
     float4 viewPos = mul( float4(worldPos, 1), PointLights[lightIndex].ViewMatrix[face]);
     float4 clipPos = mul(viewPos, PointLights[lightIndex].ProjectionMatrix);
-    float  depthRef = clipPos.z / clipPos.w;
 
     clipPos.xyz /= clipPos.w;
 
@@ -364,6 +401,7 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
+        // ShadowFactor = ShadowOcclusionVSM(WorldPosition, i);
         ShadowFactor = GetPointLightShadow(WorldPosition, i);
 #endif
         FinalColor += Lit * ShadowFactor;
