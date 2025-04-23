@@ -28,7 +28,9 @@ public:
     virtual ~FStaticMeshRenderPass() override;
 
 protected:
-    virtual void CreateShader() override;
+    virtual void CreateResource() override;
+
+    void CreateSamplers();
 
     virtual void PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 
@@ -40,9 +42,19 @@ protected:
   
     void UpdateLitUnlitConstant(int32 bIsLit) const;
 
-    void UpdateShadowConstant();
+    void UpdateShadowConstant(const std::shared_ptr<FEditorViewportClient>& Viewport);
+
+    void UpdateSpotLightSRV();
     
-    ID3D11VertexShader* VertexShader;
-    ID3D11InputLayout* InputLayout;
-    ID3D11PixelShader* PixelShader;
+    // Shadow
+    ID3D11SamplerState* PointShadowComparisonSampler = nullptr;
+    ID3D11SamplerState* SpotShadowComparisonSampler = nullptr;
+    ID3D11SamplerState* DirectionalShadowComparisonSampler = nullptr;
+
+private:
+    // For Spot Light Texture2DArray
+    ID3D11Texture2D*            CachedSpotShadowArrayTex = nullptr;
+    ID3D11ShaderResourceView*   CachedSpotShadowArraySRV = nullptr;
+    TArray<ID3D11Texture2D*>    CachedDepthRTs;
+    UINT                        CachedSpotCount = 0;
 };

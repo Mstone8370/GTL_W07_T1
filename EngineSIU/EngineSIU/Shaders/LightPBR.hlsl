@@ -24,6 +24,12 @@ struct FDirectionalLightInfo
 
     float3 Direction;
     float Intensity;
+
+    row_major matrix ViewMatrix;
+    row_major matrix ProjectionMatrix;
+
+    float ShadowMapResolution;
+    float3 DirPadding;
 };
 
 struct FPointLightInfo
@@ -32,11 +38,14 @@ struct FPointLightInfo
 
     float3 Position;
     float Radius;
-
+    
     int Type;
     float Intensity;
     float Attenuation;
     float Padding;
+
+    row_major matrix ViewMatrix[6];
+    row_major matrix ProjectionMatrix;
 };
 
 struct FSpotLightInfo
@@ -53,6 +62,9 @@ struct FSpotLightInfo
     float InnerRad;
     float OuterRad;
     float Attenuation;
+
+    row_major matrix ViewMatrix;
+    row_major matrix ProjectionMatrix;
 };
 
 cbuffer Lighting : register(b0)
@@ -68,7 +80,30 @@ cbuffer Lighting : register(b0)
     int AmbientLightsCount;
 };
 
-cbuffer TileLightCullSettings : register(b8)
+cbuffer ShowFlagBuffer : register(b5)
+{
+    uint2 ShowFlag; // ShowFlag가 64비트여서 uint2 사용. ShowFlag를 검사하는 CheckShowFlag함수 사용해야 함.
+
+    float2 ShowFlagPadding;
+}
+
+bool CheckShowFlag(uint BitPosition)
+{
+    if (BitPosition < 32)
+    {
+        return (ShowFlag.x & (1 << BitPosition)) != 0;
+    }
+    return (ShowFlag.y & (1 << (BitPosition - 32))) != 0;
+}
+
+#define SF_AABB          (0)
+#define SF_PRIMITIVES    (1)
+#define SF_BillboardText (2)
+#define SF_UUIDText      (3)
+#define SF_Fog           (4)
+#define SF_Shadow        (5)
+
+cbuffer TileLightCullSettings : register(b10)
 {
     uint2 ScreenSize; // 화면 해상도
     uint2 TileSize; // 한 타일의 크기 (예: 16x16)
@@ -90,40 +125,24 @@ struct LightPerTiles
     uint Indices[MAX_LIGHT_PER_TILE];
     uint Padding[3];
 };
-StructuredBuffer<FPointLightInfo> gPointLights : register(t10);
-StructuredBuffer<LightPerTiles> gLightPerTiles : register(t20);
+StructuredBuffer<FPointLightInfo> gPointLights : register(t50);
+StructuredBuffer<LightPerTiles> gLightPerTiles : register(t60);
 
 // Begin Shadow
-SamplerComparisonState ShadowPCF : register(s13);
+SamplerComparisonState DirectionShadowSampler : register(s12);
+SamplerComparisonState SpotShadowSampler : register(s13);
+SamplerComparisonState PointShadowSampler : register(s14);
+
 Texture2D ShadowTexture : register(t12); // directional
-Texture2D SpotShadowMap : register(t13);    // spot
+Texture2DArray<float> SpotShadowArray : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
-
-cbuffer FLightConstants: register(b5)
-{
-    row_major matrix mLightView;
-    row_major matrix mLightProj;
-    float fShadowMapSize;
-}
-
-cbuffer PointLightConstant : register(b6)
-{
-    row_major matrix viewMatrix[MAX_POINT_LIGHT * 6];
-    row_major matrix projectionMatrix[MAX_POINT_LIGHT];
-}
-
-cbuffer SpotLightConstants: register(b7)
-{
-    row_major matrix SpotLightView;
-    row_major matrix SpotLightProj;
-}
 
 int GetCubeFaceIndex(float3 dir)
 {
     float3 a = abs(dir);
     if (a.x >= a.y && a.x >= a.z) return dir.x > 0 ? 0 : 1;  // +X:0, -X:1
     if (a.y >= a.x && a.y >= a.z) return dir.y > 0 ? 2 : 3;  // +Y:2, -Y:3
-    return dir.z > 0 ? 4 : 5;                // +Z:4, -Z:5
+    return dir.z > 0 ? 4 : 5;                                // +Z:4, -Z:5
 }
 
 static const float SHADOW_BIAS = 0.01;
@@ -135,8 +154,8 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
     int face = GetCubeFaceIndex(dir);
 
     // (C) 그 face 에 맞는 뷰·프로젝션으로 깊이 계산
-    float4 viewPos = mul( float4(worldPos, 1),viewMatrix[lightIndex * 6 + face]);
-    float4 clipPos = mul(viewPos,projectionMatrix[lightIndex]);
+    float4 viewPos = mul( float4(worldPos, 1), PointLights[lightIndex].ViewMatrix[face]);
+    float4 clipPos = mul(viewPos, PointLights[lightIndex].ProjectionMatrix);
     float  depthRef = clipPos.z / clipPos.w;
 
     clipPos.xyz /= clipPos.w;
@@ -149,7 +168,7 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
         return 1.0;
     }
     float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
-        ShadowPCF,
+        PointShadowSampler,
         dir,
         clipPos.z
     );
@@ -157,12 +176,11 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-
 float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.001 /* 기본 bias */)
 {
     // 1) 월드→라이트 클립 공간
-    float4 lp = mul(float4(worldPos, 1), SpotLightView);
-    lp = mul(lp, SpotLightProj);
+    float4 lp = mul(float4(worldPos, 1), SpotLights[spotlightIdx].ViewMatrix);
+    lp = mul(lp, SpotLights[spotlightIdx].ProjectionMatrix);
 
     // 2) NDC→[0,1] uv, 깊이
     float2 uv;
@@ -170,18 +188,23 @@ float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 
     uv.y = (lp.y / lp.w) * -0.5 + 0.5;
     float depth = lp.z / lp.w;
 
-    // 3) ShadowMap 비교 샘플링
-    float s = SpotShadowMap.SampleCmp(ShadowPCF, uv, depth - shadowBias);
+    // 3) Array 텍스쳐로 비교 샘플링
+    //    uv.xy: 텍스쳐 좌표, uv.z: array 슬라이스 (spotlightIdx)
+    float shadow = SpotShadowArray.SampleCmpLevelZero(
+        SpotShadowSampler,
+        float3(uv, spotlightIdx),  // uvw
+        depth - shadowBias // cmp reference
+    );
 
-    return s;
+    return shadow;
 }
 
 float GetDirectionalLightShadow(float3 WorldPosition)
 {
     // Shadow Mapping
     float4 PositionFromLight = float4(WorldPosition, 1.0f);
-    PositionFromLight = mul(PositionFromLight, mLightView);
-    PositionFromLight = mul(PositionFromLight, mLightProj);
+    PositionFromLight = mul(PositionFromLight, Directional[0].ViewMatrix);
+    PositionFromLight = mul(PositionFromLight, Directional[0].ProjectionMatrix);
     PositionFromLight /= PositionFromLight.w;
     float2 shadowUV = {
         0.5f + PositionFromLight.x * 0.5f,
@@ -192,8 +215,8 @@ float GetDirectionalLightShadow(float3 WorldPosition)
 
     // Percentage Closer Filtering
     float DepthFromLight = 0.f;
-    float PCFOffsetX = 1.f / fShadowMapSize;
-    float PCFOffsetY = 1.f / fShadowMapSize;
+    float PCFOffsetX = 1.f / Directional[0].ShadowMapResolution;
+    float PCFOffsetY = 1.f / Directional[0].ShadowMapResolution;
     for (int i = -1; i <= 1; ++i)
     {
         for (int j = -1; j <= 1; ++j)
@@ -204,7 +227,7 @@ float GetDirectionalLightShadow(float3 WorldPosition)
             };
             if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
             {
-                DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowPCF, SampleCoord, shadowZ).r;
+                DepthFromLight += ShadowTexture.SampleCmpLevelZero(DirectionShadowSampler, SampleCoord, shadowZ).r;
             }
             else
             {
@@ -428,7 +451,10 @@ float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        ShadowFactor = GetPointLightShadow(WorldPosition, i);
+        if (CheckShowFlag(SF_Shadow))
+        {
+            ShadowFactor = GetPointLightShadow(WorldPosition, i);
+        }
 #endif
         FinalColor += Lit * ShadowFactor;
     }
@@ -439,7 +465,10 @@ float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        ShadowFactor = GetSpotLightShadow(WorldPosition, j);
+        if (CheckShowFlag(SF_Shadow))
+        {
+            ShadowFactor = GetSpotLightShadow(WorldPosition, j);
+        }
 #endif
         FinalColor += Lit * ShadowFactor;
     }
@@ -448,7 +477,7 @@ float4 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     {
         float3 Lit = DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, Metallic, Roughness);
 #ifndef LIGHTING_MODEL_GOURAUD
-        if (k == 0)
+        if (k == 0 && CheckShowFlag(SF_Shadow))
         {
             Lit *= GetDirectionalLightShadow(WorldPosition);
         }

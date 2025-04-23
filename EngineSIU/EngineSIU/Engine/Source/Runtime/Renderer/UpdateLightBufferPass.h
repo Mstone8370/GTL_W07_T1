@@ -78,10 +78,6 @@ private:
 
     ID3D11Buffer* TileConstantBuffer;
     
-    void RenderShadowMap(ULightComponent* InLightComponent);
-    void PrepareRenderState(ULightComponent* InLightComponent);
-    void RenderPrimitive(FStaticMeshRenderData* RenderData, TArray<FStaticMaterial*> Materials, TArray<UMaterial*> OverrideMaterials, int SelectedSubMeshIndex) const;
-    void RenderAllStaticMeshes();
     void UpdateObjectConstant(const FMatrix& WorldMatrix, const FVector4& UUIDColor, bool bIsSelected) const;
 
     const uint32 MAX_NUM_POINTLIGHTS = 50000;

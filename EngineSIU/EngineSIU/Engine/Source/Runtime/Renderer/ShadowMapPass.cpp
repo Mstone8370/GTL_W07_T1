@@ -45,7 +45,7 @@ void FShadowMapPass::ClearRenderArr()
     DirectionalLightComponents.Empty();
 }
 
-void FShadowMapPass::CreateShader()
+void FShadowMapPass::CreateResource()
 {
     HRESULT hr = ShaderManager->AddVertexShader(L"ShadowVertexShader", L"Shaders/ShadowVertexShader.hlsl", "mainVS");
     if (FAILED(hr)) {

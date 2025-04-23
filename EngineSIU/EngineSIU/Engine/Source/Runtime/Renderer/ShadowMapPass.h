@@ -20,7 +20,7 @@ public:
     virtual void ClearRenderArr() override;
 
 protected:
-    virtual void CreateShader() override;
+    virtual void CreateResource() override;
     
     virtual void PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 

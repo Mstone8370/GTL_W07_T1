@@ -80,6 +80,29 @@ cbuffer LightInfo : register(b0)
     int AmbientLightsCount;
 };
 
+cbuffer ShowFlagBuffer : register(b5)
+{
+    uint2 ShowFlag; // ShowFlag가 64비트여서 uint2 사용. ShowFlag를 검사하는 CheckShowFlag함수 사용해야 함.
+
+    float2 ShowFlagPadding;
+}
+
+bool CheckShowFlag(uint BitPosition)
+{
+    if (BitPosition < 32)
+    {
+        return (ShowFlag.x & (1 << BitPosition)) != 0;
+    }
+    return (ShowFlag.y & (1 << (BitPosition - 32))) != 0;
+}
+
+#define SF_AABB          (0)
+#define SF_PRIMITIVES    (1)
+#define SF_BillboardText (2)
+#define SF_UUIDText      (3)
+#define SF_Fog           (4)
+#define SF_Shadow        (5)
+
 cbuffer TileLightCullSettings : register(b10)
 {
     uint2 ScreenSize; // 화면 해상도
@@ -107,11 +130,13 @@ StructuredBuffer<LightPerTiles> gLightPerTiles : register(t60);
 
 // Begin Shadow
 SamplerComparisonState ShadowPCF : register(s13);
-SamplerState VsmSampler : register(s14);
-
+SamplerComparisonState DirectionShadowSampler : register(s12);
+SamplerComparisonState SpotShadowSampler : register(s13);
+SamplerComparisonState PointShadowSampler : register(s14);
+SamplerState VsmSampler : register(s15);
 
 Texture2D ShadowTexture : register(t12); // directional
-Texture2D SpotShadowMap : register(t13);    // spot
+Texture2DArray<float> SpotShadowArray : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
 TextureCube<float> Momentum[MAX_POINT_LIGHT] : register(t20); // PointMoment
 int GetCubeFaceIndex(float3 dir)
@@ -180,7 +205,7 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
         return 1.0;
     }
     float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
-        ShadowPCF,
+        PointShadowSampler,
         dir,
         clipPos.z
     );
@@ -188,7 +213,7 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.001 /* 기본 bias */)
+float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.0001)
 {
     // 1) 월드→라이트 클립 공간
     float4 lp = mul(float4(worldPos, 1), SpotLights[spotlightIdx].ViewMatrix);
@@ -200,10 +225,15 @@ float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 
     uv.y = (lp.y / lp.w) * -0.5 + 0.5;
     float depth = lp.z / lp.w;
 
-    // 3) ShadowMap 비교 샘플링
-    float s = SpotShadowMap.SampleCmp(ShadowPCF, uv, depth - shadowBias);
-
-    return s;
+    // 3) Array 텍스쳐로 비교 샘플링
+    //    uv.xy: 텍스쳐 좌표, uv.z: array 슬라이스 (spotlightIdx)
+    float shadow = SpotShadowArray.SampleCmpLevelZero(
+        SpotShadowSampler,
+        float3(uv, spotlightIdx),  // uvw
+        depth - shadowBias // cmp reference
+    );
+    
+    return shadow;
 }
 
 float GetDirectionalLightShadow(float3 WorldPosition)
@@ -234,7 +264,7 @@ float GetDirectionalLightShadow(float3 WorldPosition)
             };
             if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
             {
-                DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowPCF, SampleCoord, shadowZ).r;
+                DepthFromLight += ShadowTexture.SampleCmpLevelZero(DirectionShadowSampler, SampleCoord, shadowZ).r;
             }
             else
             {
@@ -287,6 +317,11 @@ float CalculateSpecular(float3 WorldNormal, float3 ToLightDir, float3 ViewDir, f
     return Spec * SpecularStrength;
 }
 
+
+
+////////
+/// Calculate Light
+////////
 float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess)
 {
     // FPointLightInfo LightInfo = gPointLights[Index];
@@ -401,8 +436,11 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = PointLight(i, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
+        if (CheckShowFlag(SF_Shadow))
+        {
         // ShadowFactor = ShadowOcclusionVSM(WorldPosition, i);
-        ShadowFactor = GetPointLightShadow(WorldPosition, i);
+            ShadowFactor = GetPointLightShadow(WorldPosition, i);
+        }
 #endif
         FinalColor += Lit * ShadowFactor;
     }
@@ -413,7 +451,10 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
         float3 Lit = SpotLight(j, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
         float ShadowFactor = 1.0;
 #ifndef LIGHTING_MODEL_GOURAUD
-        ShadowFactor = GetSpotLightShadow(WorldPosition, j);
+        if (CheckShowFlag(SF_Shadow))
+        {
+            ShadowFactor = GetSpotLightShadow(WorldPosition, j);
+        }
 #endif
         FinalColor += Lit * ShadowFactor;
     }
@@ -423,7 +464,7 @@ float3 Lighting(float3 WorldPosition, float3 WorldNormal, float3 WorldViewPositi
     {
         float3 Lit = DirectionalLight(k, WorldPosition, WorldNormal, WorldViewPosition, DiffuseColor, SpecularColor, Shininess);
 #ifndef LIGHTING_MODEL_GOURAUD
-        if (k == 0)
+        if (k == 0 && CheckShowFlag(SF_Shadow))
         {
             Lit *= GetDirectionalLightShadow(WorldPosition);
         }

@@ -384,7 +384,7 @@ void FEditorRenderPass::CreateBuffers()
     }
 
     bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-    bufferDesc.ByteWidth = ConeIndices.Num() * sizeof(FVector);
+    bufferDesc.ByteWidth = ConeIndices.Num() * sizeof(uint32);
 
     initData.pSysMem = ConeIndices.GetData();
 
@@ -692,21 +692,21 @@ void FEditorRenderPass::PrepareConstantbufferSpotlight()
 
 void FEditorRenderPass::UdpateConstantbufferSpotlightInstanced(TArray<FConstantBufferDebugCone> Buffer)
 {
-    //if (Buffer.Num() > ConstantBufferSizeCone)
-    //{
-    //    // 최대개수 초과
-    //    // 코드 잘못짠거 아니면 오면안됨
-    //    UE_LOG(LogLevel::Error, "Invalid Buffer Num");
-    //    return;
-    //}
-    //if (Resources.ConstantBuffers.Cone10)
-    //{
-    //    D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR; // GPU�� �޸� �ּ� ����
+    if (Buffer.Num() > ConstantBufferSizeCone)
+    {
+        // 최대개수 초과
+        // 코드 잘못짠거 아니면 오면안됨
+        UE_LOG(LogLevel::Error, "Invalid Buffer Num");
+        return;
+    }
+    if (Resources.ConstantBuffers.Cone10)
+    {
+        D3D11_MAPPED_SUBRESOURCE ConstantBufferMSR; // GPU�� �޸� �ּ� ����
 
-    //    Graphics->DeviceContext->Map(Resources.ConstantBuffers.Cone10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
-    //    memcpy(ConstantBufferMSR.pData, Buffer.GetData(), sizeof(FConstantBufferDebugCone) * Buffer.Num()); // TArray이니까 실제 값을 받아와야함
-    //    Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Cone10, 0); // GPU�� �ٽ� ��밡���ϰ� �����
-    //}
+        Graphics->DeviceContext->Map(Resources.ConstantBuffers.Cone10, 0, D3D11_MAP_WRITE_DISCARD, 0, &ConstantBufferMSR); // update constant buffer every frame
+        memcpy(ConstantBufferMSR.pData, Buffer.GetData(), sizeof(FConstantBufferDebugCone) * Buffer.Num()); // TArray이니까 실제 값을 받아와야함
+        Graphics->DeviceContext->Unmap(Resources.ConstantBuffers.Cone10, 0); // GPU�� �ٽ� ��밡���ϰ� �����
+    }
 }
 
 

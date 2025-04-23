@@ -13,6 +13,7 @@ UPointLightComponent::UPointLightComponent()
     PointLightInfo.Intensity = 1000.f;
     PointLightInfo.Type = ELightType::POINT_LIGHT;
     PointLightInfo.Attenuation = 20.0f;
+    
     CreateShadowMapResources();
 }
 
@@ -121,7 +122,7 @@ void UPointLightComponent::SetIntensity(float InIntensity)
     PointLightInfo.Intensity = InIntensity;
 }
 
-int UPointLightComponent::GetType() const
+int32 UPointLightComponent::GetType() const
 {
     return PointLightInfo.Type;
 }
@@ -155,61 +156,41 @@ void UPointLightComponent::CreateShadowMapResources()
         dsvDesc.ViewDimension        = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
         dsvDesc.Texture2DArray.FirstArraySlice = i;
         dsvDesc.Texture2DArray.ArraySize       = 1;
-        GEngineLoop.GraphicDevice.Device->CreateDepthStencilView(PointDepthCubeTex, &dsvDesc, &PointShadowDSV[i]);
+        FEngineLoop::GraphicDevice.Device->CreateDepthStencilView(PointDepthCubeTex, &dsvDesc, &PointShadowDSV[i]);
     }
 
+    
     // Texture Cube SRV
-    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Format         = DXGI_FORMAT_R32_FLOAT;            // 원본은 R32_TYPELESS → 쉐이더에서 float 로 읽음
-    srvDesc.ViewDimension  = D3D11_SRV_DIMENSION_TEXTURECUBE;  // 큐브맵 SRV
-    srvDesc.TextureCube.MostDetailedMip = 0;  // 가장 상위 MIP 레벨
-    srvDesc.TextureCube.MipLevels       = 1;  // 생성할 때 MipLevels = 1 이므로 1
-    hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
+    D3D11_SHADER_RESOURCE_VIEW_DESC CubeSrvDesc = {};
+    CubeSrvDesc.Format         = DXGI_FORMAT_R32_FLOAT;            // 원본은 R32_TYPELESS → 쉐이더에서 float 로 읽음
+    CubeSrvDesc.ViewDimension  = D3D11_SRV_DIMENSION_TEXTURECUBE;  // 큐브맵 SRV
+    CubeSrvDesc.TextureCube.MostDetailedMip = 0;  // 가장 상위 MIP 레벨
+    CubeSrvDesc.TextureCube.MipLevels       = 1;  // 생성할 때 MipLevels = 1 이므로 1
+    hr = FEngineLoop::GraphicDevice.Device->CreateShaderResourceView(
         PointDepthCubeTex, 
-        &srvDesc, 
+        &CubeSrvDesc, 
         &PointShadowSRV
     );
-    if (FAILED(hr)) {
-        MessageBox(NULL, L"Failed to create PointShadowSRV", L"Error", MB_OK);
+
+    
+    
+    if (FAILED(hr))
+    {
+        MessageBox(GEngineLoop.AppWnd, L"Failed to create PointShadowSRV", L"Error", MB_OK);
     }
     
-    
-    for(int face = 0; face < 6; ++face) {
-        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-        srvDesc.Format                    = DXGI_FORMAT_R32_FLOAT;              // R32_TYPELESS -> R32_FLOAT
-        srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
-        srvDesc.Texture2DArray.MostDetailedMip = 0;
-        srvDesc.Texture2DArray.MipLevels       = 1;
-        srvDesc.Texture2DArray.FirstArraySlice = face;                           // 각 페이스
-        srvDesc.Texture2DArray.ArraySize       = 1;
-        hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(
-        PointDepthCubeTex, &srvDesc, &faceSRVs[face]);
-        if (FAILED(hr)) {
-            MessageBox(NULL, L"Failed to create SRV", L"Error", MB_OK);
-        }
-    }
-    
-    D3D11_SAMPLER_DESC comparisonSamplerDesc;
-    ZeroMemory(&comparisonSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
-    comparisonSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
-    comparisonSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
-    comparisonSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
-    comparisonSamplerDesc.BorderColor[0] = 1.0f;
-    comparisonSamplerDesc.BorderColor[1] = 1.0f;
-    comparisonSamplerDesc.BorderColor[2] = 1.0f;
-    comparisonSamplerDesc.BorderColor[3] = 1.0f;
-    comparisonSamplerDesc.MinLOD = 0.f;
-    comparisonSamplerDesc.MaxLOD = 0.f;
-    comparisonSamplerDesc.MipLODBias = 0.f;
-    comparisonSamplerDesc.MaxAnisotropy = 0;
-    comparisonSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
-    comparisonSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
-    hr = GEngineLoop.GraphicDevice.Device->CreateSamplerState(&comparisonSamplerDesc, &PointShadowComparisonSampler);
-    if (FAILED(hr)) {
-        MessageBox(NULL, L"Failed to create Sampler", L"Error", MB_OK);
+    for(int face = 0; face < 6; ++face)
+    {
+        D3D11_SHADER_RESOURCE_VIEW_DESC FaceSrvDesc = {};
+        FaceSrvDesc.Format                    = DXGI_FORMAT_R32_FLOAT;              // R32_TYPELESS -> R32_FLOAT
+        FaceSrvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+        FaceSrvDesc.Texture2DArray.MostDetailedMip = 0;
+        FaceSrvDesc.Texture2DArray.MipLevels       = 1;
+        FaceSrvDesc.Texture2DArray.FirstArraySlice = face;                           // 각 페이스
+        FaceSrvDesc.Texture2DArray.ArraySize       = 1;
+        FEngineLoop::GraphicDevice.Device->CreateShaderResourceView(PointDepthCubeTex, &FaceSrvDesc, &faceSRVs[face]);
     }
     // VSM
-
 
     D3D11_TEXTURE2D_DESC momentTexDesc = {};
     momentTexDesc.Width         = static_cast<UINT>(ShadowResolutionScale);

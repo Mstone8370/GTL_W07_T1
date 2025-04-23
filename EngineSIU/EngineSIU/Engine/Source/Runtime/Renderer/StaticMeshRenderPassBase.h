@@ -1,6 +1,6 @@
 #pragma once
 #include "IRenderPass.h"
-
+#include "RendererHelpers.h"
 #include "Container/Array.h"
 
 class UStaticMeshComponent;
@@ -27,7 +27,7 @@ public:
     virtual void ClearRenderArr() override;
 
 protected:
-    virtual void CreateShader() {}
+    virtual void CreateResource() {}
 
     virtual void ReleaseShader() {}
 
@@ -52,5 +52,6 @@ protected:
     FDXDShaderManager* ShaderManager;
 
     TArray<UStaticMeshComponent*> StaticMeshComponents;
+    ID3D11ShaderResourceView* SpotShadowArraySRV = nullptr;
 };
 

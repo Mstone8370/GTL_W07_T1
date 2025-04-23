@@ -142,6 +142,9 @@ void FRenderer::CreateConstantBuffers()
     UINT LightConstantsBufferSize = sizeof(FLightConstants);
     BufferManager->CreateBufferGeneric<FLightConstants>("FLightConstants", nullptr, LightConstantsBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
 
+    UINT ShowFlagBufferSize = sizeof(FShowFlagBuffer);
+    BufferManager->CreateBufferGeneric<FShowFlagBuffer>("FShowFlagBuffer", nullptr, ShowFlagBufferSize, D3D11_BIND_CONSTANT_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE);
+    
     // TODO: 함수로 분리
     ID3D11Buffer* ObjectBuffer = BufferManager->GetConstantBuffer(TEXT("FObjectConstantBuffer"));
     ID3D11Buffer* CameraConstantBuffer = BufferManager->GetConstantBuffer(TEXT("FCameraConstantBuffer"));
@@ -274,8 +277,9 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
      *   2. 렌더 타겟의 생명주기와 용도가 명확함
      *   3. RTV -> SRV 전환 타이밍이 정확히 지켜짐
      */
-/*
-	if (DepthPrePass) // Depth Pre Pass : 렌더타겟 nullptr 및 렌더 후 복구
+    
+/*  이 함수에 주석 처리된 코드는 Tile-based light culling을 위한 것으로, 삭제 금지
+	if (DepthPrePass) // Depth Pre Pass: 렌더타겟 nullptr 및 렌더 후 복구
     {
         DepthPrePass->Render(Viewport);
     }
@@ -321,8 +325,11 @@ void FRenderer::RenderWorldScene(const std::shared_ptr<FEditorViewportClient>& V
     if (ShowFlag & EEngineShowFlags::SF_Primitives)
     {
         UpdateLightBufferPass->Render(Viewport);
-        
-        ShadowMapPass->Render(Viewport);
+
+        if (ShowFlag & EEngineShowFlags::SF_Shadow)
+        {
+            ShadowMapPass->Render(Viewport);
+        }
         
         StaticMeshRenderPass->Render(Viewport);
     }

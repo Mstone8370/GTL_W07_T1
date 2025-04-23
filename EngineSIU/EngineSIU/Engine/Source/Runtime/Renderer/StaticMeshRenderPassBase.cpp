@@ -1,7 +1,6 @@
 
 #include "StaticMeshRenderPassBase.h"
 
-#include "RendererHelpers.h"
 #include "Engine/Engine.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/StaticMeshComponent.h"
@@ -27,7 +26,7 @@ void FStaticMeshRenderPassBase::Initialize(FDXDBufferManager* InBufferManager, F
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
 
-    CreateShader();
+    CreateResource();
 }
 
 void FStaticMeshRenderPassBase::PrepareRenderArr()
