@@ -19,6 +19,31 @@ UPointLightComponent::UPointLightComponent()
 
 UPointLightComponent::~UPointLightComponent()
 {
+    if (PointShadowSRV)
+    {
+        PointShadowSRV->Release();
+        PointShadowSRV = nullptr;       
+    }
+    
+    for (int i = 0; i < 6; i++)
+    {
+        if (faceSRVs[i])
+        {
+            faceSRVs[i]->Release();
+            faceSRVs[i] = nullptr;
+        }
+        if (PointShadowDSV[i])
+        {
+            PointShadowDSV[i]->Release();
+            PointShadowDSV[i] = nullptr;
+        }
+    }
+
+    if (PointDepthCubeTex)
+    {
+        PointDepthCubeTex->Release();
+        PointDepthCubeTex = nullptr;
+    }
 }
 
 UObject* UPointLightComponent::Duplicate(UObject* InOuter)

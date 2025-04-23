@@ -5,6 +5,7 @@
 #include "Components/Light/DirectionalLightComponent.h"
 #include "Components/Light/SpotLightComponent.h"
 #include "D3D11RHI/DXDShaderManager.h"
+#include "Engine/Engine.h"
 #include "LevelEditor/SLevelEditor.h"
 #include "UnrealEd/EditorViewportClient.h"
 #include "UObject/Casts.h"
@@ -24,15 +25,24 @@ void FShadowMapPass::PrepareRenderArr()
     
     for (const auto iter: TObjectRange<UDirectionalLightComponent>())
     {
-        DirectionalLightComponents.Add(iter);
+        if (iter->GetWorld() == GEngine->ActiveWorld)
+        {
+            DirectionalLightComponents.Add(iter);
+        }
     }
     for (const auto iter : TObjectRange<USpotLightComponent>())
     {
-        SpotLightComponents.Add(iter);
+        if (iter->GetWorld() == GEngine->ActiveWorld)
+        {
+            SpotLightComponents.Add(iter);
+        }
     }
     for (const auto iter : TObjectRange<UPointLightComponent>())
     {
-        PointLightComponents.Add(iter);
+        if (iter->GetWorld() == GEngine->ActiveWorld)
+        {
+            PointLightComponents.Add(iter);
+        }
     }
 }
 
