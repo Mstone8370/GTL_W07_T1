@@ -27,7 +27,7 @@ void FStaticMeshRenderPassBase::Initialize(FDXDBufferManager* InBufferManager, F
     Graphics = InGraphics;
     ShaderManager = InShaderManager;
 
-    CreateShader();
+    CreateResource();
 }
 
 void FStaticMeshRenderPassBase::PrepareRenderArr()

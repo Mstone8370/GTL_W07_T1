@@ -106,7 +106,9 @@ StructuredBuffer<FPointLightInfo> gPointLights : register(t50);
 StructuredBuffer<LightPerTiles> gLightPerTiles : register(t60);
 
 // Begin Shadow
-SamplerComparisonState ShadowPCF : register(s13);
+SamplerComparisonState DirectionShadowSampler : register(s12);
+SamplerComparisonState SpotShadowSampler : register(s13);
+SamplerComparisonState PointShadowSampler : register(s14);
 
 Texture2D ShadowTexture : register(t12); // directional
 Texture2D SpotShadowMap : register(t13);    // spot
@@ -143,7 +145,7 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
         return 1.0;
     }
     float shadow = ShadowMap[lightIndex].SampleCmpLevelZero(
-        ShadowPCF,
+        PointShadowSampler,
         dir,
         clipPos.z
     );
@@ -164,7 +166,7 @@ float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 
     float depth = lp.z / lp.w;
 
     // 3) ShadowMap 비교 샘플링
-    float s = SpotShadowMap.SampleCmp(ShadowPCF, uv, depth - shadowBias);
+    float s = SpotShadowMap.SampleCmp(SpotShadowSampler, uv, depth - shadowBias);
 
     return s;
 }
@@ -197,7 +199,7 @@ float GetDirectionalLightShadow(float3 WorldPosition)
             };
             if (0.f <= SampleCoord.x && SampleCoord.x <= 1.f && 0.f <= SampleCoord.y && SampleCoord.y <= 1.f)
             {
-                DepthFromLight += ShadowTexture.SampleCmpLevelZero(ShadowPCF, SampleCoord, shadowZ).r;
+                DepthFromLight += ShadowTexture.SampleCmpLevelZero(DirectionShadowSampler, SampleCoord, shadowZ).r;
             }
             else
             {

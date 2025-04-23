@@ -28,7 +28,9 @@ public:
     virtual ~FStaticMeshRenderPass() override;
 
 protected:
-    virtual void CreateShader() override;
+    virtual void CreateResource() override;
+
+    void CreateSamplers();
 
     virtual void PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport) override;
 
@@ -42,7 +44,8 @@ protected:
 
     void UpdateShadowConstant(const std::shared_ptr<FEditorViewportClient>& Viewport);
     
-    ID3D11VertexShader* VertexShader;
-    ID3D11InputLayout* InputLayout;
-    ID3D11PixelShader* PixelShader;
+    // Shadow
+    ID3D11SamplerState* PointShadowComparisonSampler = nullptr;
+    ID3D11SamplerState* SpotShadowComparisonSampler = nullptr;
+    ID3D11SamplerState* DirectionalShadowComparisonSampler = nullptr;
 };

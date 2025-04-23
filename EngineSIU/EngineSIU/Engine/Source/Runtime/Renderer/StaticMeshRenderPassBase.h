@@ -27,7 +27,7 @@ public:
     virtual void ClearRenderArr() override;
 
 protected:
-    virtual void CreateShader() {}
+    virtual void CreateResource() {}
 
     virtual void ReleaseShader() {}
 

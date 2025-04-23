@@ -22,11 +22,7 @@
 
 #include "UnrealEd/EditorViewportClient.h"
 
-FStaticMeshRenderPass::FStaticMeshRenderPass()
-    : FStaticMeshRenderPassBase()
-    , VertexShader(nullptr)
-    , InputLayout(nullptr)
-    , PixelShader(nullptr)
+FStaticMeshRenderPass::FStaticMeshRenderPass() : FStaticMeshRenderPassBase()
 {
 }
 
@@ -34,7 +30,7 @@ FStaticMeshRenderPass::~FStaticMeshRenderPass()
 {
 }
 
-void FStaticMeshRenderPass::CreateShader()
+void FStaticMeshRenderPass::CreateResource()
 {
     // Begin Debug Shaders
     HRESULT hr = ShaderManager->AddPixelShader(L"StaticMeshPixelShaderDepth", L"Shaders/StaticMeshPixelShaderDepth.hlsl", "mainPS");
@@ -98,13 +94,49 @@ void FStaticMeshRenderPass::CreateShader()
     {
         return;
     }
-    
 #pragma endregion UberShader
+
+    CreateSamplers();
+}
+
+void FStaticMeshRenderPass::CreateSamplers()
+{
+    D3D11_SAMPLER_DESC ComparisonSamplerDesc;
+    ZeroMemory(&ComparisonSamplerDesc, sizeof(D3D11_SAMPLER_DESC));
+    ComparisonSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+    ComparisonSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+    ComparisonSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+    ComparisonSamplerDesc.BorderColor[0] = 1.0f;
+    ComparisonSamplerDesc.BorderColor[1] = 1.0f;
+    ComparisonSamplerDesc.BorderColor[2] = 1.0f;
+    ComparisonSamplerDesc.BorderColor[3] = 1.0f;
+    ComparisonSamplerDesc.MinLOD = 0.f;
+    ComparisonSamplerDesc.MaxLOD = 0.f;
+    ComparisonSamplerDesc.MipLODBias = 0.f;
+    ComparisonSamplerDesc.MaxAnisotropy = 0;
+    ComparisonSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    ComparisonSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    HRESULT hr = FEngineLoop::GraphicDevice.Device->CreateSamplerState(&ComparisonSamplerDesc, &PointShadowComparisonSampler);
+    if (FAILED(hr))
+    {
+        MessageBox(GEngineLoop.AppWnd, L"[FStaticMeshRenderPass::CreateSamplers] Failed to create ComparisonSampler", L"Error", MB_OK);
+        return;
+    }
+
+    // 조명 타입에 따라 다른 샘플러를 쓸 경우를 고려해서 일단 따로 생성
+    hr = FEngineLoop::GraphicDevice.Device->CreateSamplerState(&ComparisonSamplerDesc, &SpotShadowComparisonSampler);
+    if (FAILED(hr))
+    {
+        MessageBox(GEngineLoop.AppWnd, L"[FStaticMeshRenderPass::CreateSamplers] Failed to create ComparisonSampler", L"Error", MB_OK);
+        return;
+    }
     
-    VertexShader = ShaderManager->GetVertexShaderByKey(L"StaticMeshVertexShader");
-    InputLayout = ShaderManager->GetInputLayoutByKey(L"StaticMeshVertexShader");
-    
-    PixelShader = ShaderManager->GetPixelShaderByKey(L"PHONG_StaticMeshPixelShader");
+    hr = FEngineLoop::GraphicDevice.Device->CreateSamplerState(&ComparisonSamplerDesc, &DirectionalShadowComparisonSampler);
+    if (FAILED(hr))
+    {
+        MessageBox(GEngineLoop.AppWnd, L"[FStaticMeshRenderPass::CreateSamplers] Failed to create ComparisonSampler", L"Error", MB_OK);
+        return;
+    }
 }
 
 void FStaticMeshRenderPass::PrepareRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -146,6 +178,10 @@ void FStaticMeshRenderPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewp
 
 void FStaticMeshRenderPass::ChangeViewMode(EViewModeIndex ViewMode)
 {
+    ID3D11VertexShader* VertexShader = nullptr;
+    ID3D11InputLayout* InputLayout = nullptr;
+    ID3D11PixelShader* PixelShader = nullptr;
+    
     switch (ViewMode)
     {
     case EViewModeIndex::VMI_Lit_Gouraud:
@@ -233,8 +269,18 @@ void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 bIsLit) const
 
 void FStaticMeshRenderPass::UpdateShadowConstant(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
+    // DirectionLight
+    Graphics->DeviceContext->PSSetSamplers(12, 1, &DirectionalShadowComparisonSampler);
+    auto DirLightRange = TObjectRange<UDirectionalLightComponent>();
+    if (begin(DirLightRange) != end(DirLightRange))
+    {
+        UDirectionalLightComponent* DirLightComp = *DirLightRange.Begin;
+        ID3D11ShaderResourceView* ShadowMapSRV = DirLightComp->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
+    }
+
     // SpotLight
-    // TODO: SpotLight도 샘플러 설정해줘야 함.
+    Graphics->DeviceContext->PSSetSamplers(13, 1, &SpotShadowComparisonSampler);
     for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
     {
         auto srv = SpotLight->GetShadowDepthMap().SRV;
@@ -242,34 +288,14 @@ void FStaticMeshRenderPass::UpdateShadowConstant(const std::shared_ptr<FEditorVi
     }
 
     // PointLight
+    Graphics->DeviceContext->PSSetSamplers(14, 1, &PointShadowComparisonSampler);
     TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
-    ID3D11SamplerState* PCFSampler = nullptr;
     TArray<UPointLightComponent*> PointLights;
     for (auto light :  TObjectRange<UPointLightComponent>())
     {
         PointLights.Add(light);
         ShadowCubeSRV.Add(light->PointShadowSRV);
-        PCFSampler = light->PointShadowComparisonSampler;
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());     
-    Graphics->DeviceContext->PSSetSamplers(13, 1, &PCFSampler);
-
-    // DirectionLight
-    auto DirLightRange = TObjectRange<UDirectionalLightComponent>();
-    if (begin(DirLightRange) != end(DirLightRange))
-    {
-        UDirectionalLightComponent* tempDirLight = *DirLightRange.Begin;
-        
-        FLightConstants LightData = {};
-        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
-        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
-        LightData.ShadowMapSize = tempDirLight->GetShadowResolutionScale();
-        
-        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
-        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
-    
-        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
-        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
-    }
 }
 
