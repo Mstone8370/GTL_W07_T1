@@ -91,11 +91,12 @@ void FUpdateLightBufferPass::PrepareRenderArr()
 
 void FUpdateLightBufferPass::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
-    ViewportClient = Viewport.get();
     UpdateLightBuffer();
-    Graphics->DeviceContext->PSSetShaderResources(10, 1, &PointLightSRV);
-    Graphics->DeviceContext->PSSetShaderResources(20, 1, &PointLightPerTilesSRV);
-    Graphics->DeviceContext->PSSetConstantBuffers(8, 1, &TileConstantBuffer);
+
+    // Tile based light culling
+    Graphics->DeviceContext->PSSetShaderResources(50, 1, &PointLightSRV);
+    Graphics->DeviceContext->PSSetShaderResources(60, 1, &PointLightPerTilesSRV);
+    Graphics->DeviceContext->PSSetConstantBuffers(10, 1, &TileConstantBuffer);
 }
 
 void FUpdateLightBufferPass::ClearRenderArr()
@@ -107,7 +108,6 @@ void FUpdateLightBufferPass::ClearRenderArr()
     StaticMeshComponents.Empty();
 }
 
-
 void FUpdateLightBufferPass::UpdateLightBuffer()
 {
     FLightInfoBuffer LightBufferData = {};
@@ -117,7 +117,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
     int SpotLightsCount=0;
     int AmbientLightsCount=0;
     
-    for (auto Light : SpotLights)
+    for (const auto& Light : SpotLights)
     {
         if (SpotLightsCount < MAX_SPOT_LIGHT)
         {
@@ -127,12 +127,10 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
             LightBufferData.SpotLights[SpotLightsCount].ViewMatrix = Light->GetLightViewMatrix();
             LightBufferData.SpotLights[SpotLightsCount].ProjectionMatrix = Light->GetLightProjectionMatrix();
             SpotLightsCount++;
-
-            // RenderShadowMap(Light);
         }
     }
 
-    for (auto Light : PointLights)
+    for (const auto& Light : PointLights)
     {
         Light->UpdateViewProjMatrix();
         if (PointLightsCount < MAX_POINT_LIGHT)
@@ -143,7 +141,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
         }
     }
 
-    for (auto Light : DirectionalLights)
+    for (const auto& Light : DirectionalLights)
     {
         if (DirectionalLightsCount < MAX_DIRECTIONAL_LIGHT)
         {
@@ -156,7 +154,7 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
         }
     }
 
-    for (auto Light : AmbientLights)
+    for (const auto& Light : AmbientLights)
     {
         if (AmbientLightsCount < MAX_DIRECTIONAL_LIGHT)
         {
@@ -171,8 +169,8 @@ void FUpdateLightBufferPass::UpdateLightBuffer()
     LightBufferData.SpotLightsCount = SpotLightsCount;
     LightBufferData.AmbientLightsCount = AmbientLightsCount;
 
+    BufferManager->BindConstantBuffer(TEXT("FLightInfoBuffer"), 0, EShaderStage::Pixel);
     BufferManager->UpdateConstantBuffer(TEXT("FLightInfoBuffer"), LightBufferData);
-    
 }
 
 void FUpdateLightBufferPass::SetPointLightData(
@@ -208,8 +206,6 @@ void FUpdateLightBufferPass::SetTileConstantBuffer(ID3D11Buffer* InTileConstantB
 {
     TileConstantBuffer = InTileConstantBuffer;
 }
-
-
 
 void FUpdateLightBufferPass::CreatePointLightBuffer()
 {

@@ -38,6 +38,7 @@ public:
     inline void  SetShadowBias           (float Value) { ShadowBias            = Value; }
     inline void  SetShadowSlopeBias      (float Value) { ShadowSlopeBias       = Value; }
     inline void  SetShadowSharpen        (float Value) { ShadowSharpen         = Value; }
+
     FBoundingBox GetBoundingBox() const {return AABB;}
     FDepthStencilRHI GetShadowDepthMap() const {return ShadowDepthMap;}
  

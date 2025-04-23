@@ -1,8 +1,11 @@
+
 #include "ShaderRegisters.hlsl"
-cbuffer LightMatrix : register(b5)
+
+cbuffer LightConstants : register(b0)
 {
     row_major matrix LightViewMat;
     row_major matrix LightProjectMat;
+    
     float ShadowMapSize;
     float3 Padding;
 };
