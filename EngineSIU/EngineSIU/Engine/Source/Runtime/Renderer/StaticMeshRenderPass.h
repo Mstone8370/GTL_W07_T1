@@ -40,7 +40,7 @@ protected:
   
     void UpdateLitUnlitConstant(int32 bIsLit) const;
 
-    void UpdateShadowConstant();
+    void UpdateShadowConstant(const std::shared_ptr<FEditorViewportClient>& Viewport);
     
     ID3D11VertexShader* VertexShader;
     ID3D11InputLayout* InputLayout;

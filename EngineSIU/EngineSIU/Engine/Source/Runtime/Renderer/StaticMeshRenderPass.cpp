@@ -119,24 +119,8 @@ void FStaticMeshRenderPass::PrepareRenderPass(const std::shared_ptr<FEditorViewp
     Graphics->DeviceContext->OMSetRenderTargets(1, &RenderTargetRHI->RTV, DepthStencilRHI->DSV);
 
     PrepareRenderState(Viewport);
-    
-    auto tempDirLightRange = TObjectRange<UDirectionalLightComponent>();
-    
-    if (begin(tempDirLightRange) != end(tempDirLightRange))
-    {
-        UDirectionalLightComponent* tempDirLight = *tempDirLightRange.Begin;
-        FLightConstants LightData = {};
-        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
-        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
-        LightData.ShadowMapSize = tempDirLight->GetShadowResolutionScale();
-        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
-        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
-    
-        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
-        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
-    }
 
-    UpdateShadowConstant();
+    UpdateShadowConstant(Viewport);
 }
 
 void FStaticMeshRenderPass::CleanUpRenderPass(const std::shared_ptr<FEditorViewportClient>& Viewport)
@@ -247,7 +231,7 @@ void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 bIsLit) const
     BufferManager->UpdateConstantBuffer(TEXT("FLitUnlitConstants"), Data);
 }
 
-void FStaticMeshRenderPass::UpdateShadowConstant()
+void FStaticMeshRenderPass::UpdateShadowConstant(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     // SpotLight
     // TODO: SpotLight도 샘플러 설정해줘야 함.
@@ -269,5 +253,23 @@ void FStaticMeshRenderPass::UpdateShadowConstant()
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());     
     Graphics->DeviceContext->PSSetSamplers(13, 1, &PCFSampler);
+
+    // DirectionLight
+    auto DirLightRange = TObjectRange<UDirectionalLightComponent>();
+    if (begin(DirLightRange) != end(DirLightRange))
+    {
+        UDirectionalLightComponent* tempDirLight = *DirLightRange.Begin;
+        
+        FLightConstants LightData = {};
+        LightData.LightViewMatrix = tempDirLight->GetLightViewMatrix(Viewport->GetCameraLocation());
+        LightData.LightProjMatrix = tempDirLight->GetLightProjMatrix();
+        LightData.ShadowMapSize = tempDirLight->GetShadowResolutionScale();
+        
+        BufferManager->BindConstantBuffer(TEXT("FLightConstants"), 5, EShaderStage::Pixel);
+        BufferManager->UpdateConstantBuffer(TEXT("FLightConstants"), LightData);
+    
+        ID3D11ShaderResourceView* ShadowMapSRV = tempDirLight->GetShadowDepthMap().SRV;
+        Graphics->DeviceContext->PSSetShaderResources(12, 1, &ShadowMapSRV);
+    }
 }
 

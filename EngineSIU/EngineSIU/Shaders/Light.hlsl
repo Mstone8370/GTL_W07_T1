@@ -250,6 +250,11 @@ float CalculateSpecular(float3 WorldNormal, float3 ToLightDir, float3 ViewDir, f
     return Spec * SpecularStrength;
 }
 
+
+
+////////
+/// Calculate Light
+////////
 float3 PointLight(int Index, float3 WorldPosition, float3 WorldNormal, float3 WorldViewPosition, float3 DiffuseColor, float3 SpecularColor, float Shininess)
 {
     // FPointLightInfo LightInfo = gPointLights[Index];
