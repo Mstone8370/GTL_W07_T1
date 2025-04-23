@@ -185,8 +185,6 @@ void UPointLightComponent::CreateShadowMapResources()
         FaceSrvDesc.Texture2DArray.ArraySize       = 1;
         FEngineLoop::GraphicDevice.Device->CreateShaderResourceView(PointDepthCubeTex, &FaceSrvDesc, &faceSRVs[face]);
     }
-    
-    
 }
 
 void UPointLightComponent::UpdateViewProjMatrix()

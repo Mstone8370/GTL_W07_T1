@@ -235,9 +235,7 @@ void PropertyEditorPanel::RenderDetailPanel()
                 ImGui::Text("Shadow Depth Map:");
                 ImGui::Image(
                     (ImTextureID)depthSRV,
-                    ImVec2(200, 200),
-                    ImVec2(0, 1),
-                    ImVec2(1, 0)
+                    ImVec2(200, 200)
                 );
             }
             // faceIn

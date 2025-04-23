@@ -43,9 +43,18 @@ protected:
     void UpdateLitUnlitConstant(int32 bIsLit) const;
 
     void UpdateShadowConstant(const std::shared_ptr<FEditorViewportClient>& Viewport);
+
+    void UpdateSpotLightSRV();
     
     // Shadow
     ID3D11SamplerState* PointShadowComparisonSampler = nullptr;
     ID3D11SamplerState* SpotShadowComparisonSampler = nullptr;
     ID3D11SamplerState* DirectionalShadowComparisonSampler = nullptr;
+
+private:
+    // For Spot Light Texture2DArray
+    ID3D11Texture2D*            CachedSpotShadowArrayTex = nullptr;
+    ID3D11ShaderResourceView*   CachedSpotShadowArraySRV = nullptr;
+    TArray<ID3D11Texture2D*>    CachedDepthRTs;
+    UINT                        CachedSpotCount = 0;
 };

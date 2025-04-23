@@ -264,10 +264,16 @@ void USpotLightComponent::SetOuterDegree(float InOuterDegree)
 FMatrix USpotLightComponent::GetLightViewMatrix()
 {
     FVector Eye = GetWorldLocation();
-    FVector At = Eye + GetOwner()->GetActorForwardVector();
-    FVector Up = FVector(0.0f, 0.0f, 1.0f);
+    FVector At = Eye + GetDirection();
 
-    SpotLightInfo.ViewMatrix = JungleMath::CreateViewMatrix(Eye, At, Up);
+    FVector Forward = At - Eye;
+    FVector TempUp = FVector(0, 0, 1);
+    if (abs(Forward.Dot(TempUp)) > 0.99f)
+        TempUp = FVector(1, 0, 0);
+    FVector Right = TempUp.Cross(Forward).GetSafeNormal();
+    FVector UpVector = Forward.Cross(Right); // 진짜 Up
+
+    SpotLightInfo.ViewMatrix = JungleMath::CreateViewMatrix(Eye, At, UpVector);
     return SpotLightInfo.ViewMatrix;
 }
 

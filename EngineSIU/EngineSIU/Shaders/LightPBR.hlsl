@@ -111,7 +111,7 @@ SamplerComparisonState SpotShadowSampler : register(s13);
 SamplerComparisonState PointShadowSampler : register(s14);
 
 Texture2D ShadowTexture : register(t12); // directional
-Texture2D SpotShadowMap : register(t13);    // spot
+Texture2DArray<float> SpotShadowArray : register(t13);    // spot
 TextureCube<float> ShadowMap[MAX_POINT_LIGHT] : register(t14); // point
 
 int GetCubeFaceIndex(float3 dir)
@@ -165,10 +165,15 @@ float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 
     uv.y = (lp.y / lp.w) * -0.5 + 0.5;
     float depth = lp.z / lp.w;
 
-    // 3) ShadowMap 비교 샘플링
-    float s = SpotShadowMap.SampleCmp(SpotShadowSampler, uv, depth - shadowBias);
+    // 3) Array 텍스쳐로 비교 샘플링
+    //    uv.xy: 텍스쳐 좌표, uv.z: array 슬라이스 (spotlightIdx)
+    float shadow = SpotShadowArray.SampleCmpLevelZero(
+        SpotShadowSampler,
+        float3(uv, spotlightIdx),  // uvw
+        depth - shadowBias // cmp reference
+    );
 
-    return s;
+    return shadow;
 }
 
 float GetDirectionalLightShadow(float3 WorldPosition)
