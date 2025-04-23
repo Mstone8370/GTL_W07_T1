@@ -150,40 +150,28 @@ int GetCubeFaceIndex(float3 dir)
 static const float SHADOW_BIAS = 0.01;
 float VSM_Shadow(float2 moments, float depthRef)
 {
-    float E  = moments.x; // E[X]
-    float E2 = moments.y; // E[X^2]
-    float var = max(E2 - E * E, 0.0); // 분산 
-    
-    float d = depthRef - E; // 깊이에 대한 편차
-    
-    float p = var / (var + d * d + 1e-6 ); // 쉐비쳬브 부등식
-    float bias = 10;           
-    float raw = (depthRef + bias  <= E)
-              ? 1.0                    // 완전 밝기
-              : 1.0 - saturate(var/(var + d*d));
-    return 1 - saturate(var/(var + d*d));
+    float mu       = moments.x;        // E[X]
+    float m2       = moments.y;        // E[X²]
+    float variance = max(m2 - mu*mu, 0.0);  
+
+    float d        = depthRef - mu;    // 편차
+    float p        = variance / (variance + d*d); 
+
+    // depthRef <= mu 면 조명(그림자 아님), 아니면 1-p 만큼 lit 확률
+    return (depthRef<= mu + 0.01) ? 1.0 : 1.0 - clamp(p, 0.0, 1.0);
 }
 float ShadowOcclusionVSM(float3 worldPos, uint lightIndex)
 {
-    // (A) 라이트 → 픽셀 방향 및 거리
-    float3 dir = normalize(worldPos - PointLights[lightIndex].Position);
-    
-    int face = GetCubeFaceIndex(dir);
-    float4 viewPos = mul( float4(worldPos, 1), PointLights[lightIndex].ViewMatrix[face]);
-    float4 clipPos = mul(viewPos, PointLights[lightIndex].ProjectionMatrix);
-    float2 uv = clipPos.xy * 0.5f + 0.5f;          // NDC→UV 변환
-    // (B) 모멘트(1차, 2차) 샘플링
-    float2 moments = Momentum[lightIndex].Sample(VsmSampler, dir,0);
-    float  depthRef = clipPos.z / clipPos.w;
-    
-    return VSM_Shadow(moments, depthRef);
+    // (A) 라이트 기준 월드 공간 거리
+    float3 toLight = worldPos - PointLights[lightIndex].Position;
+    float3 dir     = normalize(toLight);    // 큐브맵 샘플용 정규화 방향
+    float  dist    = length(toLight);
 
-    // 선형화 
-    // float3 dir  = normalize(worldPos - PointLights[lightIndex].Position);
-    // float  dist     = distance(worldPos, PointLights[lightIndex].Position);
-    // // UV로 샘플링
-    // float2 moments = Momentum[lightIndex].Sample(VsmSampler, dir, 0);
-    // return VSM_Shadow(moments, dist);
+    // (B) 모멘트 샘플링
+    float2 moments = Momentum[lightIndex].Sample(VsmSampler, dir);
+    float depthRef = saturate(dist / PointLights[lightIndex].Radius);
+    // (C) VSM 계산
+    return pow(VSM_Shadow(moments, depthRef),3);
 }
 float GetPointLightShadow(float3 worldPos, uint lightIndex)
 {

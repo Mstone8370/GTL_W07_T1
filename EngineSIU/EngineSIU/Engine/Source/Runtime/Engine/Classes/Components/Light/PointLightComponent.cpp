@@ -220,14 +220,15 @@ void UPointLightComponent::CreateShadowMapResources()
     D3D11_TEXTURE2D_DESC momentTexDesc = {};
     momentTexDesc.Width         = static_cast<UINT>(ShadowResolutionScale);
     momentTexDesc.Height        = static_cast<UINT>(ShadowResolutionScale);
-    momentTexDesc.MipLevels     = 1;                          // ← 0 → 1
+    momentTexDesc.MipLevels     = 0;                          // ← 0 → 1
     momentTexDesc.ArraySize     = 6;
     momentTexDesc.Format        = DXGI_FORMAT_R32G32_FLOAT;
     momentTexDesc.SampleDesc    = { 1, 0 };
     momentTexDesc.Usage         = D3D11_USAGE_DEFAULT;
     momentTexDesc.BindFlags     = D3D11_BIND_RENDER_TARGET
                                 | D3D11_BIND_SHADER_RESOURCE;
-    momentTexDesc.MiscFlags     = D3D11_RESOURCE_MISC_TEXTURECUBE;
+    momentTexDesc.MiscFlags     = D3D11_RESOURCE_MISC_TEXTURECUBE
+                                | D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
     hr = GEngineLoop.GraphicDevice.Device->CreateTexture2D(&momentTexDesc, nullptr, &PointMomentCubeTex);
     if (FAILED(hr)) {
@@ -252,7 +253,7 @@ void UPointLightComponent::CreateShadowMapResources()
     momentSrvDesc.Format              = DXGI_FORMAT_R32G32_FLOAT;
     momentSrvDesc.ViewDimension       = D3D11_SRV_DIMENSION_TEXTURECUBE;
     momentSrvDesc.TextureCube.MostDetailedMip = 0;
-    momentSrvDesc.TextureCube.MipLevels       = 1;          // ← -1 → 1
+    momentSrvDesc.TextureCube.MipLevels       = -1;          // ← -1 → 1
 
     hr = GEngineLoop.GraphicDevice.Device->CreateShaderResourceView(PointMomentCubeTex, &momentSrvDesc, &PointMomentSRV);
 
@@ -263,15 +264,11 @@ void UPointLightComponent::CreateShadowMapResources()
     D3D11_SAMPLER_DESC sd = {};
     sd.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 
-    sd.AddressU       = D3D11_TEXTURE_ADDRESS_BORDER;
-    sd.AddressV       = D3D11_TEXTURE_ADDRESS_BORDER;
-    sd.AddressW       = D3D11_TEXTURE_ADDRESS_BORDER;
-    sd.BorderColor[0] = 1.0f;
-    sd.BorderColor[1] = 1.0f;
-    sd.BorderColor[2] = 1.0f;
-    sd.BorderColor[3] = 1.0f;
+    sd.AddressU       = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sd.AddressV       = D3D11_TEXTURE_ADDRESS_CLAMP;
+    sd.AddressW       = D3D11_TEXTURE_ADDRESS_CLAMP;
     sd.MinLOD         = 0;
-    sd.MaxLOD         = 0;               // ← MaxLOD도 0으로!
+    sd.MaxLOD         = D3D11_FLOAT32_MAX;               // ← MaxLOD도 0으로!
     sd.MipLODBias     = 0;
     sd.ComparisonFunc = D3D11_COMPARISON_NEVER;
 

@@ -303,6 +303,7 @@ void FStaticMeshRenderPass::UpdateShadowConstant(const std::shared_ptr<FEditorVi
         ShadowCubeSRV.Add(light->PointShadowSRV);
         MomentCubeSRV.Add(light->PointMomentSRV);
         VSMSampler = light->PointShadowVSMSampler;
+        Graphics->DeviceContext->GenerateMips(light->PointMomentSRV);
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());
     Graphics->DeviceContext->PSSetSamplers(15, 1, &VSMSampler);

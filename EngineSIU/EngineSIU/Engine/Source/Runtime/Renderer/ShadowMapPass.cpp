@@ -138,7 +138,7 @@ void FShadowMapPass::SetShadowViewports(float Width, float Height)
 void FShadowMapPass::RenderPointLight(const std::shared_ptr<FEditorViewportClient>& Viewport)
 {
     bool bShadowOn = GEngineLoop.GetLevelEditor()->GetActiveViewportClient()->GetShowFlag() & EEngineShowFlags::SF_Shadow;
-    FLOAT ClearColor[4] = { -1.0f, 1.0f, 0.0f, 0.0f }; 
+    FLOAT ClearColor[4] = { 1.0f, 1.0f, 0.0f, 0.0f }; 
     for (auto PointLight : PointLightComponents)
     {
         // Clear DSV
