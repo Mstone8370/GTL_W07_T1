@@ -32,6 +32,7 @@ FStaticMeshRenderPass::FStaticMeshRenderPass()
 
 FStaticMeshRenderPass::~FStaticMeshRenderPass()
 {
+    
 }
 
 void FStaticMeshRenderPass::CreateShader()
@@ -249,15 +250,7 @@ void FStaticMeshRenderPass::UpdateLitUnlitConstant(int32 bIsLit) const
 
 void FStaticMeshRenderPass::UpdateShadowConstant()
 {
-    // SpotLight
-    // TODO: SpotLight도 샘플러 설정해줘야 함.
-    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
-    {
-        auto srv = SpotLight->GetShadowDepthMap().SRV;
-        Graphics->DeviceContext->PSSetShaderResources(13, 1, &srv);
-    }
-
-    // PointLight
+#pragma region PointLight
     TArray<ID3D11ShaderResourceView*> ShadowCubeSRV;
     ID3D11SamplerState* PCFSampler = nullptr;
     TArray<UPointLightComponent*> PointLights;
@@ -269,5 +262,112 @@ void FStaticMeshRenderPass::UpdateShadowConstant()
     }
     Graphics->DeviceContext->PSSetShaderResources(14, ShadowCubeSRV.Num(), ShadowCubeSRV.GetData());     
     Graphics->DeviceContext->PSSetSamplers(13, 1, &PCFSampler);
+#pragma endregion 
+    
+#pragma region Spotlight
+    TArray<ID3D11Texture2D*> SpotDepthTextures;
+    ID3D11SamplerState* SpotPCFSampler = nullptr;
+    for (USpotLightComponent* SpotLight : TObjectRange<USpotLightComponent>())
+    {
+        SpotDepthTextures.Add(SpotLight->GetShadowDepthMap().Texture2D);
+        SpotPCFSampler = SpotLight->SpotShadowComparisonSampler;  // todo : Sampler 생성 한 번하고 재사용
+    }
+    SpotDepthTextures.Sort([](ID3D11Texture2D* A, ID3D11Texture2D* B) {
+    return A < B;  // 포인터 주소 기준 오름차순
+    });
+
+    UINT sliceCount = static_cast<UINT>(SpotDepthTextures.Num());
+    if (sliceCount == 0)
+    {
+        if (CachedSpotShadowArrayTex) { CachedSpotShadowArrayTex->Release();   CachedSpotShadowArrayTex = nullptr; }
+        if (CachedSpotShadowArraySRV) { CachedSpotShadowArraySRV->Release(); CachedSpotShadowArraySRV = nullptr; }
+        CachedDepthRTs.Empty();
+
+        ID3D11ShaderResourceView* nullSrv = nullptr;
+        Graphics->DeviceContext->PSSetShaderResources(13, 1, &nullSrv);
+        ID3D11SamplerState* nullSmp = nullptr;
+        Graphics->DeviceContext->PSSetSamplers(12, 1, &nullSmp);
+
+        CachedSpotCount = 0;
+        return;
+    }
+    
+    bool countChanged = (sliceCount != CachedSpotCount);
+    bool orderChanged = false;
+    if (!countChanged)
+    {
+        // 주소 배열 비교
+        for (UINT i = 0; i < sliceCount; ++i)
+        {
+            if (CachedDepthRTs[i] != SpotDepthTextures[i])
+            {
+                orderChanged = true;
+                break;
+            }
+        }
+    }
+
+    if (countChanged || orderChanged)
+    {
+        // 1) 기존 리소스 해제
+        if (CachedSpotShadowArraySRV)
+        {
+            CachedSpotShadowArraySRV->Release();
+            CachedSpotShadowArraySRV = nullptr;
+        }
+        if (CachedSpotShadowArrayTex)
+        {
+            CachedSpotShadowArrayTex->Release();
+            CachedSpotShadowArrayTex = nullptr;
+        }
+
+        // 2) 텍스처 배열 & SRV 재생성
+        D3D11_TEXTURE2D_DESC td = {};
+        SpotDepthTextures[0]->GetDesc(&td);
+        td.ArraySize        = sliceCount;
+        td.MipLevels        = 1;
+        td.Format           = DXGI_FORMAT_R32_TYPELESS;
+        td.BindFlags        = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+        td.Usage            = D3D11_USAGE_DEFAULT;
+        td.SampleDesc.Count = 1;
+        HRESULT hr = Graphics->Device->CreateTexture2D(&td, nullptr, &CachedSpotShadowArrayTex);
+        assert(SUCCEEDED(hr));
+
+        D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+        srvDesc.ViewDimension                  = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
+        srvDesc.Format                         = DXGI_FORMAT_R32_FLOAT;
+        srvDesc.Texture2DArray.MipLevels       = 1;
+        srvDesc.Texture2DArray.MostDetailedMip = 0;
+        srvDesc.Texture2DArray.FirstArraySlice = 0;
+        srvDesc.Texture2DArray.ArraySize       = sliceCount;
+        hr = Graphics->Device->CreateShaderResourceView(
+            CachedSpotShadowArrayTex, &srvDesc, &CachedSpotShadowArraySRV
+        );
+        assert(SUCCEEDED(hr));
+        
+        // 3) 캐시 갱신
+        CachedSpotCount = sliceCount;
+        CachedDepthRTs  = SpotDepthTextures;
+
+        
+    }
+    // 4) 매 프레임: 각 슬라이스에 최신 뎁스맵 복사
+    for (UINT i = 0; i < sliceCount; ++i)
+    {
+        UINT dstSub = D3D11CalcSubresource(0, i, 1);
+        Graphics->DeviceContext->CopySubresourceRegion(
+            CachedSpotShadowArrayTex,  // dst 텍스처 배열
+            dstSub,                    // dst 슬라이스
+            0, 0, 0,                   // dst 오프셋
+            SpotDepthTextures[i],      // src 뎁스맵 텍스처
+            0,                         // src 서브리소스 인덱스
+            nullptr                    // src 영역 전체 복사
+        );
+    }
+
+    // 5) 바인딩
+    Graphics->DeviceContext->PSSetShaderResources(13, 1, &CachedSpotShadowArraySRV);
+    Graphics->DeviceContext->PSSetSamplers(12, 1, &SpotPCFSampler);
+#pragma endregion 
 }
 

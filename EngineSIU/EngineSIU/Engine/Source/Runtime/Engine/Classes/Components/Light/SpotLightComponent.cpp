@@ -89,6 +89,29 @@ void USpotLightComponent::CreateShadowMapResources()
         OutputDebugStringW(message.c_str());
         return;
     }
+
+    D3D11_SAMPLER_DESC spotCmpDesc = {};
+    spotCmpDesc.Filter         = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;  // linear PCF
+    spotCmpDesc.AddressU       = D3D11_TEXTURE_ADDRESS_BORDER;
+    spotCmpDesc.AddressV       = D3D11_TEXTURE_ADDRESS_BORDER;
+    spotCmpDesc.AddressW       = D3D11_TEXTURE_ADDRESS_BORDER;
+    spotCmpDesc.BorderColor[0] = 1.0f;
+    spotCmpDesc.BorderColor[1] = 1.0f;
+    spotCmpDesc.BorderColor[2] = 1.0f;
+    spotCmpDesc.BorderColor[3] = 1.0f;
+    spotCmpDesc.MinLOD         = 0.0f;
+    spotCmpDesc.MaxLOD         = D3D11_FLOAT32_MAX;
+    spotCmpDesc.MipLODBias     = 0.0f;
+    spotCmpDesc.MaxAnisotropy  = 0;  
+    spotCmpDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+    hr = device->CreateSamplerState(&spotCmpDesc, &SpotShadowComparisonSampler);
+    if (FAILED(hr))
+    {
+        std::wstring message = L"[SpotLight] CreateSpotPCFSampler failed: HRESULT = 0x" + std::to_wstring(hr) + L"\n";
+        OutputDebugStringW(message.c_str());
+        return;
+    }
 }
 
 void USpotLightComponent::ReleaseShadowDepthMap()

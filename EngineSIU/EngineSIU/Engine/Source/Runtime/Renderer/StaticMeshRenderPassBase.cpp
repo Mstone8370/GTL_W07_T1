@@ -1,7 +1,6 @@
 
 #include "StaticMeshRenderPassBase.h"
 
-#include "RendererHelpers.h"
 #include "Engine/Engine.h"
 #include "UObject/UObjectIterator.h"
 #include "Components/StaticMeshComponent.h"

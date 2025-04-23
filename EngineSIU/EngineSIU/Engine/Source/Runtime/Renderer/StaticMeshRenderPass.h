@@ -45,4 +45,10 @@ protected:
     ID3D11VertexShader* VertexShader;
     ID3D11InputLayout* InputLayout;
     ID3D11PixelShader* PixelShader;
+
+private:
+    ID3D11Texture2D*            CachedSpotShadowArrayTex = nullptr;
+    ID3D11ShaderResourceView*   CachedSpotShadowArraySRV = nullptr;
+    TArray<ID3D11Texture2D*>  CachedDepthRTs;
+    UINT                            CachedSpotCount = 0;
 };

@@ -62,6 +62,8 @@ public:
     
     const FShadowDepthMap& GetShadowDepthMap() const { return ShadowDepthMap; }
 
+    ID3D11SamplerState* SpotShadowComparisonSampler = nullptr;
+
 private:
     FSpotLightInfo SpotLightInfo;
     FShadowDepthMap ShadowDepthMap;
