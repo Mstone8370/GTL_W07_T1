@@ -284,8 +284,9 @@ void FRenderer::Render(const std::shared_ptr<FEditorViewportClient>& Viewport)
      *   2. 렌더 타겟의 생명주기와 용도가 명확함
      *   3. RTV -> SRV 전환 타이밍이 정확히 지켜짐
      */
-/*
-	if (DepthPrePass) // Depth Pre Pass : 렌더타겟 nullptr 및 렌더 후 복구
+    
+/*  이 함수에 주석 처리된 코드는 Tile-based light culling을 위한 것으로, 삭제 금지
+	if (DepthPrePass) // Depth Pre Pass: 렌더타겟 nullptr 및 렌더 후 복구
     {
         DepthPrePass->Render(Viewport);
     }
