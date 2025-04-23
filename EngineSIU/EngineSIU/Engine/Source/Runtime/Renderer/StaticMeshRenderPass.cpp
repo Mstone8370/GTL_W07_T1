@@ -296,7 +296,6 @@ void FStaticMeshRenderPass::UpdateShadowConstant(const std::shared_ptr<FEditorVi
 void FStaticMeshRenderPass::UpdateSpotLightSRV()
 {
     // 개별로 존재하는 리소스들을 카피해서 연속적인 메모리 공간에 배치한 후에 GPU로 전달
-
     Graphics->DeviceContext->PSSetSamplers(13, 1, &SpotShadowComparisonSampler);
     
     TArray<ID3D11Texture2D*> SpotDepthTextures;
@@ -304,12 +303,6 @@ void FStaticMeshRenderPass::UpdateSpotLightSRV()
     {
         SpotDepthTextures.Add(SpotLight->GetShadowDepthMap().Texture2D);
     }
-    SpotDepthTextures.Sort(
-        [](const ID3D11Texture2D* A, const ID3D11Texture2D* B)
-        {
-            return A < B;  // 포인터 주소 기준 오름차순
-        }
-    );
 
     const uint32 SliceCount = static_cast<uint32>(SpotDepthTextures.Num());
     if (SliceCount == 0)
@@ -411,4 +404,3 @@ void FStaticMeshRenderPass::UpdateSpotLightSRV()
     // 5) 바인딩
     Graphics->DeviceContext->PSSetShaderResources(13, 1, &CachedSpotShadowArraySRV);
 }
-

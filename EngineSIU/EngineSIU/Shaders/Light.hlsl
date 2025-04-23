@@ -153,7 +153,7 @@ float GetPointLightShadow(float3 worldPos, uint lightIndex)
     return shadow;
 }
 
-float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.001)
+float GetSpotLightShadow(float3 worldPos, uint spotlightIdx, float shadowBias = 0.0001)
 {
     // 1) 월드→라이트 클립 공간
     float4 lp = mul(float4(worldPos, 1), SpotLights[spotlightIdx].ViewMatrix);
